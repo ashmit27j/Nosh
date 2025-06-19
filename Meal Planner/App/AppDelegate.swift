@@ -1,9 +1,5 @@
-//
-//  AppDelegate.swift
-//  Meal Planner
-//
-//  Created by MacBook on 13/06/25.
-//
+//AppDelegate should do: analytics, push setup, core data, etc.
+//This is used for all the backend calls, etc when the app first startsup not for UIbootstrapping
 
 import UIKit
 

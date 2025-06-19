@@ -36,10 +36,22 @@
 				"/Localized: App/LaunchScreen.storyboard",
 				"/Localized: App/Main.storyboard",
 				App/AppDelegate.swift,
-				App/HomeView.swift,
+				App/SceneDelegate.swift,
 				Assets.xcassets,
 				Controllers/ViewController.swift,
+				Models/Ingredient.swift,
+				Models/Recipe.swift,
+				Models/User.swift,
+				Views/Components/Navbar.swift,
+				Views/Main/HomeView.swift,
+				Views/Main/MealPlanner.swift,
+				Views/Main/Nosh.swift,
+				Views/Main/Pantry.swift,
+				Views/Main/Profile.swift,
+				Views/Subpages/CookingView.swift,
+				Views/Subpages/RecipeView.swift,
 				Views/SwiftUIView.swift,
+				Views/TestView.swift,
 			);
 			target = 1762069D2DFC0E8C00707C54 /* Meal Planner */;
 		};
@@ -49,11 +61,17 @@
 				"/Localized: App/LaunchScreen.storyboard",
 				"/Localized: App/Main.storyboard",
 				App/AppDelegate.swift,
-				App/HomeView.swift,
+				App/SceneDelegate.swift,
 				Assets.xcassets,
 				Controllers/ViewController.swift,
 				Info.plist,
+				Views/Main/HomeView.swift,
+				Views/Main/MealPlanner.swift,
+				Views/Main/Nosh.swift,
+				Views/Main/Pantry.swift,
+				Views/Main/Profile.swift,
 				Views/SwiftUIView.swift,
+				Views/TestView.swift,
 			);
 			target = 176206BD2DFC0E9100707C54 /* Meal PlannerUITests */;
 		};
@@ -304,8 +322,9 @@
 		176206C82DFC0E9100707C54 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = NoshAppIcons;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T9DK5MHDVG;
@@ -334,8 +353,9 @@
 		176206C92DFC0E9100707C54 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = NoshAppIcons;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T9DK5MHDVG;
