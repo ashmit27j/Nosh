@@ -9,22 +9,22 @@ Nosh is a cross-platform (iOS + Android) hybrid SwiftUI + UIKit application that
 
 ---
 
-## 🧠 Core Features
+## Core Features
 
-- ✅ **Ingredient-Based Dish Suggestions**
-- ✅ **Smart Search & Filters** — by prep time, difficulty, and veg/non-veg
-- ✅ **Favorites** — save recipes offline
-- ✅ **Cook Now Mode** — interactive, filterable recipe discovery
-- ✅ **Meal Plan Builder** — drag-and-drop weekly planner
-- ✅ **Cooking Instructions** — timers, steps, and substitutes
-- ✅ **Nutrition Insights** — macros, vitamins, and more
-- ✅ **Substitution Suggestions** — with nutrition comparison
-- ✅ **Auto Shopping List** — generated from plans
-- ✅ **User Preferences** — dietary filters, goals, and themes
+- **Ingredient-Based Dish Suggestions**
+- **Smart Search & Filters** — by prep time, difficulty, and veg/non-veg
+- **Favorites** — save recipes offline
+- **Cook Now Mode** — interactive, filterable recipe discovery
+- **Meal Plan Builder** — drag-and-drop weekly planner
+- **Cooking Instructions** — timers, steps, and substitutes
+- **Nutrition Insights** — macros, vitamins, and more
+- **Substitution Suggestions** — with nutrition comparison
+- **Auto Shopping List** — generated from plans
+- **User Preferences** — dietary filters, goals, and themes
 
 ---
 
-## 📱 App Screens (UI Navigation)
+## App Screens (UI Navigation)
 
 | Screen            | Description                                                            |
 |-------------------|------------------------------------------------------------------------|
@@ -38,18 +38,18 @@ Nosh is a cross-platform (iOS + Android) hybrid SwiftUI + UIKit application that
 
 ---
 
-## 🧭 Navigation Flow
+## Navigation Flow
 
-- 🏠 Home  
-- 🔥 Cook Now  
-- 📅 Meal Plan  
-- 🛒 Grocery & Pantry  
-- ⭐ Favorites  
-- 👤 Profile/Settings  
+- Home  
+- Cook Now  
+- Meal Plan  
+- Grocery & Pantry  
+- Favorites  
+- Profile/Settings  
 
 ---
 
-## ⚙️ Project Architecture (MVVM + SwiftUI/UIKit)
+## Project Architecture (MVVM + SwiftUI/UIKit)
 
 ```
 Nosh/
@@ -64,30 +64,30 @@ Nosh/
 
 ---
 
-## 🌐 External APIs Used
+## External APIs Used (future)
 
 - [Spoonacular API](https://spoonacular.com/food-api) – Recipe & nutrition data  
 - [TheMealDB](https://www.themealdb.com/api.php) – Backup recipe source  
 
 ---
 
-## 🚀 Download & Installation
+## Download & Installation (Under Development)
 
-### 📲 iOS (TestFlight)
+### iOS (TestFlight)
 1. Download from TestFlight: [TestFlight Link Here](#) *(replace with actual link)*
 2. Tap **Install** and launch the app from your home screen.
 
-### 🤖 Android (APK)
+### Android (APK)
 1. Download the APK: [Nosh-v1.0.apk](#) *(replace with actual download link)*
 2. Go to **Settings > Security** and enable "Install from Unknown Sources".
 3. Open the APK file and tap **Install**.
 
 ---
 
-## 🧪 Testing
+## Testing
 
-- ✅ Unit Tests: Logic for meal filtering, substitution, planning
-- ✅ UI Tests: Navigation, cooking steps, edge cases
+- Unit Tests: Logic for meal filtering, substitution, planning
+- UI Tests: Navigation, cooking steps, edge cases
 
 ---
 
@@ -102,40 +102,40 @@ Nosh/
 
 ---
 
-## 🧠 Future Scope
+## Future Scope
 
-- 🧾 **Barcode Scanner** for pantry input  
-- ☁️ **CloudKit sync** for multi-device use  
-- 🗣 **Voice-Guided Cooking** with speech prompts  
-- 🤖 **AI Recipe Assistant** (e.g., "I have eggs and spinach...")  
+- **Barcode Scanner** for pantry input  
+- **CloudKit sync** for multi-device use  
+- **Voice-Guided Cooking** with speech prompts  
+- **AI Recipe Assistant** (e.g., "I have eggs and spinach...")  
 
 ---
 
-## 💬 Sample User Flows
+## Sample User Flows
 
-### 🍳 Cooking a Dish
+### Cooking a Dish
 1. Select a recipe
 2. View ingredient checklist + substitutions
 3. Tap to expand instructions with built-in timers
 
-### 🧑‍🍳 Weekly Planning
+### Weekly Planning
 1. Navigate to “Meal Plan”
 2. Drag dishes into weekly calendar (B/L/D/S)
 3. Auto-generates shopping list
 
 ---
 
-## 🧠 Advanced Features Overview
+## Advanced Features Overview
 
-- 🎛️ Filters by Hunger Level, Cook Time, and Serving Size  
-- 📦 Pantry tracks current stock, greys out incompatible dishes  
-- ⏱️ Multiple cook durations: *Instant*, *SuperFast*, *Fast*, *Long*  
-- 📤 Shareable grocery checklist  
-- 🌗 Dark/Light mode support  
+- Filters by Hunger Level, Cook Time, and Serving Size  
+- Pantry tracks current stock, greys out incompatible dishes  
+- Multiple cook durations: *Instant*, *SuperFast*, *Fast*, *Long*  
+- Shareable grocery checklist  
+- Dark/Light mode support  
 
 ---
 
-## 📊 Views Overview
+## Views Overview
 
 ### 1. **Detailed Dish View**
 - Ingredients, time, difficulty
@@ -149,22 +149,15 @@ Nosh/
 
 ---
 
-## 📈 Data Handling
+## Data Handling
 
-- 📄 **Excel Sheet** for Recipes, Ingredients & Substitutions (source data)
-- 📂 Clean copy + working copy updated per user interaction
+- **Excel Sheet** for Recipes, Ingredients & Substitutions (source data)
+- Clean copy + working copy updated per user interaction
 
 ---
 
-## 👨‍💻 Author
-
+## Authors:
+**Sukhada Gulhane**  
+[Github](https://github.com/sukhada35)
 **Ashmit Jain**  
-[Portfolio](https://ashmit27j.wixstudio.com/my-blogs)  
 [GitHub](https://github.com/ashmit27j)  
-[HackerRank](https://www.hackerrank.com/profile/ashmit)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
