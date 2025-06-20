@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="logo.png" alt="Nosh Logo" width="150"/>
+  <img src="logo.png" alt="Nosh Logo"/>
 </p>
 
 # Nosh
