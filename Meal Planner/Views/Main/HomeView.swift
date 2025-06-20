@@ -308,7 +308,7 @@ struct QuickBiteButton: View {
 
 
 
-    struct HomeView: PreviewProvider {
+    struct HomeView_Preview: PreviewProvider {
         static var previews: some View {
             HomeView()
         }
