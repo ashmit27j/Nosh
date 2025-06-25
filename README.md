@@ -157,7 +157,5 @@ Nosh/
 ---
 
 ## Authors:
-**Sukhada Gulhane**  
-[Github](https://github.com/sukhada35)
-**Ashmit Jain**  
-[GitHub](https://github.com/ashmit27j)  
+[**Sukhada Gulhane**  ](https://github.com/sukhada35)
+[**Ashmit Jain**](https://github.com/ashmit27j)  
