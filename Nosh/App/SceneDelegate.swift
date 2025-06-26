@@ -12,7 +12,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                options connectionOptions: UIScene.ConnectionOptions) {
 
         // Load your SwiftUI view here
-        let contentView = HomeView()
+        let contentView = TabView()
 
         // Setup the hosting controller
         if let windowScene = scene as? UIWindowScene {
