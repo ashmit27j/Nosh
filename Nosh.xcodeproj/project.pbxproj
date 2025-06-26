@@ -37,6 +37,20 @@
 			);
 			target = 1795F6E52E0C05710013DC7C /* Nosh */;
 		};
+		17AD5BB72E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/SubViews/RecipeView.swift,
+			);
+			target = 1795F6F22E0C05780013DC7C /* NoshTests */;
+		};
+		17AD5BB82E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/SubViews/RecipeView.swift,
+			);
+			target = 1795F6FC2E0C05780013DC7C /* NoshUITests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,6 +58,8 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				1778B9B02E0C0E50006FD032 /* Exceptions for "Nosh" folder in "Nosh" target */,
+				17AD5BB72E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshTests" target */,
+				17AD5BB82E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshUITests" target */,
 			);
 			path = Nosh;
 			sourceTree = "<group>";
@@ -392,7 +408,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -423,7 +439,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
