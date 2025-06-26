@@ -66,7 +66,7 @@ struct TabView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 30)
+            .padding(.top, 20)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(.ultraThinMaterial)
