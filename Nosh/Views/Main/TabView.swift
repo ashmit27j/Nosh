@@ -19,7 +19,7 @@ struct TabView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Content view based on selected tab
+            // Main content based on selected tab
             Group {
                 switch selectedTab {
                 case .home:
@@ -37,27 +37,56 @@ struct TabView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
             .ignoresSafeArea()
-
+            
             // Custom Tab Bar
             HStack {
                 ForEach(Tab.allCases, id: \.self) { tab in
                     Spacer()
                     Button {
-                        withAnimation(.spring()) {
-                            selectedTab = tab
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                            if tab == .nosh && selectedTab == .nosh {
+                                selectedTab = .home // or toggle logic
+                            } else {
+                                selectedTab = tab
+                            }
                         }
                     } label: {
                         VStack {
-                            Image(tab.iconName)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: selectedTab == tab ? 28 : 24, height: selectedTab == tab ? 28 : 24)
-                                .opacity(selectedTab == tab ? 1.0 : 0.6)
-                            if selectedTab == tab {
-                                Circle()
-                                    .fill(Color.blue)
-                                    .frame(width: 6, height: 6)
-                                    .transition(.scale)
+                            if tab == .nosh {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color("primaryAccent"))
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Group {
+                                        if selectedTab == .nosh {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundColor(Color("white"))
+                                                .transition(.scale)
+                                        } else {
+                                            Image(tab.iconName)
+                                                .renderingMode(.template)
+                                                .resizable()
+                                                .foregroundColor(Color("white"))
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(width: 24, height: 24)
+                                                .transition(.scale)
+                                        }
+                                    }
+                                }
+                                .scaleEffect(1.5)
+                                .padding(.horizontal)
+                            } else {
+                                VStack {
+                                    Image(tab.iconName)
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 28, height: 28)
+                                        .foregroundColor(Color("iconPrimary"))
+                                }
+                                .opacity(selectedTab == tab ? 1.0 : 0.3) // 👈 opacity applied to VStack, not image
                             }
                         }
                         .padding(.vertical, 10)
@@ -65,15 +94,8 @@ struct TabView: View {
                     Spacer()
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
-                    .shadow(radius: 5)
-                    .ignoresSafeArea(edges: .bottom)
-            )
         }
+        
     }
 }
 
