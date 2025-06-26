@@ -40,14 +40,14 @@
 		17AD5BB72E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Views/SubViews/RecipeView.swift,
+				Assets.xcassets,
 			);
 			target = 1795F6F22E0C05780013DC7C /* NoshTests */;
 		};
 		17AD5BB82E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Views/SubViews/RecipeView.swift,
+				Assets.xcassets,
 			);
 			target = 1795F6FC2E0C05780013DC7C /* NoshUITests */;
 		};

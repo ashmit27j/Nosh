@@ -23,7 +23,7 @@ struct TabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    HomeView()
+                    Home()
                 case .mealPlanner:
                     MealPlanner()
                 case .nosh:
