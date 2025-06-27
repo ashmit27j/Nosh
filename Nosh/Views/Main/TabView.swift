@@ -36,6 +36,20 @@ struct TabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
+            //            .background(
+            //                ZStack {
+            //                    // New solid background behind the tab bar container
+            //                    Color("tabBarBackground") // ← define this in Assets if needed
+            //                        .ignoresSafeArea(edges: .bottom)
+            //
+            //                    // Existing frosted/glass effect with corner radius
+            //                    RoundedRectangle(cornerRadius: 20)
+            //                        .fill(.ultraThinMaterial)
+            //                        .shadow(radius: 5)
+            //                        .ignoresSafeArea(edges: .bottom)
+            //                }
+            //            )
+            
             .ignoresSafeArea()
             
             // Custom Tab Bar
@@ -45,32 +59,33 @@ struct TabView: View {
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                             if tab == .nosh && selectedTab == .nosh {
-                                selectedTab = .home // or toggle logic
+                                selectedTab = .home
                             } else {
                                 selectedTab = tab
                             }
                         }
-                    } label: {
+                    }
+                    label: {
                         VStack {
                             if tab == .nosh {
                                 ZStack {
                                     Circle()
                                         .fill(Color("primaryAccent"))
                                         .frame(width: 40, height: 40)
-                                    
+
                                     Group {
                                         if selectedTab == .nosh {
                                             Image(systemName: "xmark")
                                                 .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(Color("white"))
+                                                .foregroundColor(.white)
                                                 .transition(.scale)
                                         } else {
                                             Image(tab.iconName)
                                                 .renderingMode(.template)
                                                 .resizable()
-                                                .foregroundColor(Color("white"))
                                                 .aspectRatio(contentMode: .fit)
                                                 .frame(width: 24, height: 24)
+                                                .foregroundColor(.white) // Always iconPrimary for nosh
                                                 .transition(.scale)
                                         }
                                     }
@@ -78,15 +93,13 @@ struct TabView: View {
                                 .scaleEffect(1.5)
                                 .padding(.horizontal)
                             } else {
-                                VStack {
-                                    Image(tab.iconName)
-                                        .renderingMode(.template)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 28, height: 28)
-                                        .foregroundColor(Color("iconPrimary"))
-                                }
-                                .opacity(selectedTab == tab ? 1.0 : 0.3) // 👈 opacity applied to VStack, not image
+                                Image(tab.iconName)
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 28, height: 28)
+                                    .foregroundColor(selectedTab == tab ? Color("iconPrimary") : Color("iconSecondary"))
+                                    .opacity(selectedTab == tab ? 1.0 : 0.5)
                             }
                         }
                         .padding(.vertical, 10)
@@ -94,6 +107,22 @@ struct TabView: View {
                     Spacer()
                 }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .background(
+                ZStack {
+                    // Outer solid background
+                    Color("tabBarBackground")
+                        .ignoresSafeArea(edges: .bottom)
+                    
+                    // Inner translucent material
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                        .shadow(radius: 5)
+                        .ignoresSafeArea(edges: .bottom)
+                }
+            )
+            
         }
         
     }
