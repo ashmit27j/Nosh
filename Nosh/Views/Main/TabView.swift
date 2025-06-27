@@ -36,21 +36,6 @@ struct TabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
-            //            .background(
-            //                ZStack {
-            //                    // New solid background behind the tab bar container
-            //                    Color("tabBarBackground") // ← define this in Assets if needed
-            //                        .ignoresSafeArea(edges: .bottom)
-            //
-            //                    // Existing frosted/glass effect with corner radius
-            //                    RoundedRectangle(cornerRadius: 20)
-            //                        .fill(.ultraThinMaterial)
-            //                        .shadow(radius: 5)
-            //                        .ignoresSafeArea(edges: .bottom)
-            //                }
-            //            )
-            
-            .ignoresSafeArea()
             
             // Custom Tab Bar
             HStack {
@@ -128,6 +113,6 @@ struct TabView: View {
     }
 }
 
-#Preview {
-    TabView()
-}
+//#Preview {
+//    TabView()
+//}

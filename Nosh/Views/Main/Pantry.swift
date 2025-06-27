@@ -1,18 +1,31 @@
-//
-//  Pantry.swift
-//  Meal Planner
-//
-//  Created by MacBook on 19/06/25.
-//
-
 import SwiftUI
 
 struct Pantry: View {
     var body: some View {
-        Text("Pantry View")
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    ForEach(0..<30) { i in
+                        Text("Item \(i)")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(10)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Pantry")
+            .navigationBarTitleDisplayMode(.large)
+        }
     }
 }
 
-#Preview {
-    Pantry()
-}
+
+
+
+
+//#Preview {
+//    Pantry()
+//}
+//
