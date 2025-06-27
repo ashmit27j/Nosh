@@ -6,7 +6,10 @@
 //    @State private var selectedTab = "All"
 //    @State private var showCollapsedTitle = false
 //
-//    let tabs = ["All", "Fruits", "Veggies", "Snacks", "Drinks", "Others"]
+//    @Namespace private var underlineNamespace
+//    @StateObject private var viewModel = PantryViewModel(tabs: [
+//        "All", "Vegetables", "Fruits", "Dairy", "Spices", "Condiments", "Oils", "Instant", "Drinks"
+//    ])
 //
 //    var body: some View {
 //        NavigationStack {
@@ -19,19 +22,62 @@
 //                    .frame(height: 0)
 //
 //                    VStack(spacing: 16) {
-//                        // Space for search and tab bar to stick
-////                        Color.clear.frame(height: 120)
+//                        if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
+//                            ForEach(currentItems, id: \ .id) { item in
+//                                HStack(spacing: 0) {
+//                                    Rectangle()
+//                                        .fill(color(for: item.quantity))
+//                                        .frame(width: 6)
 //
-//                        // Example item grid
-//                        ForEach(0..<30) { i in
-//                            RoundedRectangle(cornerRadius: 12)
-//                                .fill(Color(uiColor: .secondarySystemBackground))
-//                                .frame(height: 80)
-//                                .overlay(Text("\(selectedTab) Item \(i)").foregroundColor(.primary))
+//                                    HStack {
+//                                        Text(item.name)
+//                                            .frame(maxWidth: .infinity, alignment: .leading)
+//
+//                                        HStack(spacing: 8) {
+//                                            Button(action: {
+//                                                viewModel.decrement(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+//                                            }) {
+//                                                Image(systemName: "minus")
+//                                                    .font(.system(size: 14, weight: .bold))
+//                                                    .foregroundColor(.primary)
+//                                                    .frame(width: 24, height: 24)
+//                                                    .overlay(
+//                                                        RoundedRectangle(cornerRadius: 4)
+//                                                            .stroke(Color("primaryOutline"), lineWidth: 1)
+//                                                    )
+//                                            }
+//
+//                                            Text("\(item.quantity)")
+//                                                .frame(width: 24)
+//
+//                                            Button(action: {
+//                                                viewModel.increment(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+//                                            }) {
+//                                                Image(systemName: "plus")
+//                                                    .font(.system(size: 14, weight: .bold))
+//                                                    .foregroundColor(.primary)
+//                                                    .frame(width: 24, height: 24)
+//                                                    .overlay(
+//                                                        RoundedRectangle(cornerRadius: 4)
+//                                                            .stroke(Color("primaryOutline"), lineWidth: 1)
+//                                                    )
+//                                            }
+//                                        }
+//                                    }
+//                                    .padding()
+//                                    .background(Color(uiColor: .secondarySystemBackground))
+//                                    .cornerRadius(12)
+//                                }
+//                            }
+//
+//                            AddItemButton(
+//                                category: selectedTab == "All" ? "Vegetables" : selectedTab,
+//                                viewModel: viewModel
+//                            )
 //                        }
 //                    }
 //                    .padding(.horizontal)
-//                    .padding(.top, 20)
+//                    .padding(.top, 120) // space for sticky header
 //                }
 //                .coordinateSpace(name: "scroll")
 //                .onPreferenceChange(ScrollOffsetKey.self) { offset in
@@ -40,7 +86,7 @@
 //                    }
 //                }
 //
-//                // Sticky Header: Title + Search + Tabs
+//                // Sticky Header
 //                VStack(spacing: 8) {
 //                    if showCollapsedTitle {
 //                        Text("Pantry")
@@ -48,7 +94,6 @@
 //                            .transition(.opacity)
 //                    }
 //
-//                    // Search + Cancel
 //                    HStack(spacing: 8) {
 //                        SearchBar(text: $searchText, isEditing: $isEditing)
 //
@@ -64,46 +109,45 @@
 //                    }
 //                    .animation(.easeInOut(duration: 0.25), value: isEditing)
 //
-//                    // Horizontal Tab Bar
 //                    ScrollView(.horizontal, showsIndicators: false) {
 //                        HStack(spacing: 20) {
-//                            ForEach(tabs, id: \.self) { tab in
-//                                VStack(spacing: 4) {
+//                            ForEach(viewModel.tabs, id: \ .self) { tab in
+//                                VStack(spacing: 2) {
 //                                    Button(action: {
 //                                        selectedTab = tab
 //                                    }) {
 //                                        Text(tab)
 //                                            .fontWeight(selectedTab == tab ? .semibold : .regular)
 //                                            .foregroundColor(selectedTab == tab ? .primary : .secondary)
+//                                            .padding(.top, 10)
 //                                    }
 //
-//                                    if selectedTab == tab {
-//                                        Capsule()
-//                                            .frame(height: 2)
-//                                            .foregroundColor(Color("primaryAccent"))
-//                                            .matchedGeometryEffect(id: "underline", in: Namespace().wrappedValue)
-//                                    } else {
-//                                        Capsule()
-//                                            .frame(height: 2)
-//                                            .foregroundColor(.clear)
-//                                    }
+//                                    Capsule()
+//                                        .frame(height: 3)
+//                                        .foregroundColor(selectedTab == tab ? Color("primaryAccent") : .clear)
+//                                        .matchedGeometryEffect(id: "underline", in: underlineNamespace, isSource: selectedTab == tab)
 //                                }
 //                            }
 //                        }
 //                        .padding(.horizontal)
 //                    }
 //                }
-////                .padding(.top, 20)
 //                .padding()
 //                .background(.ultraThinMaterial)
 //            }
-//            
 //            .navigationTitle("Pantry")
 //            .navigationBarTitleDisplayMode(.large)
 //        }
 //    }
+//
+//    private func color(for quantity: Int) -> Color {
+//        switch quantity {
+//        case 4...: return .green
+//        case 2...3: return .yellow
+//        default: return .red
+//        }
+//    }
 //}
-
 
 
 import SwiftUI
@@ -115,8 +159,9 @@ struct Pantry: View {
     @State private var showCollapsedTitle = false
 
     @Namespace private var underlineNamespace
-
-    let tabs = ["All", "Vegetables", "Fruits", "Dairy", "Spices", "Condiments", "Oils", "Instant", "Drinks"]
+    @StateObject private var viewModel = PantryViewModel(tabs: [
+        "All", "Vegetables", "Fruits", "Dairy", "Spices", "Condiments", "Oils", "Instant", "Drinks"
+    ])
 
     var body: some View {
         NavigationStack {
@@ -129,16 +174,64 @@ struct Pantry: View {
                     .frame(height: 0)
 
                     VStack(spacing: 16) {
-                        ForEach(0..<30) { i in
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(uiColor: .secondarySystemBackground))
-                                .frame(height: 80)
-                                .padding(.leading, 0)
-                                .overlay(Text("\(selectedTab) Item \(i)").foregroundColor(.primary))
+                        if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
+                            ForEach(currentItems, id: \ .id) { item in
+                                HStack(spacing: 0) {
+                                    HStack {
+                                        Rectangle()
+                                            .fill(color(for: item.quantity))
+                                            .frame(width: 8, height: 8)
+                                            .cornerRadius(12)
+
+                                        Text(item.name)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 2)
+
+                                        HStack(spacing: 8) {
+                                            Button(action: {
+                                                viewModel.decrement(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+                                            }) {
+                                                Image(systemName: "minus")
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundColor(.primary)
+                                                    .frame(width: 24, height: 24)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 4)
+                                                            .stroke(Color("primaryOutline"), lineWidth: 1)
+                                                    )
+                                            }
+
+                                            Text("\(item.quantity)")
+                                                .frame(width: 24)
+
+                                            Button(action: {
+                                                viewModel.increment(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+                                            }) {
+                                                Image(systemName: "plus")
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundColor(.primary)
+                                                    .frame(width: 24, height: 24)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 4)
+                                                            .stroke(Color("primaryOutline"), lineWidth: 1)
+                                                    )
+                                            }
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color(uiColor: .secondarySystemBackground))
+                                    .cornerRadius(12)
+                                }
+                            }
+
+                            AddItemButton(
+                                category: selectedTab == "All" ? "Vegetables" : selectedTab,
+                                viewModel: viewModel
+                            )
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 120) // leave space for sticky header
+                    .padding(.top, 130) // space for sticky header
                 }
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { offset in
@@ -170,19 +263,17 @@ struct Pantry: View {
                     }
                     .animation(.easeInOut(duration: 0.25), value: isEditing)
 
-                    // Tab Bar
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 20) {
-                            ForEach(tabs, id: \.self) { tab in
-                                VStack(spacing: 2) { //here spacing daala
+                            ForEach(viewModel.tabs, id: \ .self) { tab in
+                                VStack(spacing: 2) {
                                     Button(action: {
                                         selectedTab = tab
                                     }) {
                                         Text(tab)
                                             .fontWeight(selectedTab == tab ? .semibold : .regular)
                                             .foregroundColor(selectedTab == tab ? .primary : .secondary)
-                                            .padding(.top, 10) // Push text up slightly was 2 before
-//                                            .padding(.leading, 0)
+                                            .padding(.top, 10)
                                     }
 
                                     Capsule()
@@ -202,5 +293,12 @@ struct Pantry: View {
             .navigationBarTitleDisplayMode(.large)
         }
     }
-}
 
+    private func color(for quantity: Int) -> Color {
+        switch quantity {
+        case 4...: return .green
+        case 2...3: return .yellow
+        default: return .red
+        }
+    }
+}
