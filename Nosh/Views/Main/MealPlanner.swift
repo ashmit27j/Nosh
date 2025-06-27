@@ -15,7 +15,7 @@ struct MealPlanner: View {
                 }
                 .padding()
             }
-            .navigationTitle("MealPlanner")
+            .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.large)
         }
     }
