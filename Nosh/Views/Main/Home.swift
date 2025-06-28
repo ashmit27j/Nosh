@@ -14,13 +14,15 @@ struct Home: View {
                             .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
                     }
                     .frame(height: 0)
-                    VStack(spacing: 16) {
-                        ForEach(0..<30) { i in
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(uiColor: .secondarySystemBackground))
-                                .frame(height: 80)
-                                .overlay(Text("Item \(i)").foregroundColor(.primary))
-                        }
+
+                    VStack(spacing: 24) {
+                        HomeButtons()
+
+                        // Quick Bites (CategorySelector copied exactly as before)
+                        CategorySelector(selectedCategory: .constant("Full Meal"))
+
+                        // Upcoming Meals Horizontal Scroll
+                        UpcomingMealsSection()
                     }
                     .padding()
                     .padding(.top, 80)
@@ -62,50 +64,10 @@ struct Home: View {
             }
             .navigationTitle("Welcome User")
             .navigationBarTitleDisplayMode(.large)
-            //MARK: new addition
-//            .background(.ultraThinMaterial)
         }
     }
 }
 
-// MARK: - Search Bar with Filter Icon
-struct SearchBar: View {
-    @Binding var text: String
-    @Binding var isEditing: Bool
-
-    var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-
-            TextField("Search", text: $text, onEditingChanged: { editing in
-                isEditing = editing
-            })
-            .textFieldStyle(PlainTextFieldStyle())
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-
-            if !text.isEmpty {
-                Button(action: {
-                    text = ""
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                }
-            }
-
-            // 🔍 Your custom filter icon from assets
-            Image("filterIcon")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
-                .foregroundColor(.gray)
-        }
-        .padding(12)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
 
 // MARK: - Scroll Offset Tracker
 struct ScrollOffsetKey: PreferenceKey {
@@ -114,3 +76,4 @@ struct ScrollOffsetKey: PreferenceKey {
         value = nextValue()
     }
 }
+
