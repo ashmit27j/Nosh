@@ -4,6 +4,7 @@ struct MealPlanner: View {
     var body: some View {
         NavigationStack {
             ScrollView {
+                
                 VStack(spacing: 20) {
                     ForEach(0..<30) { i in
                         Text("Item \(i)")
@@ -14,18 +15,17 @@ struct MealPlanner: View {
                     }
                 }
                 .padding()
+//                .background(.ultraThinMaterial)
             }
-            .navigationTitle("Search")
+            .navigationTitle("MealPlanner")
             .navigationBarTitleDisplayMode(.large)
         }
     }
 }
 
-
-
-
-
+//
 //#Preview {
 //    MealPlanner()
 //}
+//
 

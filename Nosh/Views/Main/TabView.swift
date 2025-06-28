@@ -19,7 +19,6 @@ struct TabView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Main content based on selected tab
             Group {
                 switch selectedTab {
                 case .home:
@@ -70,7 +69,7 @@ struct TabView: View {
                                                 .resizable()
                                                 .aspectRatio(contentMode: .fit)
                                                 .frame(width: 24, height: 24)
-                                                .foregroundColor(.white) // Always iconPrimary for nosh
+                                                .foregroundColor(.white)
                                                 .transition(.scale)
                                         }
                                     }
@@ -96,23 +95,20 @@ struct TabView: View {
             .padding(.top, 20)
             .background(
                 ZStack {
-                    // Outer solid background
                     Color("tabBarBackground")
                         .ignoresSafeArea(edges: .bottom)
                     
-                    // Inner translucent material
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                         .shadow(radius: 5)
                         .ignoresSafeArea(edges: .bottom)
                 }
             )
-            
         }
-        
     }
 }
 
+// Uncomment when previewing:
 //#Preview {
-//    TabView()
+//    AppTabView()
 //}
