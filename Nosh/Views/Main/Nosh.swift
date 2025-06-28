@@ -1,7 +1,23 @@
 import SwiftUI
 
 struct Nosh: View {
-    //these are default values that i wrote randomly, they will be assigned based on data given during user onboarding
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    NoshSection()
+                }
+                .padding(.top)
+                .padding(.horizontal)
+                .padding(.bottom, 40) // Extra space at bottom
+            }
+            .navigationTitle("Nosh Now")
+            .navigationBarTitleDisplayMode(.large)
+        }
+    }
+}
+
+struct NoshSection: View {
     @State private var selectedCategory: String? = "Full Meal"
     @State private var portionSize: Int = 1
     @State private var timeToCook: Double = 45
@@ -22,152 +38,156 @@ struct Nosh: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 32) {
+        VStack(spacing: 20) {
 
-                    // Category Selector
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 16) {
-                            ForEach(categories, id: \.name) { category in
-                                VStack(spacing: 4) {
-                                    Button(action: {
-                                        selectedCategory = category.name
-                                    }) {
-                                        Image(category.icon)
-                                            .resizable()
-                                            .renderingMode(.original)
-                                            .scaledToFit()
-                                            .frame(width: 24, height: 24)
-                                            .padding(16)
-                                            .frame(maxWidth: .infinity)
-                                            .background(category.color.opacity(selectedCategory == category.name ? 1 : 0.5))
-                                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    }
-                                    Text(category.name)
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
+            // Category Box
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Category")
+                    .font(.headline)
 
-                    // Portion Size
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Portion Size")
-                            .font(.headline)
-                        Text("Select the number of people to cook for")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-
-                        HStack {
-                            Button(action: { if portionSize > 1 { portionSize -= 1 } }) {
-                                Text("-")
-                                    .font(.title)
-                                    .frame(width: 50, height: 50)
-                                    .background(Color("primaryAccent"))
-                                    .foregroundColor(.white)
+                HStack(spacing: 12) {
+                    ForEach(categories, id: \.name) { category in
+                        VStack(spacing: 10) {
+                            Button(action: {
+                                selectedCategory = category.name
+                            }) {
+                                Image(category.icon)
+                                    .resizable()
+                                    .renderingMode(.original)
+                                    .scaledToFit()
+                                    .frame(width: 30, height: 30)
+                                    .frame(width: 70, height: 70)
+                                    .background(category.color.opacity(selectedCategory == category.name ? 1 : 0.5))
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
-
-                            Spacer()
-
-                            Text("\(portionSize)")
-                                .font(.title2)
-
-                            Spacer()
-
-                            Button(action: { portionSize += 1 }) {
-                                Text("+")
-                                    .font(.title)
-                                    .frame(width: 50, height: 50)
-                                    .background(Color("primaryAccent"))
-                                    .foregroundColor(.white)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color(uiColor: .secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                    }
-
-                    // Time to Cook
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Time to Cook")
-                            .font(.headline)
-                        Text("Select the amount of preparation time (in minutes)")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-
-                        VStack {
-                            Text("\(Int(timeToCook)) min")
-                                .font(.title2)
-                                .bold()
-
-                            Slider(value: $timeToCook, in: 5...60, step: 1)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color(uiColor: .secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                    }
-
-                    // Difficulty
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Difficulty")
-                            .font(.headline)
-                        Text("How hard it is to prepare the dish")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-
-                        HStack(spacing: 16) {
-                            ForEach(difficulties, id: \.name) { difficulty in
-                                VStack(spacing: 4) {
-                                    Button(action: {
-                                        selectedDifficulty = difficulty.name
-                                    }) {
-                                        Image(difficulty.icon)
-                                            .resizable()
-                                            .renderingMode(.original)
-                                            .scaledToFit()
-                                            .frame(width: 24, height: 24)
-                                            .padding(16)
-                                            .frame(maxWidth: .infinity)
-                                            .background(difficulty.color.opacity(selectedDifficulty == difficulty.name ? 1 : 0.5))
-                                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    }
-                                    Text(difficulty.name)
-                                        .font(.caption)
-                                        .foregroundColor(.primary)
-                                }
-                            }
+                            Text(category.name)
+                                .font(.caption)
+                                .foregroundColor(.primary)
                         }
                     }
-
-                    // Example Scroll Cards
-                    VStack(spacing: 16) {
-                        ForEach(0..<10) { i in
-                            Text("Generated Recipe \(i + 1)")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-
                 }
-                .padding()
             }
-            .navigationTitle("Nosh")
-            .navigationBarTitleDisplayMode(.large)
+            .padding()
+            .background(Color(uiColor: .secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Portion Size Box
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Portion Size")
+                    .font(.headline)
+                Text("Select the number of people to cook for")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+
+                HStack {
+                    Button(action: { if portionSize > 1 { portionSize -= 1 } }) {
+                        Text("-")
+                            .font(.title)
+                            .frame(width: 50, height: 50)
+                            .background(Color("primaryAccent"))
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    Spacer()
+
+                    Text("\(portionSize)")
+                        .font(.title2)
+
+                    Spacer()
+
+                    Button(action: { portionSize += 1 }) {
+                        Text("+")
+                            .font(.title)
+                            .frame(width: 50, height: 50)
+                            .background(Color("primaryAccent"))
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .padding()
+            .background(Color(uiColor: .secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Time to Cook Box
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Time to Cook")
+                    .font(.headline)
+                Text("Select the amount of preparation time")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("0")
+                        Spacer()
+                        Text("60")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
+                    Text("\(Int(timeToCook)) min")
+                        .font(.title2)
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    Slider(value: $timeToCook, in: 0...60, step: 1)
+                        .accentColor(Color("primaryAccent"))
+                }
+            }
+            .padding()
+            .background(Color(uiColor: .secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Difficulty Box
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Difficulty")
+                    .font(.headline)
+                Text("How hard it is to prepare the dish")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+
+                HStack(spacing: 12) {
+                    ForEach(difficulties, id: \.name) { difficulty in
+                        VStack(spacing: 20) {
+                            Button(action: {
+                                selectedDifficulty = difficulty.name
+                            }) {
+                                Image(difficulty.icon)
+                                    .resizable()
+                                    .renderingMode(.original)
+                                    .scaledToFit()
+                                    .frame(width: 30, height: 30)
+                                    .frame(width: 70, height: 70)
+                                    .background(difficulty.color.opacity(selectedDifficulty == difficulty.name ? 1 : 0.5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                            Text(difficulty.name)
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
+            .padding()
+            .background(Color(uiColor: .secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Cook Now Button
+            Button(action: {
+                // Action to cook
+            }) {
+                Text("Cook Now")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color("primaryAccent"))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
         }
     }
 }
 
-extension Color {
-    func darker() -> Color {
-        return self.opacity(0.5)
-    }
-}
