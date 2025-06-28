@@ -95,8 +95,10 @@ struct TabView: View {
             .padding(.top, 20)
             .background(
                 ZStack {
-                    Color("tabBarBackground")
+                    Color(.systemBackground)
                         .ignoresSafeArea(edges: .bottom)
+//                    Color("tabBarBackground")
+//                        .ignoresSafeArea(edges: .bottom)
                     
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
