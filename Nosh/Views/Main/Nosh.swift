@@ -3,13 +3,12 @@ import SwiftUI
 struct Nosh: View {
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     NoshSection()
                 }
                 .padding(.top)
-                .padding(.horizontal)
-                .padding(.bottom, 40) // Extra space at bottom
+                .padding(.bottom, 80) // Extra bottom spacing
             }
             .navigationTitle("Nosh Now")
             .navigationBarTitleDisplayMode(.large)
@@ -40,13 +39,16 @@ struct NoshSection: View {
     var body: some View {
         VStack(spacing: 20) {
 
-            // Category Box
+            //MARK: Category Box
             VStack(alignment: .leading, spacing: 12) {
                 Text("Category")
                     .font(.headline)
+                //Buttons stack for category
+                
+                HStack {
+                    ForEach(categories.indices, id: \.self) { index in
+                        let category = categories[index]
 
-                HStack(spacing: 12) {
-                    ForEach(categories, id: \.name) { category in
                         VStack(spacing: 10) {
                             Button(action: {
                                 selectedCategory = category.name
@@ -55,78 +57,104 @@ struct NoshSection: View {
                                     .resizable()
                                     .renderingMode(.original)
                                     .scaledToFit()
-                                    .frame(width: 30, height: 30)
+                                    .frame(width: 26, height: 26)
                                     .frame(width: 70, height: 70)
                                     .background(category.color.opacity(selectedCategory == category.name ? 1 : 0.5))
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
+
                             Text(category.name)
                                 .font(.caption)
                                 .foregroundColor(.primary)
                         }
+
+                        // Add spacer *between* items, but not after the last one
+                        if index != categories.count - 1 {
+                            Spacer()
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity)
+
+
             }
             .padding()
             .background(Color(uiColor: .secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal)
 
+            // MARK: Portion Size Box
             // Portion Size Box
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Portion Size")
-                    .font(.headline)
-                Text("Select the number of people to cook for")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                        VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading) {
+                                Text("Portion Size")
+                                    .font(.headline)
+                                Text("Select the number of people to cook for")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack {
-                    Button(action: { if portionSize > 1 { portionSize -= 1 } }) {
-                        Text("-")
-                            .font(.title)
-                            .frame(width: 50, height: 50)
-                            .background(Color("primaryAccent"))
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                            HStack {
+                                Spacer(minLength: 0)
 
-                    Spacer()
+                                HStack {
+                                    Button(action: { if portionSize > 1 { portionSize -= 1 } }) {
+                                        Image(systemName: "minus")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 20, height: 20)
+                                            .frame(width: 50, height: 50)
+                                            .background(Color("primaryAccent"))
+                                            .foregroundColor(.white)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    }
 
-                    Text("\(portionSize)")
-                        .font(.title2)
+                                    Spacer()
 
-                    Spacer()
+                                    Text("\(portionSize)")
+                                        .font(.title2)
+                                        .frame(minWidth: 40)
 
-                    Button(action: { portionSize += 1 }) {
-                        Text("+")
-                            .font(.title)
-                            .frame(width: 50, height: 50)
-                            .background(Color("primaryAccent"))
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-                .padding(.top, 8)
-            }
-            .padding()
-            .background(Color(uiColor: .secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    Spacer()
+
+                                    Button(action: { portionSize += 1 }) {
+                                        Image(systemName: "plus")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 20, height: 20)
+                                            .frame(width: 50, height: 50)
+                                            .background(Color("primaryAccent"))
+                                            .foregroundColor(.white)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    }
+                                }
+                                .padding()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+
+                                Spacer(minLength: 0)
+                            }
+                        }
+                        .padding()
+                        .background(Color(uiColor: .secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .padding(.horizontal)
 
             // Time to Cook Box
             VStack(alignment: .leading, spacing: 12) {
-                Text("Time to Cook")
-                    .font(.headline)
-                Text("Select the amount of preparation time")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                VStack(alignment: .leading) {
+                    Text("Time to Cook")
+                        .font(.headline)
+                    Text("Select the amount of preparation time")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
 
                 VStack(alignment: .leading) {
-                    HStack {
-                        Text("0")
-                        Spacer()
-                        Text("60")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                    
 
                     Text("\(Int(timeToCook)) min")
                         .font(.title2)
@@ -135,22 +163,37 @@ struct NoshSection: View {
 
                     Slider(value: $timeToCook, in: 0...60, step: 1)
                         .accentColor(Color("primaryAccent"))
+                    
+                    HStack {
+                        Text("0")
+                        Spacer()
+                        Text("60")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.gray)
                 }
             }
             .padding()
             .background(Color(uiColor: .secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal)
 
             // Difficulty Box
             VStack(alignment: .leading, spacing: 12) {
-                Text("Difficulty")
-                    .font(.headline)
-                Text("How hard it is to prepare the dish")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                VStack(alignment: .leading) {
+                    Text("Difficulty")
+                        .font(.headline)
+                    Text("How hard it is to prepare the dish")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
 
-                HStack(spacing: 12) {
-                    ForEach(difficulties, id: \.name) { difficulty in
+                HStack {
+                    Spacer(minLength: 0)
+
+                    ForEach(difficulties.indices, id: \.self) { index in
+                        let difficulty = difficulties[index]
+
                         VStack(spacing: 20) {
                             Button(action: {
                                 selectedDifficulty = difficulty.name
@@ -159,7 +202,7 @@ struct NoshSection: View {
                                     .resizable()
                                     .renderingMode(.original)
                                     .scaledToFit()
-                                    .frame(width: 30, height: 30)
+                                    .frame(width: 26, height: 26)
                                     .frame(width: 70, height: 70)
                                     .background(difficulty.color.opacity(selectedDifficulty == difficulty.name ? 1 : 0.5))
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -168,12 +211,15 @@ struct NoshSection: View {
                                 .font(.caption)
                                 .foregroundColor(.primary)
                         }
+
+                        Spacer(minLength: 0)
                     }
                 }
             }
             .padding()
             .background(Color(uiColor: .secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal)
 
             // Cook Now Button
             Button(action: {
@@ -187,7 +233,7 @@ struct NoshSection: View {
                     .background(Color("primaryAccent"))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
             }
+            .padding(.horizontal)
         }
     }
 }
-
