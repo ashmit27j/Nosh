@@ -111,6 +111,6 @@ struct TabView: View {
 }
 
 // Uncomment when previewing:
-//#Preview {
-//    AppTabView()
-//}
+#Preview {
+    TabView()
+}

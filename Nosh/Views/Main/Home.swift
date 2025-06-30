@@ -4,6 +4,10 @@ struct Home: View {
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
     @State private var isEditing = false
+    @State private var selectedCategory: String? = ""
+    @State private var portionSize: Int = 1
+    @State private var timeToCook: Double = 45
+    @State private var selectedDifficulty: String? = "Beginner"
 
     var body: some View {
         NavigationStack {
@@ -16,18 +20,10 @@ struct Home: View {
                     .frame(height: 0)
 
                     VStack(spacing: 20) {
-
-                        CategorySelector(selectedCategory: .constant("Full Meal"))
-                            .padding(.horizontal, 0)
-                            .frame(maxWidth: .infinity)
-
+                        QuickBitesSection(selectedCategory: $selectedCategory)
                         AiChefSection()
-                            .padding(.horizontal, 16)
-
-                        UpcomingMealsSection()
                     }
-                    .padding(.top, 100)
-//                    .padding(.horizontal, 16)
+                    .padding(.top, 96)
                 }
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { offset in
@@ -38,12 +34,6 @@ struct Home: View {
 
                 // Floating SearchBar
                 VStack(spacing: 8) {
-                    if showCollapsedTitle {
-                        Text("Home")
-                            .font(.headline)
-                            .transition(.opacity)
-                    }
-
                     HStack(spacing: 8) {
                         SearchBar(text: $searchText, isEditing: $isEditing)
 
@@ -51,7 +41,10 @@ struct Home: View {
                             Button("Cancel") {
                                 searchText = ""
                                 isEditing = false
-                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                UIApplication.shared.sendAction(
+                                    #selector(UIResponder.resignFirstResponder),
+                                    to: nil, from: nil, for: nil
+                                )
                             }
                             .foregroundColor(.accentColor)
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
@@ -64,9 +57,10 @@ struct Home: View {
                 .padding(.bottom, 20)
                 .background(.ultraThinMaterial)
             }
-            .navigationTitle("Welcome User")
+            .navigationTitle(showCollapsedTitle ? "Home" : "Welcome User")
             .navigationBarTitleDisplayMode(.large)
         }
+        .id(showCollapsedTitle)
     }
 }
 
@@ -79,3 +73,9 @@ struct ScrollOffsetKey: PreferenceKey {
         value = nextValue()
     }
 }
+//
+//#Preview {
+//    Home()
+//}
+
+
