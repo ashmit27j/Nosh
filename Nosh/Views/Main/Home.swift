@@ -22,6 +22,8 @@ struct Home: View {
                     VStack(spacing: 20) {
                         QuickBitesSection(selectedCategory: $selectedCategory)
                         AiChefSection()
+                        HomeButtons()
+                            .padding(.horizontal, 20)
                     }
                     .padding(.top, 96)
                 }

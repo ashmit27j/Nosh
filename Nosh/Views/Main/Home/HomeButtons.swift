@@ -4,38 +4,43 @@ import SwiftUI
 struct HomeButtons: View {
     var body: some View {
         HStack(spacing: 20) {
-            // Ask Chef button
+            // Random button
             Button(action: {}) {
                 HStack(spacing: 8) {
-                    Image("cookIcon")
+                    Image("diceIcon")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 26, height: 26)
 
-                    Text("Ask Chef")
+                    Text("Random")
                         .fontWeight(.semibold)
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity)
                 .background(Color("primaryAccent"))
                 .foregroundColor(.black)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
 
-            // Dice (Recipes) button
+            // Recipe button
             Button(action: {}) {
-                Image("diceIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 26, height: 26)
-                    .padding(12)
-                    .background(Color("primaryAccent"))
-                    .foregroundColor(.black)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-            }
+                HStack(spacing: 8) {
+                    Image("menuIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 26, height: 26)
 
-            Spacer() // Pushes buttons to the left
+                    Text("Recipes")
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity)
+                .background(Color("primaryAccent"))
+                .foregroundColor(.black)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
         }
-        .padding(.horizontal, 0) // Keep outer padding minimal, Home view handles it
     }
 }
