@@ -1,7 +1,10 @@
 import SwiftUI
 
-struct TabView: View {
+struct MainTabView: View {
     @State private var selectedTab: Tab = .home
+    @StateObject private var sharedViewModel = MealPlannerViewModel(tabs: [
+        "All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+    ])
 
     enum Tab: CaseIterable {
         case home, mealPlanner, nosh, pantry, profile
@@ -22,9 +25,9 @@ struct TabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    Home()
+                    Home(viewModel: sharedViewModel)
                 case .mealPlanner:
-                    MealPlanner()
+                    MealPlanner(viewModel: sharedViewModel)
                 case .nosh:
                     Nosh()
                 case .pantry:
@@ -35,10 +38,11 @@ struct TabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemBackground))
-            
+
             // Custom Tab Bar
             HStack {
                 ForEach(Tab.allCases, id: \.self) { tab in
+
                     Spacer()
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
@@ -48,8 +52,7 @@ struct TabView: View {
                                 selectedTab = tab
                             }
                         }
-                    }
-                    label: {
+                    } label: {
                         VStack {
                             if tab == .nosh {
                                 ZStack {
@@ -98,9 +101,6 @@ struct TabView: View {
                 ZStack {
                     Color(.systemBackground)
                         .ignoresSafeArea(edges: .bottom)
-//                    Color("tabBarBackground")
-//                        .ignoresSafeArea(edges: .bottom)
-                    
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                         .shadow(radius: 5)
@@ -112,7 +112,6 @@ struct TabView: View {
     }
 }
 
-// Uncomment when previewing:
-#Preview {
-    TabView()
-}
+//#Preview {
+//    MainTabView()
+//}

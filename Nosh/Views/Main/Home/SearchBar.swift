@@ -33,7 +33,15 @@ struct SearchBar: View {
                 .foregroundColor(.gray)
         }
         .padding(12)
-        .background(.ultraThinMaterial)
+        .background(
+            ZStack {
+                Color("secondaryBackground").opacity(0.6) // subtle base color
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

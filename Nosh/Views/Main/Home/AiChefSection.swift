@@ -95,7 +95,8 @@ struct AiChefSection: View {
 //                                        .frame(width: 20, height: 20)
 
                                     Text("Ask Chef")
-                                        .fontWeight(.semibold)
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
                                     
                                     Image("triangleIcon")
                                         .resizable()

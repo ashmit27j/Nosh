@@ -1,33 +1,52 @@
-//
-//  UpcomingMealsSection.swift
-//  Nosh
-//
-//  Created by MacBook on 29/06/25.
-//
-
 import SwiftUI
 
-// MARK: - Upcoming Meals Section
 struct UpcomingMealsSection: View {
+    @State private var currentIndex = 0
+
+    let meals: [UpcomingMeal] = [
+        UpcomingMeal(imageName: "pancakes", name: "Pancakes"),
+        UpcomingMeal(imageName: "pasta", name: "Creamy Pasta"),
+        UpcomingMeal(imageName: "wrap", name: "Veggie Wrap"),
+        UpcomingMeal(imageName: "biryani", name: "Veg Biryani"),
+        UpcomingMeal(imageName: "salad", name: "Fresh Salad")
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Upcoming meals")
-                .font(.title2.bold())
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Upcoming meals")
+                    .font(.title2.bold())
 
-            Text("Here are upcoming meals / No upcoming schedule one")
-                .font(.subheadline)
-                .foregroundColor(.gray)
+                Spacer()
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(0..<5) { index in
-                        UpcomingMealCard(imageName: "pancakes", title: "Item Name")
-                            .transition(.scale)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.6), value: index)
-                    }
+                NavigationLink(destination: MealPlanner(viewModel: MealPlannerViewModel(tabs: [
+                    "All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+                ]))) {
+                    Text("See schedule")
+                        .font(.subheadline)
+                        .foregroundColor(.accentColor)
                 }
-                .padding(.vertical, 8)
             }
+
+            TabView(selection: $currentIndex) {
+                ForEach(meals.indices, id: \.self) { index in
+                    UpcomingMealCard(meal: meals[index])
+//                        .padding(.horizontal, 12)
+                        .tag(index)
+                }
+            }
+            .frame(height: 300)
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+
+            HStack(spacing: 6) {
+                ForEach(0..<meals.count, id: \.self) { index in
+                    Circle()
+                        .fill(currentIndex == index ? Color.primary : Color.gray.opacity(0.3))
+                        .frame(width: 8, height: 8)
+                }
+            }
+            .frame(maxWidth: .infinity)
         }
+
     }
 }

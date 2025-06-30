@@ -6,14 +6,15 @@ struct HomeButtons: View {
         HStack(spacing: 20) {
             // Random button
             Button(action: {}) {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     Image("diceIcon")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 26, height: 26)
 
                     Text("Random")
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
@@ -25,14 +26,15 @@ struct HomeButtons: View {
 
             // Recipe button
             Button(action: {}) {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     Image("menuIcon")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 26, height: 26)
 
                     Text("Recipes")
-                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)

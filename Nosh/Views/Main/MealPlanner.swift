@@ -7,10 +7,7 @@ struct MealPlanner: View {
     @State private var showCollapsedTitle = false
 
     @Namespace private var underlineNamespace
-    @StateObject private var viewModel = MealPlannerViewModel(tabs: [
-        "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-    ])
-
+    @StateObject var viewModel: MealPlannerViewModel 
 
     var body: some View {
         NavigationStack {
@@ -34,7 +31,7 @@ struct MealPlanner: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 130) // space for sticky header
+                    .padding(.top, 130)
                 }
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { offset in

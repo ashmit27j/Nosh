@@ -8,6 +8,7 @@ struct Home: View {
     @State private var portionSize: Int = 1
     @State private var timeToCook: Double = 45
     @State private var selectedDifficulty: String? = "Beginner"
+    let viewModel: MealPlannerViewModel
 
     var body: some View {
         NavigationStack {
@@ -24,9 +25,22 @@ struct Home: View {
                         AiChefSection()
                         HomeButtons()
                             .padding(.horizontal, 20)
+                        Rectangle()
+                            .fill(Color("secondaryBackground")) // Use your asset catalog color
+                            .frame(height: 4)
+                            .frame(maxWidth: .infinity)
+                            .cornerRadius(100)
+                            .padding(.horizontal, 20)
+
+
+                            
+                        UpcomingMealsSection()
+                            .padding(.horizontal, 20)
                     }
-                    .padding(.top, 96)
+                    .padding(.top, 100)
+                    .padding(.bottom, 100)
                 }
+                .scrollIndicators(.hidden)
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { offset in
                     withAnimation(.easeInOut(duration: 0.25)) {
@@ -57,7 +71,8 @@ struct Home: View {
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 20)
-                .background(.ultraThinMaterial)
+//                .background(.ultraThinMaterial)
+                .background(.primaryCard)
             }
             .navigationTitle(showCollapsedTitle ? "Home" : "Welcome User")
             .navigationBarTitleDisplayMode(.large)
@@ -68,14 +83,13 @@ struct Home: View {
 
 
 // MARK: - Scroll Offset Key
-
 struct ScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
 }
-//
+
 //#Preview {
 //    Home()
 //}

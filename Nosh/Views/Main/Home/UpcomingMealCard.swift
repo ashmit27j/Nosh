@@ -1,44 +1,42 @@
 import SwiftUI
-// MARK: - Upcoming Meal Card
+
 struct UpcomingMealCard: View {
-    var imageName: String
-    var title: String
+    let meal: UpcomingMeal
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(imageName)
+        VStack(alignment: .leading, spacing: 12) {
+            Image(meal.imageName)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 100, height: 100)
+                .frame(height: 180)
+                .frame(maxWidth: .infinity)
                 .clipped()
-                .cornerRadius(12)
+                .cornerRadius(16)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(meal.name)
                     .font(.headline)
-                Text("Breakfast\n330 kCalories\nMaterials: available\nCook at 3:30")
-                    .font(.caption)
-                    .foregroundColor(.gray)
 
-                Spacer()
-
-                Button(action: {}) {
+                Button(action: {
+                    // TODO: Handle action
+                }) {
                     HStack {
                         Text("Cook Now")
                         Image(systemName: "arrow.right")
                     }
-                    .font(.footnote.bold())
-                    .padding(8)
-                    .background(Color.green)
-                    .foregroundColor(.black)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color("primaryAccent"))
+                    .cornerRadius(10)
                 }
             }
-            .frame(maxHeight: 100)
+            .padding(20)
         }
-        .padding()
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .background(Color("primaryCard"))
+        
+        .cornerRadius(20)
+//        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 3)
     }
 }
