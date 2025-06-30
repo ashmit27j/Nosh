@@ -93,6 +93,7 @@ struct TabView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
+            .padding(.bottom, 40)
             .background(
                 ZStack {
                     Color(.systemBackground)
@@ -107,6 +108,7 @@ struct TabView: View {
                 }
             )
         }
+        .ignoresSafeArea()
     }
 }
 
