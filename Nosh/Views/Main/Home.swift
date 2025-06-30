@@ -15,17 +15,19 @@ struct Home: View {
                     }
                     .frame(height: 0)
 
-                    VStack(spacing: 24) {
-                        HomeButtons()
+                    VStack(spacing: 20) {
 
-                        // Quick Bites (CategorySelector copied exactly as before)
                         CategorySelector(selectedCategory: .constant("Full Meal"))
+                            .padding(.horizontal, 0)
+                            .frame(maxWidth: .infinity)
 
-                        // Upcoming Meals Horizontal Scroll
+                        AiChefSection()
+                            .padding(.horizontal, 16)
+
                         UpcomingMealsSection()
                     }
-                    .padding()
-                    .padding(.top, 80)
+                    .padding(.top, 100)
+//                    .padding(.horizontal, 16)
                 }
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { offset in
@@ -34,7 +36,7 @@ struct Home: View {
                     }
                 }
 
-                // Floating search section
+                // Floating SearchBar
                 VStack(spacing: 8) {
                     if showCollapsedTitle {
                         Text("Home")
@@ -51,7 +53,7 @@ struct Home: View {
                                 isEditing = false
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
-                            .foregroundColor(Color.accentColor)
+                            .foregroundColor(.accentColor)
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
                         }
                     }
@@ -69,11 +71,11 @@ struct Home: View {
 }
 
 
-// MARK: - Scroll Offset Tracker
+// MARK: - Scroll Offset Key
+
 struct ScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
 }
-

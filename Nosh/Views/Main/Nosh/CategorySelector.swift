@@ -1,4 +1,5 @@
 import SwiftUI
+
 struct CategorySelector: View {
     @Binding var selectedCategory: String?
     
@@ -11,34 +12,43 @@ struct CategorySelector: View {
 
     var body: some View {
         SectionContainer {
-            Text("Category")
-                .font(.headline)
-            
-            HStack {
-                ForEach(categories.indices, id: \.self) { index in
-                    let category = categories[index]
-                    VStack(spacing: 10) {
-                        Button(action: {
-                            selectedCategory = category.name
-                        }) {
-                            Image(category.icon)
-                                .resizable()
-                                .renderingMode(.original)
-                                .scaledToFit()
-                                .frame(width: 28, height: 28)
-                                .frame(width: 70, height: 70)
-                                .background(category.color.opacity(selectedCategory == category.name ? 1 : 0.5))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Category")
+                    .font(.headline)
+
+                HStack {
+                    ForEach(categories.indices, id: \.self) { index in
+                        let category = categories[index]
+                        VStack(spacing: 10) {
+                            Button(action: {
+                                selectedCategory = category.name
+                            }) {
+                                Image(category.icon)
+                                    .resizable()
+                                    .renderingMode(.original)
+                                    .scaledToFit()
+                                    .frame(width: 28, height: 28)
+                                    .frame(width: 70, height: 70)
+                                    .background(
+                                        selectedCategory == category.name
+                                        ? category.color
+                                        : Color.clear
+                                    )
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                            Text(category.name)
+                                .font(.caption)
+                                .foregroundColor(.primary)
                         }
-                        Text(category.name)
-                            .font(.caption)
-                            .foregroundColor(.primary)
-                    }
-                    if index != categories.count - 1 {
-                        Spacer()
+                        if index != categories.count - 1 {
+                            Spacer()
+                        }
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity)
     }
 }
