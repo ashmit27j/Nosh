@@ -1,5 +1,5 @@
 import SwiftUI
-
+import Foundation
 struct MealPlanner: View {
     @State private var searchText = ""
     @State private var isEditing = false
@@ -12,86 +12,233 @@ struct MealPlanner: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
-                ScrollView {
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
-                    }
-                    .frame(height: 0)
-
-                    VStack(spacing: 16) {
-                        if let currentItems = viewModel.items[selectedTab] {
-                            ForEach(currentItems, id: \.id) { item in
-                                Text(item.name)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding()
-                                    .background(Color(uiColor: .secondarySystemBackground))
-                                    .cornerRadius(12)
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
+                
+                // MARK: - Scrollable Meal List
+                MealListView(viewModel: viewModel, selectedTab: selectedTab)
                     .padding(.top, 130)
-                }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollOffsetKey.self) { offset in
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        showCollapsedTitle = offset < -20
-                    }
-                }
-
-                // Sticky Header
-                VStack(spacing: 8) {
-                    if showCollapsedTitle {
-                        Text("Pantry")
-                            .font(.headline)
-                            .transition(.opacity)
-                    }
-
-                    HStack(spacing: 8) {
-                        SearchBar(text: $searchText, isEditing: $isEditing)
-
-                        if isEditing {
-                            Button("Cancel") {
-                                searchText = ""
-                                isEditing = false
-                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                            }
-                            .foregroundColor(.accentColor)
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    .padding(.bottom, 100)
+                    .onPreferenceChange(ScrollOffsetKey.self) { offset in
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            showCollapsedTitle = offset < -20
                         }
                     }
-                    .animation(.easeInOut(duration: 0.25), value: isEditing)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 24) {
-                            ForEach(viewModel.tabs, id: \.self) { tab in
-                                VStack(spacing: 2) {
-                                    Button(action: {
-                                        selectedTab = tab
-                                    }) {
-                                        Text(tab)
-                                            .fontWeight(selectedTab == tab ? .semibold : .regular)
-                                            .foregroundColor(selectedTab == tab ? .primary : .secondary)
-                                            .padding(.top, 10)
-                                    }
-
-                                    Capsule()
-                                        .frame(height: 3)
-                                        .foregroundColor(selectedTab == tab ? Color("primaryAccent") : .clear)
-                                        .matchedGeometryEffect(id: "underline", in: underlineNamespace, isSource: selectedTab == tab)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-                }
-                .padding()
-                .background(Color("primaryCard"))
+                // MARK: - Sticky Header
+                StickyHeaderView(
+                    searchText: $searchText,
+                    isEditing: $isEditing,
+                    selectedTab: $selectedTab,
+                    showCollapsedTitle: showCollapsedTitle,
+                    tabs: viewModel.tabs,
+                    underlineNamespace: underlineNamespace
+                )
             }
             .navigationTitle("Meal Planner")
             .navigationBarTitleDisplayMode(.large)
             .background(Color("primaryBackground"))
         }
     }
+}
+
+struct MealListView: View {
+    @ObservedObject var viewModel: MealPlannerViewModel
+    let selectedTab: String
+
+    @State private var isEditing = false
+
+    var body: some View {
+        ScrollView {
+            GeometryReader { geo in
+                Color.clear
+                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
+            }
+            .frame(height: 0)
+
+            VStack(spacing: 24) {
+                if let mealsByType = viewModel.items[selectedTab] {
+                    MealSectionView(
+                        title: "Breakfast",
+                        meals: mealsByType["breakfast"] ?? [],
+                        onEditTapped: { isEditing.toggle() },
+                        onAdd: {
+                            viewModel.addMeal(to: selectedTab, type: "breakfast", meal: sampleMeal())
+                        },
+                        onDelete: { meal in
+                            viewModel.removeMeal(from: selectedTab, type: "breakfast", meal: meal)
+                        },
+                        isEditing: isEditing
+                    )
+
+                    MealSectionView(
+                        title: "Lunch",
+                        meals: mealsByType["lunch"] ?? [],
+                        onEditTapped: { isEditing.toggle() },
+                        onAdd: {
+                            viewModel.addMeal(to: selectedTab, type: "lunch", meal: sampleMeal())
+                        },
+                        onDelete: { meal in
+                            viewModel.removeMeal(from: selectedTab, type: "lunch", meal: meal)
+                        },
+                        isEditing: isEditing
+                    )
+
+                    MealSectionView(
+                        title: "Dinner",
+                        meals: mealsByType["dinner"] ?? [],
+                        onEditTapped: { isEditing.toggle() },
+                        onAdd: {
+                            viewModel.addMeal(to: selectedTab, type: "dinner", meal: sampleMeal())
+                        },
+                        onDelete: { meal in
+                            viewModel.removeMeal(from: selectedTab, type: "dinner", meal: meal)
+                        },
+                        isEditing: isEditing
+                    )
+                }
+            }
+            .padding(.horizontal)
+        }
+        .coordinateSpace(name: "scroll")
+    }
+}
+
+
+struct MealSectionView: View {
+    let title: String
+    let meals: [MealItem]
+    let onEditTapped: () -> Void
+    let onAdd: () -> Void
+    let onDelete: (MealItem) -> Void
+    let isEditing: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(Color("primaryText"))
+
+                Spacer()
+
+                Button(action: onEditTapped) {
+                    Text("Edit")
+                        .foregroundColor(Color.red.opacity(0.8))
+                        .fontWeight(.medium)
+                }
+            }
+
+            ForEach(meals) { meal in
+                ZStack(alignment: .topTrailing) {
+                    MealCard(meal: meal)
+
+                    if isEditing {
+                        Button(action: { onDelete(meal) }) {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(.red)
+                                .padding(8)
+                        }
+                    }
+                }
+            }
+
+            if isEditing {
+                Button(action: onAdd) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Add \(title) Dish")
+                            .fontWeight(.medium)
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Sticky Header Section
+struct StickyHeaderView: View {
+    @Binding var searchText: String
+    @Binding var isEditing: Bool
+    @Binding var selectedTab: String
+    let showCollapsedTitle: Bool
+    let tabs: [String]
+    var underlineNamespace: Namespace.ID
+
+    var body: some View {
+        VStack(spacing: 8) {
+            if showCollapsedTitle {
+                Text("Pantry")
+                    .font(.headline)
+                    .transition(.opacity)
+            }
+
+            // MARK: - Search Bar
+            HStack(spacing: 8) {
+                SearchBar(text: $searchText, isEditing: $isEditing)
+
+                if isEditing {
+                    Button("Cancel") {
+                        searchText = ""
+                        isEditing = false
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                    .foregroundColor(.accentColor)
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: isEditing)
+
+            // MARK: - Tabs
+            TabSelectorView(
+                tabs: tabs,
+                selectedTab: $selectedTab,
+                underlineNamespace: underlineNamespace
+            )
+        }
+        .padding()
+        .background(Color("primaryCard"))
+    }
+}
+
+// MARK: - Tab Selector
+struct TabSelectorView: View {
+    let tabs: [String]
+    @Binding var selectedTab: String
+    var underlineNamespace: Namespace.ID
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 24) {
+                ForEach(tabs, id: \.self) { tab in
+                    VStack(spacing: 2) {
+                        Button(action: {
+                            selectedTab = tab
+                        }) {
+                            Text(tab)
+                                .fontWeight(selectedTab == tab ? .semibold : .regular)
+                                .foregroundColor(selectedTab == tab ? .primary : .secondary)
+                                .padding(.top, 10)
+                        }
+
+                        Capsule()
+                            .frame(height: 3)
+                            .foregroundColor(selectedTab == tab ? Color("primaryAccent") : .clear)
+                            .matchedGeometryEffect(id: "underline", in: underlineNamespace, isSource: selectedTab == tab)
+                    }
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+}
+
+func sampleMeal() -> MealItem {
+    return MealItem(
+        name: "Cheese Frankie",
+        imageName: "frankieImage",  // Must exist in Assets
+        cookTime: 20,
+        servingSize: 2,
+        isAvailableInPantry: true
+    )
 }
