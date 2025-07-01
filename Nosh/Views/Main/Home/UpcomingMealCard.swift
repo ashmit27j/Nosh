@@ -22,11 +22,18 @@ struct UpcomingMealCard: View {
                 }) {
                     HStack {
                         Text("Cook Now")
-                        Image(systemName: "arrow.right")
+                            .foregroundColor(Color("buttonInner"))
+                        Image("triangleIcon")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .rotationEffect(.degrees(-90))
+                            .foregroundColor(Color("buttonInner"))
                     }
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 20)
                     .frame(maxWidth: .infinity)
                     .background(Color("primaryAccent"))
                     .cornerRadius(10)
@@ -40,3 +47,4 @@ struct UpcomingMealCard: View {
 //        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 3)
     }
 }
+

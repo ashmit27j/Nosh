@@ -11,44 +11,45 @@ struct QuickBitesSection: View {
     ]
 
     var body: some View {
-        SectionContainer {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Quick Bites")
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Bites")
+                .font(.headline)
+                .foregroundColor(Color("textPrimary"))
 
-                HStack {
-                    ForEach(categories.indices, id: \.self) { index in
-                        let category = categories[index]
-                        VStack(spacing: 10) {
-                            Button(action: {
-                                selectedCategory = category.name
-                            }) {
-                                Image(category.icon)
-                                    .resizable()
-                                    .renderingMode(.original)
-                                    .scaledToFit()
-                                    .frame(width: 28, height: 28)
-                                    .frame(width: 70, height: 70)
-                                    .background(
-                                        selectedCategory == category.name
-                                        ? category.color
-                                        : Color.clear
-                                    )
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                            Text(category.name)
-                                .font(.caption)
-                                .foregroundColor(.primary)
+            HStack {
+                ForEach(categories.indices, id: \.self) { index in
+                    let category = categories[index]
+                    VStack(spacing: 10) {
+                        Button(action: {
+                            selectedCategory = category.name
+                        }) {
+                            Image(category.icon)
+                                .resizable()
+                                .renderingMode(.original)
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .frame(width: 70, height: 70)
+                                .background(
+                                    selectedCategory == category.name
+                                    ? category.color
+                                    : Color("buttonSecondary")
+                                )
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        if index != categories.count - 1 {
-                            Spacer()
-                        }
+                        Text(category.name)
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                    }
+                    if index != categories.count - 1 {
+                        Spacer()
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity)
+        .padding() // internal padding within card
+        .background(Color("primaryCard")) // actual card color
+        .cornerRadius(24)
+        .padding(.horizontal, 20) // same outer horizontal padding as others
     }
 }

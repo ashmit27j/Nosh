@@ -37,7 +37,7 @@ struct MainTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
+            .background(Color("primaryBackground")) // ← CHANGE THIS LINE
 
             // Custom Tab Bar
             HStack {
@@ -99,15 +99,16 @@ struct MainTabView: View {
             .padding(.bottom, 40)
             .background(
                 ZStack {
-                    Color(.systemBackground)
+                    Color("primaryBackground")
                         .ignoresSafeArea(edges: .bottom)
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color("primaryCard"))
                         .shadow(radius: 5)
                         .ignoresSafeArea(edges: .bottom)
                 }
             )
         }
+        
         .ignoresSafeArea()
     }
 }

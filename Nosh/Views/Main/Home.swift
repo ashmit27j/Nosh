@@ -12,7 +12,10 @@ struct Home: View {
 
     var body: some View {
         NavigationStack {
+            
             ZStack(alignment: .top) {
+                Color("primaryBackground")
+                    .ignoresSafeArea()
                 ScrollView {
                     GeometryReader { geo in
                         Color.clear
@@ -21,12 +24,18 @@ struct Home: View {
                     .frame(height: 0)
 
                     VStack(spacing: 20) {
-                        QuickBitesSection(selectedCategory: $selectedCategory)
                         AiChefSection()
+                        
+                        QuickBitesSection(selectedCategory: $selectedCategory)
+//                            .background(Color("primaryCard"))
+                        
                         HomeButtons()
                             .padding(.horizontal, 20)
+//                            .background(Color("primaryCard"))
+                        
+                        //Divider but better cos i wanted it rounded
                         Rectangle()
-                            .fill(Color("secondaryBackground")) // Use your asset catalog color
+                            .fill(Color("secondaryBackground")) 
                             .frame(height: 4)
                             .frame(maxWidth: .infinity)
                             .cornerRadius(100)
@@ -72,7 +81,7 @@ struct Home: View {
                 .padding(.top, 20)
                 .padding(.bottom, 20)
 //                .background(.ultraThinMaterial)
-                .background(.primaryCard)
+                .background(Color("primaryCard"))
             }
             .navigationTitle(showCollapsedTitle ? "Home" : "Welcome User")
             .navigationBarTitleDisplayMode(.large)
