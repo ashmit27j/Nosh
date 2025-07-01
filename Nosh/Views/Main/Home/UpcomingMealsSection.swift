@@ -47,7 +47,7 @@ struct UpcomingMealsSection: View {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 320) // 👈 This is the magic fix — fixed height that fully fits the card
+            .frame(height: 340) // 👈 This is the magic fix — fixed height that fully fits the card
 
             // MARK: - Dots
             HStack(spacing: 6) {

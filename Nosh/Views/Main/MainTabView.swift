@@ -3,7 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab: Tab = .home
     @StateObject private var sharedViewModel = MealPlannerViewModel(tabs: [
-        "All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+        "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
     ])
 
     enum Tab: CaseIterable {

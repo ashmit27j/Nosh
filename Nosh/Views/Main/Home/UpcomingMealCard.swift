@@ -4,11 +4,12 @@ struct UpcomingMealCard: View {
     let meal: UpcomingMeal
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Image(meal.imageName)
                 .resizable()
                 .scaledToFill()
                 .frame(height: 180)
+                .padding(16)
                 .frame(maxWidth: .infinity)
                 .clipped()
                 .cornerRadius(16)

@@ -3,11 +3,11 @@ import SwiftUI
 struct MealPlanner: View {
     @State private var searchText = ""
     @State private var isEditing = false
-    @State private var selectedTab = "All"
+    @State private var selectedTab = "Mon"
     @State private var showCollapsedTitle = false
 
     @Namespace private var underlineNamespace
-    @StateObject var viewModel: MealPlannerViewModel 
+    @StateObject var viewModel: MealPlannerViewModel
 
     var body: some View {
         NavigationStack {
@@ -20,7 +20,7 @@ struct MealPlanner: View {
                     .frame(height: 0)
 
                     VStack(spacing: 16) {
-                        if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
+                        if let currentItems = viewModel.items[selectedTab] {
                             ForEach(currentItems, id: \.id) { item in
                                 Text(item.name)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,7 +64,7 @@ struct MealPlanner: View {
                     .animation(.easeInOut(duration: 0.25), value: isEditing)
 
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 20) {
+                        HStack(spacing: 24) {
                             ForEach(viewModel.tabs, id: \.self) { tab in
                                 VStack(spacing: 2) {
                                     Button(action: {
@@ -83,14 +83,15 @@ struct MealPlanner: View {
                                 }
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 2)
                     }
                 }
                 .padding()
-                .background(.ultraThinMaterial)
+                .background(Color("primaryCard"))
             }
             .navigationTitle("Meal Planner")
             .navigationBarTitleDisplayMode(.large)
+            .background(Color("primaryBackground"))
         }
     }
 }

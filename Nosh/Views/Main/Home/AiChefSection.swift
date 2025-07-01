@@ -184,6 +184,6 @@ struct AiChefSection: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color("primaryCard"))
         )
-        .padding(.horizontal, 20)
+//        .padding(.horizontal, 20)
     }
 }

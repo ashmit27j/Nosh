@@ -25,12 +25,14 @@ struct Home: View {
 
                     VStack(spacing: 20) {
                         AiChefSection()
+                            .padding(.horizontal, 16)
                         
                         QuickBitesSection(selectedCategory: $selectedCategory)
+                            .padding(.horizontal, 16)
 //                            .background(Color("primaryCard"))
                         
                         HomeButtons()
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 16)
 //                            .background(Color("primaryCard"))
                         
                         //Divider but better cos i wanted it rounded
@@ -39,12 +41,12 @@ struct Home: View {
                             .frame(height: 4)
                             .frame(maxWidth: .infinity)
                             .cornerRadius(100)
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 16)
 
 
                             
                         UpcomingMealsSection()
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 16)
                     }
                     .padding(.top, 100)
                     .padding(.bottom, 100)

@@ -11,12 +11,9 @@ class MealPlannerViewModel: ObservableObject {
     }
 
     private func setupDummyItems() {
-        for tab in tabs where tab != "All" {
+        for tab in tabs {
             items[tab] = dummyItems(for: tab)
         }
-        items["All"] = tabs
-            .filter { $0 != "All" }
-            .flatMap { items[$0] ?? [] }
     }
 
     func dummyItems(for tab: String) -> [PantryItem] {
@@ -32,7 +29,6 @@ class MealPlannerViewModel: ObservableObject {
         }
     }
 
-
     func addCustomItem(to category: String) {
         let newItem = PantryItem(name: "Custom Meal", quantity: 0)
         items[category, default: []].append(newItem)
@@ -44,6 +40,6 @@ class MealPlannerViewModel: ObservableObject {
                 return category
             }
         }
-        return "Mon"
+        return tabs.first ?? ""
     }
 }

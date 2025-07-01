@@ -21,6 +21,7 @@ struct Nosh: View {
             }
             .navigationTitle("Nosh Now")
             .navigationBarTitleDisplayMode(.large)
+            .background(Color("primaryBackground"))
         }
     }
 }
