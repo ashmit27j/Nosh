@@ -45,10 +45,11 @@ struct MealCard: View {
                     .padding()
                     .foregroundColor(Color("secondaryAccent"))
                     .background(Color("primaryAccent"))
-                    .clipShape(Circle()) 
+                    .cornerRadius(12)
+//                    .clipShape(Circle())
             }
         }
-        .padding()
+        .padding(.vertical, 10)
         .background(Color("primaryCard"))
         .cornerRadius(20)
 //        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)

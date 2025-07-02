@@ -33,7 +33,7 @@ struct Pantry: View {
                                     HStack {
                                         //Item name
                                         Text(item.name)
-                                            .foregroundColor(item.quantity == 0 ? Color("buttonSecondary") : Color("textPrimary"))
+                                            .foregroundColor(item.quantity == 0 ? Color("buttonSecondary") : Color("primaryText"))
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 2)
                                         
@@ -44,7 +44,7 @@ struct Pantry: View {
                                             }) {
                                                 Image(systemName: "minus")
                                                     .font(.system(size: 14, weight: .bold))
-                                                    .foregroundColor(Color("textSecondary"))
+                                                    .foregroundColor(Color("secondaryText"))
                                                     .frame(width: 20, height: 20)
 //                                                    .overlay(
 //                                                        RoundedRectangle(cornerRadius: 4)
@@ -54,14 +54,14 @@ struct Pantry: View {
 
                                             Text("\(item.quantity)")
                                                 .frame(width: 24)
-                                                .foregroundColor(Color("textPrimary"))
+                                                .foregroundColor(Color("primaryText"))
 
                                             Button(action: {
                                                 viewModel.increment(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
                                             }) {
                                                 Image(systemName: "plus")
                                                     .font(.system(size: 14, weight: .bold))
-                                                    .foregroundColor(Color("textSecondary"))
+                                                    .foregroundColor(Color("secondaryText"))
                                                     .frame(width: 20, height: 20)
 //                                                    .overlay(
 //                                                        RoundedRectangle(cornerRadius: 4)

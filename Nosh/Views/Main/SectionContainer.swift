@@ -13,7 +13,7 @@ struct SectionContainer<Content: View>: View {
         }
         .padding()
         .background(Color(uiColor: .secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
     }
 }

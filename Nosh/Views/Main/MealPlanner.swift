@@ -68,7 +68,10 @@ struct MealListView: View {
                         },
                         isEditing: isEditing
                     )
-
+                    .padding(16)
+                    .background(Color("primaryCard"))
+                    .cornerRadius(12)
+                    
                     MealSectionView(
                         title: "Lunch",
                         meals: mealsByType["lunch"] ?? [],
@@ -122,19 +125,24 @@ struct MealSectionView: View {
 
                 Button(action: onEditTapped) {
                     Text("Edit")
-                        .foregroundColor(Color.red.opacity(0.8))
+                        .foregroundColor(Color("primaryAccent"))
                         .fontWeight(.medium)
                 }
             }
 
             ForEach(meals) { meal in
+//                Rectangle()
+//                    .fill(Color("buttonSecondary"))
+//                    .frame(height: 2)
+//                    .frame(maxWidth: .infinity)
+//                    .cornerRadius(100)
                 ZStack(alignment: .topTrailing) {
                     MealCard(meal: meal)
 
                     if isEditing {
                         Button(action: { onDelete(meal) }) {
                             Image(systemName: "minus.circle.fill")
-                                .foregroundColor(.red)
+                                .foregroundColor(Color("primaryCard"))
                                 .padding(8)
                         }
                     }

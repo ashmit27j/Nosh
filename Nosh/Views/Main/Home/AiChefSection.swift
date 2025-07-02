@@ -144,7 +144,7 @@ struct AiChefSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Chef Nash")
                     .font(.headline)
-                    .foregroundColor(Color("textPrimary"))
+                    .foregroundColor(Color("primaryText"))
 
                 Text("Not sure what to cook? Ask your personal chef!")
                     .font(.subheadline)
@@ -181,7 +181,7 @@ struct AiChefSection: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(Color("primaryCard"))
         )
 //        .padding(.horizontal, 20)
