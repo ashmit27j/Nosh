@@ -42,9 +42,11 @@ struct MealCard: View {
                         .scaledToFit()
                         .frame(width: 24, height: 24)
                         .padding() // match size with cook button
-                        .background(Color("pastelRed"))
+//                        .background(Color("buttonSecondary"))
+                        .background(.ultraThinMaterial)
+                    
                         .cornerRadius(12)
-                        .foregroundColor(Color("b&w"))
+                        .foregroundColor(.red)
                 }
             } else {
                 // When not editing: show cook CTA

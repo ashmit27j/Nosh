@@ -12,7 +12,7 @@ struct SectionContainer<Content: View>: View {
             content
         }
         .padding()
-        .background(Color(uiColor: .secondarySystemBackground))
+        .background(Color("primaryCard"))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal)
     }

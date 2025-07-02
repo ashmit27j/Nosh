@@ -14,7 +14,7 @@ struct MealPlanner: View {
             ZStack(alignment: .top) {
                 // MARK: - Scrollable Meal List
                 MealListView(viewModel: viewModel, selectedTab: selectedTab)
-                    .padding(.top, 130)
+                    .padding(.top, 128)
                     .padding(.bottom, 100)
                     .onPreferenceChange(ScrollOffsetKey.self) { offset in
                         withAnimation(.easeInOut(duration: 0.25)) {

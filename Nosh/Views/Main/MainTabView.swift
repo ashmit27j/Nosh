@@ -103,7 +103,8 @@ struct MainTabView: View {
                         .ignoresSafeArea(edges: .bottom)
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Color("primaryCard"))
-                        .shadow(radius: 5)
+                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 8)
+
                         .ignoresSafeArea(edges: .bottom)
                 }
             )
