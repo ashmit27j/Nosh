@@ -1,15 +1,7 @@
-//
-//  MealCard.swift
-//  Nosh
-//
-//  Created by MacBook on 01/07/25.
-//
-
-
 import SwiftUI
-
 struct MealCard: View {
     let meal: MealItem
+    var isEditing: Bool = false // <- Add this to control the UI based on editing mode
 
     var body: some View {
         HStack(spacing: 16) {
@@ -22,7 +14,7 @@ struct MealCard: View {
                 .cornerRadius(12)
 
             // MARK: - Meal Info
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(meal.name)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
@@ -30,28 +22,39 @@ struct MealCard: View {
                 Text("\(meal.cookTime) mins | \(meal.servingSize) servings")
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                Text(meal.isAvailableInPantry ? "Ready To Cook!" : "Unavailable")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             // MARK: - CTA Button
-            Button(action: {
-                print("Cook now tapped for \(meal.name)")
-            }) {
-                Image("triangleIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 24, height: 24)
-                    .rotationEffect(.degrees(-90))
-                    .padding()
-                    .foregroundColor(Color("secondaryAccent"))
-                    .background(Color("primaryAccent"))
+            if !isEditing {
+                Button(action: {
+                    print("Cook now tapped for \(meal.name)")
+                }) {
+                    Image("triangleIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .rotationEffect(.degrees(-90))
+                        .padding()
+                        .foregroundColor(Color("secondaryAccent"))
+                        .background(meal.isAvailableInPantry ? Color("primaryAccent") : Color("buttonSecondary"))
+                        .cornerRadius(12)
+                }
+                .disabled(meal.isAvailableInPantry ? false : true) //disable the button if the material isnt available
+            } else {
+                // background red when editing
+                Rectangle()
+                    .fill(Color("pastelRed"))
+                    .frame(width: 56, height: 56)
                     .cornerRadius(12)
-//                    .clipShape(Circle())
+                    
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 4)
         .background(Color("primaryCard"))
-        .cornerRadius(20)
-//        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(16)
     }
 }

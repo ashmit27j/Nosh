@@ -1,10 +1,4 @@
-//
-//  MealItem.swift
-//  Nosh
-//
-//  Created by MacBook on 01/07/25.
-//
-
+//what all data does the meal item take
 import Foundation
 struct MealItem: Identifiable, Hashable {
     let id = UUID()
@@ -12,5 +6,5 @@ struct MealItem: Identifiable, Hashable {
     var imageName: String
     var cookTime: Int
     var servingSize: Int
-    var isAvailableInPantry: Bool
+    var isAvailableInPantry: Bool //to check for item availability
 }

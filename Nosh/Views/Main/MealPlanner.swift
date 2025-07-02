@@ -12,7 +12,6 @@ struct MealPlanner: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
-                
                 // MARK: - Scrollable Meal List
                 MealListView(viewModel: viewModel, selectedTab: selectedTab)
                     .padding(.top, 130)
@@ -71,7 +70,7 @@ struct MealListView: View {
                     .padding(16)
                     .background(Color("primaryCard"))
                     .cornerRadius(12)
-                    
+
                     MealSectionView(
                         title: "Lunch",
                         meals: mealsByType["lunch"] ?? [],
@@ -84,6 +83,9 @@ struct MealListView: View {
                         },
                         isEditing: isEditing
                     )
+                    .padding(16)
+                    .background(Color("primaryCard"))
+                    .cornerRadius(12)
 
                     MealSectionView(
                         title: "Dinner",
@@ -97,6 +99,9 @@ struct MealListView: View {
                         },
                         isEditing: isEditing
                     )
+                    .padding(16)
+                    .background(Color("primaryCard"))
+                    .cornerRadius(12)
                 }
             }
             .padding(.horizontal)
@@ -117,45 +122,54 @@ struct MealSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
+                //breakfast lunch dinner titles are these
                 Text(title)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(Color("primaryText"))
 
+                //to help with alignment
                 Spacer()
 
+                //edit button
                 Button(action: onEditTapped) {
-                    Text("Edit")
+                    Text(!isEditing ? "Edit" : "Done")
                         .foregroundColor(Color("primaryAccent"))
                         .fontWeight(.medium)
                 }
             }
+            //line divider here
+            Rectangle()
+                .fill(Color("buttonSecondary"))
+                .frame(height: 2)
+                .frame(maxWidth: .infinity)
+                .cornerRadius(100)
 
             ForEach(meals) { meal in
-//                Rectangle()
-//                    .fill(Color("buttonSecondary"))
-//                    .frame(height: 2)
-//                    .frame(maxWidth: .infinity)
-//                    .cornerRadius(100)
                 ZStack(alignment: .topTrailing) {
-                    MealCard(meal: meal)
+                    MealCard(meal: meal, isEditing: isEditing)
 
+                    //delete item button, which is only visible in cases where the edit button is clicked
+                    #warning("trash icon")
                     if isEditing {
                         Button(action: { onDelete(meal) }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(Color("primaryCard"))
-                                .padding(8)
+                            Image(systemName: "trash.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(Color("b&w"))
                         }
                     }
                 }
             }
-
+            //this is the part visible when editing
             if isEditing {
                 Button(action: onAdd) {
                     HStack(spacing: 6) {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundColor(Color("primaryAccent"))
                         Text("Add \(title) Dish")
                             .fontWeight(.medium)
+                            .foregroundStyle(Color("secondaryText"))
                     }
                     .padding(.vertical, 8)
                 }
@@ -248,5 +262,9 @@ func sampleMeal() -> MealItem {
         cookTime: 20,
         servingSize: 2,
         isAvailableInPantry: true
+//        isAvailableInPantry: false
     )
 }
+
+
+
