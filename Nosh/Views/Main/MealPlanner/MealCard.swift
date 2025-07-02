@@ -1,7 +1,9 @@
 import SwiftUI
+
 struct MealCard: View {
     let meal: MealItem
-    var isEditing: Bool = false // <- Add this to control the UI based on editing mode
+    var isEditing: Bool = false // to control UI state
+    var onDelete: (() -> Void)? = nil // optional closure for delete action
 
     var body: some View {
         HStack(spacing: 16) {
@@ -22,14 +24,30 @@ struct MealCard: View {
                 Text("\(meal.cookTime) mins | \(meal.servingSize) servings")
                     .font(.subheadline)
                     .foregroundColor(.gray)
+
                 Text(meal.isAvailableInPantry ? "Ready To Cook!" : "Unavailable")
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // MARK: - CTA Button
-            if !isEditing {
+            // MARK: - Right-Aligned Action Button
+            if isEditing {
+                // When editing: show red trash button
+                Button(action: {
+                    onDelete?()
+                }) {
+                    Image(systemName: "trash.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .padding() // match size with cook button
+                        .background(Color("pastelRed"))
+                        .cornerRadius(12)
+                        .foregroundColor(Color("b&w"))
+                }
+            } else {
+                // When not editing: show cook CTA
                 Button(action: {
                     print("Cook now tapped for \(meal.name)")
                 }) {
@@ -43,18 +61,12 @@ struct MealCard: View {
                         .background(meal.isAvailableInPantry ? Color("primaryAccent") : Color("buttonSecondary"))
                         .cornerRadius(12)
                 }
-                .disabled(meal.isAvailableInPantry ? false : true) //disable the button if the material isnt available
-            } else {
-                // background red when editing
-                Rectangle()
-                    .fill(Color("pastelRed"))
-                    .frame(width: 56, height: 56)
-                    .cornerRadius(12)
-                    
+                .disabled(!meal.isAvailableInPantry) // disable the button if the material isn't available
             }
         }
         .padding(.vertical, 4)
         .background(Color("primaryCard"))
         .cornerRadius(16)
+//        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }

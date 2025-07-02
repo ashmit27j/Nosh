@@ -111,6 +111,8 @@ struct MealListView: View {
 }
 
 
+// ... existing imports and structs
+
 struct MealSectionView: View {
     let title: String
     let meals: [MealItem]
@@ -137,6 +139,7 @@ struct MealSectionView: View {
                         .fontWeight(.medium)
                 }
             }
+
             //line divider here
             Rectangle()
                 .fill(Color("buttonSecondary"))
@@ -145,22 +148,14 @@ struct MealSectionView: View {
                 .cornerRadius(100)
 
             ForEach(meals) { meal in
-                ZStack(alignment: .topTrailing) {
-                    MealCard(meal: meal, isEditing: isEditing)
-
-                    //delete item button, which is only visible in cases where the edit button is clicked
-                    #warning("trash icon")
-                    if isEditing {
-                        Button(action: { onDelete(meal) }) {
-                            Image(systemName: "trash.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(Color("b&w"))
-                        }
-                    }
-                }
+                // show meal card with built-in edit/cook/delete logic
+                MealCard(
+                    meal: meal,
+                    isEditing: isEditing,
+                    onDelete: { onDelete(meal) } // pass delete handler
+                )
             }
+
             //this is the part visible when editing
             if isEditing {
                 Button(action: onAdd) {
