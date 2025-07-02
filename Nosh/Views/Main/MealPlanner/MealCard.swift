@@ -42,7 +42,7 @@ struct MealCard: View {
                         .scaledToFit()
                         .frame(width: 24, height: 24)
                         .padding() // match size with cook button
-//                        .background(Color("buttonSecondary"))
+//                        .background(Color("secondaryButton"))
                         .background(.ultraThinMaterial)
                     
                         .cornerRadius(12)
@@ -60,7 +60,7 @@ struct MealCard: View {
                         .rotationEffect(.degrees(-90))
                         .padding()
                         .foregroundColor(Color("secondaryAccent"))
-                        .background(meal.isAvailableInPantry ? Color("primaryAccent") : Color("buttonSecondary"))
+                        .background(meal.isAvailableInPantry ? Color("primaryAccent") : Color("secondaryButton"))
                         .cornerRadius(12)
                 }
                 .disabled(!meal.isAvailableInPantry) // disable the button if the material isn't available

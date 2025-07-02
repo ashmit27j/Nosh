@@ -32,7 +32,7 @@ struct QuickBitesSection: View {
                                 .background(
                                     selectedCategory == category.name
                                     ? category.color
-                                    : Color("buttonSecondary")
+                                    : Color("secondaryButton")
                                 )
                                 .background(.ultraThinMaterial)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))

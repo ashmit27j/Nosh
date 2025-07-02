@@ -1,4 +1,5 @@
 //what all data does the meal item take
+//SAMPLE DATA USED BY MANY PAGES DONT DELETE
 import Foundation
 struct MealItem: Identifiable, Hashable {
     let id = UUID()

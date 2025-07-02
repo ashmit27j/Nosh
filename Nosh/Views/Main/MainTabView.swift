@@ -85,7 +85,7 @@ struct MainTabView: View {
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: 28, height: 28)
-                                    .foregroundColor(selectedTab == tab ? Color("iconPrimary") : Color("iconSecondary"))
+                                    .foregroundColor(selectedTab == tab ? Color("primaryIcon") : Color("secondaryIcon"))
                                     .opacity(selectedTab == tab ? 1.0 : 0.5)
                             }
                         }

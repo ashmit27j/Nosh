@@ -1,13 +1,13 @@
 import SwiftUI
-
+//may reuse this in ohte pages
 struct CookNowButton: View {
     var body: some View {
         Button(action: {
-            // TODO: Handle Cook Now action
+            // TODO: Handle Cook Now action (havent reached yet)
         }) {
             Text("Cook Now")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(Color("primaryText"))
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color("primaryAccent"))

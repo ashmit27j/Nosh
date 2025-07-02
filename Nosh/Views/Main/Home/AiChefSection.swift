@@ -103,7 +103,7 @@
 //                                        .scaledToFit()
 //                                        .frame(width: 20, height: 20)
 //                                        .rotationEffect(.degrees(-90))
-//                                        .foregroundColor(Color("buttonInner"))
+//                                        .foregroundColor(Color("primaryButtonText"))
 //                                }
 //                                .frame(maxWidth: .infinity)
 //                                .padding()

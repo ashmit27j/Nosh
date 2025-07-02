@@ -1,6 +1,12 @@
+
 import SwiftUI
 
 struct Home: View {
+    //home button vars
+    @State private var showRandomDish = false
+    @State private var randomMeal: MealItem? = nil
+
+    //other vars
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
     @State private var isEditing = false
@@ -12,10 +18,10 @@ struct Home: View {
 
     var body: some View {
         NavigationStack {
-            
             ZStack(alignment: .top) {
                 Color("primaryBackground")
                     .ignoresSafeArea()
+
                 ScrollView {
                     GeometryReader { geo in
                         Color.clear
@@ -26,25 +32,20 @@ struct Home: View {
                     VStack(spacing: 20) {
                         AiChefSection()
                             .padding(.horizontal, 16)
-                        
+
                         QuickBitesSection(selectedCategory: $selectedCategory)
                             .padding(.horizontal, 16)
-//                            .background(Color("primaryCard"))
-                        
-                        HomeButtons()
-                            .padding(.horizontal, 16)
-//                            .background(Color("primaryCard"))
-                        
-                        //Divider but better cos i wanted it rounded
+
+                        HomeButtons(showRandomDish: $showRandomDish)
+                            
+
                         Rectangle()
-                            .fill(Color("secondaryBackground")) 
+                            .fill(Color("secondaryBackground"))
                             .frame(height: 4)
                             .frame(maxWidth: .infinity)
                             .cornerRadius(100)
                             .padding(.horizontal, 16)
 
-
-                            
                         UpcomingMealsSection()
                             .padding(.horizontal, 16)
                     }
@@ -59,7 +60,6 @@ struct Home: View {
                     }
                 }
 
-                // Floating SearchBar
                 VStack(spacing: 8) {
                     HStack(spacing: 8) {
                         SearchBar(text: $searchText, isEditing: $isEditing)
@@ -82,27 +82,30 @@ struct Home: View {
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 20)
-//                .background(.ultraThinMaterial)
                 .background(Color("primaryCard"))
             }
             .navigationTitle(showCollapsedTitle ? "Home" : "Welcome User")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showRandomDish) {
+                if let meal = randomMeal {
+                    RandomDishSheet(meal: meal) {
+                        randomMeal = viewModel.generateRandomMeal()
+                    }
+                }
+            }
+            .onChange(of: showRandomDish) { show in
+                if show {
+                    randomMeal = viewModel.generateRandomMeal()
+                }
+            }
         }
         .id(showCollapsedTitle)
     }
 }
 
-
-// MARK: - Scroll Offset Key
 struct ScrollOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
 }
-
-//#Preview {
-//    Home()
-//}
-
-

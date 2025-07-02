@@ -23,14 +23,14 @@ struct UpcomingMealCard: View {
                 }) {
                     HStack {
                         Text("Cook Now")
-                            .foregroundColor(Color("buttonInner"))
+                            .foregroundColor(Color("primaryButtonText"))
                         Image("triangleIcon")
                             .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 20, height: 20)
                             .rotationEffect(.degrees(-90))
-                            .foregroundColor(Color("buttonInner"))
+                            .foregroundColor(Color("primaryButtonText"))
                     }
                     .font(.subheadline.bold())
                     .foregroundColor(.white)

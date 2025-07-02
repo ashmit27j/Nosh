@@ -34,7 +34,7 @@ struct UpcomingMealsSection: View {
                             .scaledToFit()
                             .frame(width: 16, height: 16)
                             .rotationEffect(.degrees(-90))
-                            .foregroundColor(Color("buttonInner"))
+                            .foregroundColor(Color("primaryButtonText"))
                     }
                 }
             }

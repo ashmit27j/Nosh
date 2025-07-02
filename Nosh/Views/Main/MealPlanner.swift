@@ -10,34 +10,128 @@ struct MealPlanner: View {
     @StateObject var viewModel: MealPlannerViewModel
 
     var body: some View {
+//        NavigationStack {
+//            ZStack(alignment: .top) {
+//                // MARK: - Scrollable Meal List
+//                MealListView(viewModel: viewModel, selectedTab: selectedTab)
+//                    .padding(.top, 128)
+//                    .padding(.bottom, 80)
+//                    .onPreferenceChange(ScrollOffsetKey.self) { offset in
+//                        withAnimation(.easeInOut(duration: 0.25)) {
+//                            showCollapsedTitle = offset < -20
+//                        }
+//                    }
+//
+//                // MARK: - Sticky Header
+//                StickyHeaderView(
+//                    searchText: $searchText,
+//                    isEditing: $isEditing,
+//                    selectedTab: $selectedTab,
+//                    showCollapsedTitle: showCollapsedTitle,
+//                    tabs: viewModel.tabs,
+//                    underlineNamespace: underlineNamespace
+//                )
+//            }
+//            .background(Color("primaryBackground"))
+//            .header {
+//                ZStack {
+//                    Text("Meal Planner")
+//                        .font(.largeTitle.bold())
+//
+//                    HStack {
+//                        Spacer()
+//                        Button {
+//                            print("Calendar tapped")
+//                        } label: {
+//                            HStack(spacing: 8) {
+//                                Image(systemName: "calendar")
+//                                    .resizable()
+//                                    .scaledToFit()
+//                                    .frame(width: 18, height: 18)
+//                                    .foregroundColor(Color("secondaryAccent"))
+//                                Text("Calendar")
+//                                    .foregroundColor(Color("secondaryAccent"))
+//                                    .fontWeight(.semibold)
+//                            }
+//                            .padding(.horizontal, 16)
+//                            .padding(.vertical, 10)
+//                            .background(Color("primaryAccent"))
+//                            .cornerRadius(16)
+//                        }
+//                    }
+//                }
+//                .frame(maxWidth: .infinity)
+//                .padding(.horizontal)
+//                .padding(.top, 16)
+//            }
+//            .navigationTitle("Meal Planner")
+//            .navigationBarTitleDisplayMode(.large)
+//            .background(Color("primaryBackground"))
         NavigationStack {
-            ZStack(alignment: .top) {
-                // MARK: - Scrollable Meal List
-                MealListView(viewModel: viewModel, selectedTab: selectedTab)
-                    .padding(.top, 128)
-                    .padding(.bottom, 100)
-                    .onPreferenceChange(ScrollOffsetKey.self) { offset in
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            showCollapsedTitle = offset < -20
+            VStack(spacing: 0) {
+                // Custom header (title + calendar button)
+                VStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Meal Planner")
+                            .font(.largeTitle.bold())
+                            .padding(.bottom, 16) // Matches Pantry
+                            .foregroundColor(Color("primaryText"))
+
+                        Spacer()
+
+                        Button {
+                            print("Calendar tapped")
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "calendar")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 18, height: 18)
+                                    .foregroundColor(Color("secondaryAccent"))
+                                Text("Calendar")
+                                    .foregroundColor(Color("secondaryAccent"))
+                                    .fontWeight(.semibold)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color("primaryAccent"))
+                            .cornerRadius(16)
                         }
                     }
+                    // StickyHeaderView or SearchBar/TabSelectorView can go here
+                }
+                .padding(.horizontal)
+                .padding(.top, 26)
+                .background(Color("primaryCard"))
+//                .animation(.easeInOut(duration: 0.25), value: showCollapsedTitle)
 
-                // MARK: - Sticky Header
-                StickyHeaderView(
-                    searchText: $searchText,
-                    isEditing: $isEditing,
-                    selectedTab: $selectedTab,
-                    showCollapsedTitle: showCollapsedTitle,
-                    tabs: viewModel.tabs,
-                    underlineNamespace: underlineNamespace
-                )
+                // Main layout
+                ZStack(alignment: .top) {
+                    MealListView(viewModel: viewModel, selectedTab: selectedTab)
+                        .padding(.top, 128)
+                        .padding(.bottom, 80)
+                        .onPreferenceChange(ScrollOffsetKey.self) { offset in
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                showCollapsedTitle = offset < -20
+                            }
+                        }
+
+                    StickyHeaderView(
+                        searchText: $searchText,
+                        isEditing: $isEditing,
+                        selectedTab: $selectedTab,
+                        showCollapsedTitle: showCollapsedTitle,
+                        tabs: viewModel.tabs,
+                        underlineNamespace: underlineNamespace
+                    )
+                }
             }
-            .navigationTitle("Meal Planner")
-            .navigationBarTitleDisplayMode(.large)
             .background(Color("primaryBackground"))
         }
+        
     }
 }
+
 
 struct MealListView: View {
     @ObservedObject var viewModel: MealPlannerViewModel
@@ -142,7 +236,7 @@ struct MealSectionView: View {
 
             //line divider here
             Rectangle()
-                .fill(Color("buttonSecondary"))
+                .fill(Color("secondaryButton"))
                 .frame(height: 2)
                 .frame(maxWidth: .infinity)
                 .cornerRadius(100)
