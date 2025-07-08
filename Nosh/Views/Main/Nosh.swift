@@ -19,8 +19,13 @@ struct Nosh: View {
                 .padding(.top)
                 .padding(.bottom, 100) // Extra bottom spacing like original
             }
-            .navigationTitle("Nosh Now")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("Nosh")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("hi")
+                        .opacity(1) // Invisible but still occupies space
+                }
+            }
             .background(Color("primaryBackground"))
         }
     }

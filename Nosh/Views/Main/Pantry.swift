@@ -52,13 +52,14 @@ struct Pantry: View {
     }
 
     private var Header: some View {
-        VStack(spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
+        VStack(spacing: 16) {
+            HStack(alignment: .center) {
                 Text("Pantry")
                     .font(.largeTitle.bold())
-                    .padding(.bottom, 16)
                     .transition(.opacity)
+
                 Spacer()
+
                 Button {
                     print("Add tapped")
                 } label: {
@@ -68,19 +69,13 @@ struct Pantry: View {
                             .scaledToFit()
                             .frame(width: 18, height: 18)
                             .foregroundColor(Color("secondaryAccent"))
-                        Text("Get List")
-                            .foregroundColor(Color("secondaryAccent"))
-                            .fontWeight(.semibold)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
                     .background(Color("primaryAccent"))
                     .cornerRadius(16)
-
                 }
             }
-            .padding(.top, 26)
-            .transition(.opacity)
 
             HStack(spacing: 8) {
                 SearchBar(text: $searchText, isEditing: $isEditing)
@@ -89,7 +84,10 @@ struct Pantry: View {
                     Button("Cancel") {
                         searchText = ""
                         isEditing = false
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
                     }
                     .foregroundColor(.accentColor)
                     .transition(.opacity.combined(with: .move(edge: .trailing)))
@@ -99,7 +97,7 @@ struct Pantry: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
-                    ForEach(viewModel.tabs, id: \ .self) { tab in
+                    ForEach(viewModel.tabs, id: \.self) { tab in
                         VStack(spacing: 2) {
                             Button {
                                 selectedTab = tab
@@ -107,7 +105,7 @@ struct Pantry: View {
                                 Text(tab)
                                     .fontWeight(selectedTab == tab ? .semibold : .regular)
                                     .foregroundColor(selectedTab == tab ? .primary : .secondary)
-                                    .padding(.top, 10)
+//                                    .padding(.top, 0)
                             }
 
                             Capsule()
@@ -121,9 +119,11 @@ struct Pantry: View {
             }
         }
         .padding()
+        .frame(maxWidth: .infinity, alignment: .top)
         .background(Color("primaryCard"))
         .animation(.easeInOut(duration: 0.3), value: scrollOffset)
     }
+
 
     private func color(for quantity: Int) -> Color {
         switch quantity {

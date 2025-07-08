@@ -2,6 +2,7 @@ import SwiftUI
 
 struct UpcomingMealsSection: View {
     @State private var currentIndex = 0
+    let onViewAllTapped: () -> Void
 
     let meals: [UpcomingMeal] = [
         UpcomingMeal(imageName: "pancakeImage", name: "Pancakes"),
@@ -13,7 +14,7 @@ struct UpcomingMealsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            
+
             // MARK: - Header
             HStack {
                 Text("Upcoming meals")
@@ -21,9 +22,7 @@ struct UpcomingMealsSection: View {
 
                 Spacer()
 
-                NavigationLink(destination: MealPlanner(viewModel: MealPlannerViewModel(tabs: [
-                    "All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-                ]))) {
+                Button(action: onViewAllTapped) {
                     HStack(spacing: 4) {
                         Text("View All")
                             .font(.subheadline)
@@ -47,7 +46,7 @@ struct UpcomingMealsSection: View {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 340) // 👈 This is the magic fix — fixed height that fully fits the card
+            .frame(height: 340)
 
             // MARK: - Dots
             HStack(spacing: 6) {

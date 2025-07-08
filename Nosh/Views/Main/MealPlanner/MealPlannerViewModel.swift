@@ -15,7 +15,7 @@ class MealPlannerViewModel: ObservableObject {
             ]
         }
 
-        // ✅ TEMP: Add sample meals for testing
+//         ✅ TEMP: Add sample meals for testing
         let sampleMeal = MealItem(
             name: "Test Pasta",
             imageName: "pastaImage", // <-- ensure this exists in Assets.xcassets
@@ -24,6 +24,7 @@ class MealPlannerViewModel: ObservableObject {
             isAvailableInPantry: true
         )
 
+        addMeal(to: tabs.first ?? "Mon", type: "breakfast", meal: sampleMeal)
         addMeal(to: tabs.first ?? "Mon", type: "lunch", meal: sampleMeal)
         addMeal(to: tabs.first ?? "Mon", type: "dinner", meal: sampleMeal)
     }
