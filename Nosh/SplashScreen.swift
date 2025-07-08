@@ -6,21 +6,22 @@ struct SplashScreen: View {
     var body: some View {
         Group {
             if isActive {
-                MainTabView() // 👈 Replace with your actual entry point
+                MainTabView()
             } else {
                 ZStack {
-                    Color("logoBackground") // ⬅️ Matches storyboard background
+                    //background color to the whole screen
+                    Color("logoBackground")
                         .ignoresSafeArea()
-
-                    Image("noshBannerFinal") // ⬅️ Same asset used in Launch Screen
+                    //Logo for Nosh with the whle name written
+                    Image("noshBannerFinal")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 232, height: 129) // ⬅️ Exact storyboard size
+                        .frame(width: 232, height: 129)
                 }
             }
         }
         .onAppear {
-            // Splash delay (adjust as needed)
+            // Splash delay (actual delay + 0.7 seconds)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation {
                     isActive = true
