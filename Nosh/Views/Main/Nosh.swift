@@ -8,25 +8,58 @@ struct Nosh: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    CategorySelector(selectedCategory: $selectedCategory)
-                    PortionSizeSelector(portionSize: $portionSize)
-                    TimeToCookSlider(timeToCook: $timeToCook)
-                    DifficultySelector(selectedDifficulty: $selectedDifficulty)
-                    CookNowButton()
+            ZStack(alignment: .top) {
+                // Scrollable content behind the header
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        // Add top spacer equal to header height to avoid overlap
+                        Color.clear.frame(height: 72)
+
+                        CategorySelector(selectedCategory: $selectedCategory)
+                        PortionSizeSelector(portionSize: $portionSize)
+                        TimeToCookSlider(timeToCook: $timeToCook)
+                        DifficultySelector(selectedDifficulty: $selectedDifficulty)
+                        CookNowButton()
+                    }
+                    .padding(.bottom, 100)
+                    .padding(.top, 56)
                 }
-                .padding(.top)
-                .padding(.bottom, 100) // Extra bottom spacing like original
+                .background(Color("primaryBackground"))
+                .ignoresSafeArea(edges: .top)
+                NoshHeader
             }
-            .navigationTitle("Nosh")
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("hi")
-                        .opacity(1) // Invisible but still occupies space
-                }
-            }
-            .background(Color("primaryBackground"))
         }
     }
+}
+
+private var NoshHeader: some View {
+    // MARK: - Title and Calendar Button
+    HStack(alignment: .center) {
+        Text("Nosh")
+            .font(.largeTitle.bold())
+            .transition(.opacity)
+
+        Spacer()
+
+        Button {
+            print("AI Schedule generator tapped")
+        } label: {
+            HStack(spacing: 8) {
+                Image("cookIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .foregroundColor(Color("secondaryAccent"))
+                
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .background(Color("primaryAccent"))
+            .cornerRadius(16)
+        }
+    }
+    .padding(.horizontal)
+    .padding(.vertical, 20)
+    .frame(maxWidth: .infinity, alignment: .top)
+    .background(Color("primaryCard"))
 }

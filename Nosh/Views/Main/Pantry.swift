@@ -43,8 +43,9 @@ struct Pantry: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.top, 220)
+            .padding(.top, 188)
         }
+        .scrollIndicators(.hidden)
         .coordinateSpace(name: "scroll")
         .onPreferenceChange(ScrollOffsetKey.self) { value in
             scrollOffset = value

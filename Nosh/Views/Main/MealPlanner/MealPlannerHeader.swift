@@ -18,6 +18,23 @@ struct MealPlannerHeader: View {
                 Spacer()
 
                 Button {
+                    print("AI Schedule generator tapped")
+                } label: {
+                    HStack(spacing: 8) {
+                        Image("cookIcon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .foregroundColor(Color("secondaryAccent"))
+
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .background(Color("primaryAccent"))
+                    .cornerRadius(16)
+                }
+                
+                Button {
                     print("Calendar tapped")
                 } label: {
                     HStack(spacing: 8) {
