@@ -6,8 +6,21 @@ struct RandomDishSheet: View {
 
     var body: some View {
         ScrollView {
+            //add the rectangle here
+            VStack {
+                Rectangle()
+                    .fill(Color("primaryLineColor"))
+                    .frame(height: 6)
+                    .frame(maxWidth: 50)
+                    .cornerRadius(100)
+                    .padding(.horizontal, 16)
+            }
+            .frame(maxWidth: .infinity) 
+            .padding(.vertical, 10)
+
             VStack(spacing: 24) {
-                // MARK: - Meal Card
+                //MARK: this is the top bar that will be pulled down if the user wishes to exit UI popup
+                #warning("Meal Card (I will later add a meal card component here directly, this is temp)")
                 VStack(alignment: .leading, spacing: 16) {
                     Image(meal.imageName)
                         .resizable()
@@ -27,8 +40,10 @@ struct RandomDishSheet: View {
                             .foregroundColor(.gray)
                     }
 
+                    //cook now button
                     Button(action: {
-                        // Trigger your cook flow
+                        #warning("delete this later, only for testing")
+                        print("cook now button was succesfully pressed (testprint statment delete later)")
                     }) {
                         Text("Cook Now")
                             .fontWeight(.semibold)
@@ -45,26 +60,31 @@ struct RandomDishSheet: View {
                 .padding(.horizontal)
 
                 // MARK: - Dice Section
-                VStack(spacing: 12) {
-                    Text("Roll The Dice")
-                        .font(.headline)
-                        .foregroundColor(.white)
+                #warning("dice section animation and working pending, this is static")
+                HStack {
+                    VStack(spacing: 12) {
+                        Text("Roll The Dice")
+                            .font(.headline)
+                            .foregroundColor(Color("primaryText"))
 
-                    DiceView(iconName: "diceIcon") {
-                        onRollAgain()
+                        DiceView(iconName: "diceIcon") {
+                            onRollAgain()
+                        }
+
+                        Text("Tap the dice to roll again and discover another dish!")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 4)
                     }
-
-                    Text("Tap the dice to roll again and discover another dish!")
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 4)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color("primaryCard"))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                 }
                 .padding(.horizontal)
-
-                Spacer()
             }
-            .padding(.top, 24)
+//            .padding(.top)
         }
         .background(Color("primaryBackground").ignoresSafeArea())
     }

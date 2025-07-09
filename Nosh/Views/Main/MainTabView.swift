@@ -25,7 +25,14 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    Home(viewModel: sharedViewModel)
+                    Home(
+                        viewModel: sharedViewModel,
+                        onSwitchToMealPlanner: {
+                            withAnimation {
+                                selectedTab = .mealPlanner
+                            }
+                        }
+                    )
                 case .mealPlanner:
                     MealPlanner(viewModel: sharedViewModel)
                 case .nosh:
@@ -37,12 +44,11 @@ struct MainTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color("primaryBackground")) // ← CHANGE THIS LINE
+            .background(Color("primaryBackground"))
 
             // Custom Tab Bar
             HStack {
                 ForEach(Tab.allCases, id: \.self) { tab in
-
                     Spacer()
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
@@ -104,16 +110,10 @@ struct MainTabView: View {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Color("primaryCard"))
                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 8)
-
                         .ignoresSafeArea(edges: .bottom)
                 }
             )
         }
-        
         .ignoresSafeArea()
     }
 }
-
-//#Preview {
-//    MainTabView()
-//}

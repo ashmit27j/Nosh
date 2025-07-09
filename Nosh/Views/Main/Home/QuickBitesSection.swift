@@ -50,6 +50,5 @@ struct QuickBitesSection: View {
         .padding() // internal padding within card
         .background(Color("primaryCard")) // actual card color
         .cornerRadius(12)
-//        .padding(.horizontal, 20) // same outer horizontal padding as others
     }
 }

@@ -1,3 +1,11 @@
+//
+//  SearchBar.swift
+//  Nosh
+//
+//  Created by MacBook on 09/07/25.
+//
+
+
 import SwiftUI
 
 // MARK: - Search Bar with Filter Icon
@@ -35,7 +43,7 @@ struct SearchBar: View {
         .padding(12)
         .background(
             ZStack {
-                Color("secondaryBackground").opacity(0.6) // subtle base color
+                Color("secondaryButton") // subtle base color
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 RoundedRectangle(cornerRadius: 12)

@@ -32,11 +32,6 @@ struct PortionSizeSelector: View {
                     }) {
                         Image(systemName: "plus")
                             .frameModifier()
-                            
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(Color("secondaryAccent"))
-//                            .frameModifier()
                     }
                 }
                 .padding()
