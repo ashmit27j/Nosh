@@ -28,7 +28,7 @@ struct HomeButtons: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             }
 
-            // Recipes NavigationLink (works fine)
+            //MARK: Recipes NavigationLink 
             NavigationLink(destination: RecipesView()) {
                 HStack(spacing: 12) {
                     Image("menuIcon")

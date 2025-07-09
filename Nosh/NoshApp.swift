@@ -6,7 +6,6 @@ struct NoshApp: App {
         WindowGroup {
             SplashScreen()
         }
-//        .commandsRemoved()
     }
 }
 

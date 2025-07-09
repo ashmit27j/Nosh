@@ -1,10 +1,3 @@
-//
-//  NoshUITestsLaunchTests.swift
-//  NoshUITests
-//
-//  Created by MacBook on 25/06/25.
-//
-
 import XCTest
 
 final class NoshUITestsLaunchTests: XCTestCase {

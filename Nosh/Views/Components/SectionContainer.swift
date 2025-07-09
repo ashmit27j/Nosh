@@ -1,3 +1,11 @@
+//
+//  SectionContainer.swift
+//  Nosh
+//
+//  Created by MacBook on 09/07/25.
+//
+
+
 import SwiftUI
 
 struct SectionContainer<Content: View>: View {

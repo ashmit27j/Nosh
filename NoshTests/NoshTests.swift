@@ -1,10 +1,3 @@
-//
-//  NoshTests.swift
-//  NoshTests
-//
-//  Created by MacBook on 25/06/25.
-//
-
 import Testing
 @testable import Nosh
 

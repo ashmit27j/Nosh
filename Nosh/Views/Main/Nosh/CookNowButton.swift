@@ -1,5 +1,5 @@
 import SwiftUI
-//may reuse this in ohte pages
+//may reuse this in ohter pages
 struct CookNowButton: View {
     var body: some View {
         Button(action: {

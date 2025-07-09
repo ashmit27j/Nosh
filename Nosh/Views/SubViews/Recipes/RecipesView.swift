@@ -1,3 +1,11 @@
+//
+//  RecipesView.swift
+//  Nosh
+//
+//  Created by MacBook on 09/07/25.
+//
+
+
 import SwiftUI
 
 struct RecipesView: View {
@@ -8,6 +16,9 @@ struct RecipesView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     CategorySelector(selectedCategory: $selectedCategory)
+                    VStack(spacing: 20){
+                        
+                    }
                 }
                 .padding(.top)
                 .padding(.bottom, 100) // Extra bottom spacing like original

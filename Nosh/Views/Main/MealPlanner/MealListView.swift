@@ -14,7 +14,7 @@ struct MealListView: View {
             }
             .frame(height: 0)
 
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 if let mealsByType = viewModel.items[selectedTab] {
                     // Section 1
                     MealSectionView(

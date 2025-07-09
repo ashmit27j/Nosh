@@ -1,3 +1,11 @@
+//
+//  SearchBar.swift
+//  Nosh
+//
+//  Created by MacBook on 09/07/25.
+//
+
+
 import SwiftUI
 
 // MARK: - Search Bar with Filter Icon
