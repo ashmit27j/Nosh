@@ -485,7 +485,7 @@ struct Profile: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
                         // Spacer to offset the floating header
-                        Color.clear.frame(height: 72)
+//                        Color.clear.frame(height: 72)
 
                         VStack(spacing: 20) {
                             ProfileCard
@@ -521,7 +521,8 @@ struct Profile: View {
                                 ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true)
                             ])
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 100)
 
                         Spacer().padding(.bottom, 60)
                     }

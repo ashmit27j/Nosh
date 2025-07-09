@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct Home: View {
-    //home button vars
+    // Home button vars
     @State private var showRandomDish = false
     @State private var randomMeal: MealItem? = nil
 
-    //other vars
+    // Other vars
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
     @State private var isEditing = false
@@ -13,9 +13,9 @@ struct Home: View {
     @State private var portionSize: Int = 1
     @State private var timeToCook: Double = 45
     @State private var selectedDifficulty: String? = "Beginner"
+
     let viewModel: MealPlannerViewModel
-    
-    let onSwitchToMealPlanner: () -> Void // ✅ ← add th
+    let onSwitchToMealPlanner: () -> Void
 
     var body: some View {
         NavigationStack {
@@ -29,8 +29,7 @@ struct Home: View {
                             .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
                     }
                     .frame(height: 0)
-                    
-                    
+
                     VStack(spacing: 20) {
                         AiChefSection()
                             .padding(.horizontal, 16)
@@ -38,12 +37,10 @@ struct Home: View {
                         QuickBitesSection(selectedCategory: $selectedCategory)
                             .padding(.horizontal, 16)
 
-//                        HomeButtons(showRandomDish: $showRandomDish)
                         HomeButtons(showRandomDish: Binding(
                             get: { showRandomDish },
                             set: { newValue in
                                 if newValue {
-                                    // 👇 generate BEFORE showing sheet
                                     randomMeal = viewModel.generateRandomMeal()
                                     showRandomDish = true
                                 } else {
@@ -52,7 +49,6 @@ struct Home: View {
                             }
                         ))
 
-                        
                         Rectangle()
                             .fill(Color("secondaryBackground"))
                             .frame(height: 4)
@@ -63,7 +59,7 @@ struct Home: View {
                         UpcomingMealsSection(onViewAllTapped: onSwitchToMealPlanner)
                             .padding(.horizontal, 16)
                     }
-                    .padding(.top, 100)
+                    .padding(.top, 146)
                     .padding(.bottom, 100)
                     #warning("this is the thing that pushes all content down by 100 pixels")
                 }
@@ -75,32 +71,9 @@ struct Home: View {
                     }
                 }
 
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        SearchBar(text: $searchText, isEditing: $isEditing)
-
-                        if isEditing {
-                            Button("Cancel") {
-                                searchText = ""
-                                isEditing = false
-                                UIApplication.shared.sendAction(
-                                    #selector(UIResponder.resignFirstResponder),
-                                    to: nil, from: nil, for: nil
-                                )
-                            }
-                            .foregroundColor(.accentColor)
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
-                        }
-                    }
-                    .animation(.easeInOut(duration: 0.25), value: isEditing)
-                    .padding(.horizontal)
-                }
-                .padding(.top, 20)
-                .padding(.bottom, 20)
-                .background(Color("primaryCard"))
+                HomeHeader
+                    .zIndex(1)
             }
-            .navigationTitle("Home")
-            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showRandomDish) {
                 if let meal = randomMeal {
                     RandomDishSheet(meal: meal) {
@@ -111,21 +84,53 @@ struct Home: View {
                         .padding()
                 }
             }
-
-//            .sheet(isPresented: $showRandomDish) {
-//                if let meal = randomMeal {
-//                    RandomDishSheet(meal: meal) {
-//                        randomMeal = viewModel.generateRandomMeal()
-//                    }
-//                }
-//            }
-//            .onChange(of: showRandomDish) { show in
-//                if show {
-//                    randomMeal = viewModel.generateRandomMeal()
-//                }
-//            }
         }
-        .id(showCollapsedTitle)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var HomeHeader: some View {
+        VStack(spacing: 16) {
+            HStack(alignment: .center) {
+                Text("Home")
+                    .font(.largeTitle.bold())
+
+                Spacer()
+
+                Button {
+                    print("Add tapped")
+                } label: {
+                    Image(systemName: "sparkles")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+//                        .foregroundColor(Color("secondaryAccent"))
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color("secondaryButton"))
+                        .cornerRadius(16)
+                }
+            }
+
+            HStack(spacing: 8) {
+                SearchBar(text: $searchText, isEditing: $isEditing)
+
+                if isEditing {
+                    Button("Cancel") {
+                        searchText = ""
+                        isEditing = false
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
+                    }
+                    .foregroundColor(.accentColor)
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: isEditing)
+        }
+        .padding()
+        .background(Color("primaryCard"))
     }
 }
 
