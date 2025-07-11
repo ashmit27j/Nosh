@@ -63,7 +63,6 @@
 		17510D942E1EBFA600E564C2 /* Exceptions for "Nosh" folder in "Nosh" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"GoogleService-Info.plist",
 				Info.plist,
 			);
 			target = 1795F6E52E0C05710013DC7C /* Nosh */;
