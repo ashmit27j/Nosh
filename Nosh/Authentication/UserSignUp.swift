@@ -2,12 +2,14 @@ import SwiftUI
 
 struct UserSignUp: View {
     @StateObject private var viewModel = UserSignUpViewModel()
-    var switchToSignIn: () -> Void  // <-- Accept closure
+    var switchToSignIn: () -> Void  
     var body: some View {
             ZStack {
-                // Background Gradient
                 LinearGradient(
-                    gradient: Gradient(colors: [Color("gradientStart"), Color("gradientEnd")]),
+                    gradient: Gradient(colors: [
+                        Color(red: 195/255, green: 255/255, blue: 0/255),
+                        Color(red: 64/255, green: 162/255, blue: 0/255)
+                    ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -84,9 +86,58 @@ struct UserSignUp: View {
                                 .background(Color("primaryAccent"))
                                 .cornerRadius(10)
                         }
+                        
+                        // MARK: All the buttons and other options
+                        HStack(spacing: 16) {
+                            // Forgot Password Button
+                            Button(action: {
+                                // viewModel.sendPasswordReset()
+                            }) {
+                                Text("Forgot Password?")
+                                    .bold()
+                                    .font(.subheadline)
+                                    .foregroundColor(Color("primaryText"))
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("secondaryButton"))
+                                    .cornerRadius(8)
+                            }
 
+                            // Report a Problem Button
+                            Button(action: {
+                                // viewModel.sendPasswordReset()
+                            }) {
+                                Text("Report A Problem")
+                                    .bold()
+                                    .font(.subheadline)
+                                    .foregroundColor(Color("primaryText"))
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("secondaryButton"))
+                                    .cornerRadius(8)
+                            }
+                        }
 
-                        // Optional: Social login or other buttons (copy from SignIn if needed)
+                        // MARK: - Divider
+                        HStack {
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(.gray.opacity(0.3))
+                            Text("Or Sign In with")
+                                .bold()
+                                .font(.subheadline)
+                                .foregroundColor(Color("primaryText"))
+                            Rectangle()
+                                .frame(height: 1)
+                                .foregroundColor(.gray.opacity(0.3))
+                        }
+
+                        // MARK: - Social Icons
+                        HStack(spacing: 16) {
+                            SocialIconBox(assetImage: "googleIcon")
+                            SocialIconBox(systemImage: "apple.logo")
+                            SocialIconBox(systemImage: "phone.fill")
+                        }
                     }
                     .padding()
                     .padding(.bottom, 20)
