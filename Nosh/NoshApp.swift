@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 @main
 struct NoshApp: App {
     var body: some Scene {
@@ -8,4 +9,5 @@ struct NoshApp: App {
         }
     }
 }
+
 
