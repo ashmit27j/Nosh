@@ -2,7 +2,7 @@ import SwiftUI
 
 struct UserSignUp: View {
     @StateObject private var viewModel = UserSignUpViewModel()
-
+    var switchToSignIn: () -> Void  // <-- Accept closure
     var body: some View {
             ZStack {
                 // Background Gradient
@@ -27,7 +27,10 @@ struct UserSignUp: View {
                             HStack {
                                 Text("Already have an account?")
                                     .foregroundColor(Color("secondaryText"))
-                                NavigationLink(destination: UserSignIn()) {
+                                
+                                Button(action: {
+                                    switchToSignIn()  // This comes from AuthFlowView
+                                }) {
                                     Text("Sign In")
                                         .foregroundColor(Color("primaryAccent"))
                                         .bold()
