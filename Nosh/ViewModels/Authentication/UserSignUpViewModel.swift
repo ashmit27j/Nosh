@@ -1,22 +1,28 @@
 import FirebaseAuth
 import Foundation
 
-final class UserSignInViewModel: ObservableObject {
+final class UserSignUpViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
+    @Published var confirmPassword = ""
 
-    // Sign in logic
-    func signInUser() {
+    // Sign up logic
+    func signUpUser() {
         guard isValidEmail(email) else {
             print("Invalid email format")
             return
         }
 
-        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+        guard password == confirmPassword else {
+            print("Passwords do not match")
+            return
+        }
+
+        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
             if let error = error {
-                print("Error signing in: \(error.localizedDescription)")
+                print("Error signing up: \(error.localizedDescription)")
             } else {
-                print("User signed in successfully.")
+                print("User account created successfully.")
                 // Navigate to main app screen if needed
             }
         }
@@ -28,4 +34,3 @@ final class UserSignInViewModel: ObservableObject {
         return email.range(of: regex, options: .regularExpression) != nil
     }
 }
-

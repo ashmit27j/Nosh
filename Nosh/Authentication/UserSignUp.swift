@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UserSignUp: View {
-    @StateObject private var viewModel = SignUpEmailViewModel()
+    @StateObject private var viewModel = UserSignUpViewModel()
 
     var body: some View {
             ZStack {
@@ -70,7 +70,7 @@ struct UserSignUp: View {
 
                         // Sign Up Button
                         Button(action: {
-                            viewModel.createAccount()
+                            viewModel.signUpUser()
                         }) {
                             Text("Sign Up")
                                 .bold()
@@ -81,6 +81,7 @@ struct UserSignUp: View {
                                 .background(Color("primaryAccent"))
                                 .cornerRadius(10)
                         }
+
 
                         // Optional: Social login or other buttons (copy from SignIn if needed)
                     }

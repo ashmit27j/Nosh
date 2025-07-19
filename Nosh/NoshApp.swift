@@ -5,7 +5,8 @@ import SwiftUI
 struct NoshApp: App {
     var body: some Scene {
         WindowGroup {
-            SplashScreen()
+//            SplashScreen()
+            UserSignIn()
         }
     }
 }
