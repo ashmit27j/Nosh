@@ -1,167 +1,89 @@
 import SwiftUI
-import SwiftUI
 import FirebaseAuth
 
 struct UserSignIn: View {
     @ObservedObject var viewModel = UserSignInViewModel()
+    var switchToSignUp: () -> Void  // <-- Accept closure
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // MARK: - Gradient Background
-                LinearGradient(
-                    gradient: Gradient(colors: [Color("gradientStart"), Color("gradientEnd")]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                gradient: Gradient(colors: [Color("gradientStart"), Color("gradientEnd")]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-                // MARK: - Card at Bottom
-                VStack {
-                    Spacer()
+            VStack {
+                Spacer()
 
-                    VStack(spacing: 24) {
-                        VStack(spacing: 10) {
-                            // MARK: - Header
-                            Text("Sign In")
-                                .font(.largeTitle)
-                                .bold()
-                                .foregroundColor(Color("primaryText"))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                            // MARK: - Sign Up Prompt
-                            HStack {
-                                Text("Don't have an account?")
-                                    .foregroundColor(Color("secondaryText"))
-                                NavigationLink(destination: UserSignUp()) {
-                                    Text("Sign Up")
-                                        .foregroundColor(Color("primaryAccent"))
-                                        .bold()
-                                }
-                            }
+                VStack(spacing: 24) {
+                    VStack(spacing: 10) {
+                        Text("Sign In")
+                            .font(.largeTitle)
+                            .bold()
+                            .foregroundColor(Color("primaryText"))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        }
 
-                        // MARK: - Email Field
-                        FieldContainer {
-                            HStack {
-                                Image(systemName: "envelope")
-                                    .foregroundColor(.gray)
-                                TextField("Email", text: $viewModel.email)
-                                    .foregroundColor(Color("primaryText"))
-                                    .autocapitalization(.none)
-                                    .keyboardType(.emailAddress)
-                            }
-                        }
-
-                        // MARK: - Password Field
-                        FieldContainer {
-                            HStack {
-                                Image(systemName: "lock")
-                                    .foregroundColor(.gray)
-                                SecureField("Password", text: $viewModel.password)
-                                    .foregroundColor(Color("primaryText"))
-                            }
-                        }
-                        
-                        // MARK: - Login Button
-                        Button(action: {
-                            // Sign-in logic
-                        }) {
-                            Text("Login")
-                                .bold()
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color("primaryAccent"))
-                                .cornerRadius(10)
-                        }
-                        
-                        HStack(spacing: 20) {
-                            // Forgot Password Button
-                            Button(action: {
-//                                viewModel.sendPasswordReset()
-                            }) {
-                                Text("Forgot Password?")
-                                    .bold()
-                                    .font(.subheadline)
-                                    .foregroundColor(Color("primaryText"))
-                                    .padding(.vertical, 12)
-                                    .frame(maxWidth: .infinity) // Apply inside label
-                                    .background(Color("secondaryButton"))
-                                    .cornerRadius(8)
-                            }
-
-                            // Report a Problem Button
-                            Button(action: {
-//                                viewModel.sendPasswordReset()
-                            }) {
-                                Text("Report A Problem")
-                                    .bold()
-                                    .font(.subheadline)
-                                    .foregroundColor(Color("primaryText"))
-                                    .padding(.vertical, 12)
-                                    .frame(maxWidth: .infinity) // Apply inside label
-                                    .background(Color("secondaryButton"))
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        // MARK: - Divider
                         HStack {
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(.gray.opacity(0.3))
-                            Text("Or Sign In with")
-                                .bold()
-                                .font(.subheadline)
-                                .foregroundColor(Color("primaryText"))
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(.gray.opacity(0.3))
+                            Text("Don't have an account?")
+                                .foregroundColor(Color("secondaryText"))
+                            Button(action: {
+                                switchToSignUp()
+                            }) {
+                                Text("Sign Up")
+                                    .foregroundColor(Color("primaryAccent"))
+                                    .bold()
+                            }
                         }
-
-                        // MARK: - Social Icons
-                        HStack(spacing: 16) {
-                            SocialIconBox(assetImage: "googleIcon")
-                            SocialIconBox(systemImage: "apple.logo")
-                            SocialIconBox(systemImage: "phone.fill")
-                        }
-                        
-                        // Divider
-//                        Rectangle()
-//                            .frame(height: 1)
-//                            .foregroundColor(.gray.opacity(0.3))
-//                        
-                        
-
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding()
-                    .padding(.bottom, 20)
-                    .background(Color("primaryCard"))
-                    .cornerRadius(20)
-                }
-                .padding(0)
-                .ignoresSafeArea()
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(red: 0.49, green: 0.95, blue: 0.20), // light green (similar to the leaf)
-                            Color(red: 0.00, green: 0.25, blue: 0.25)  // dark teal background
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .ignoresSafeArea()
-                )
 
+                    FieldContainer {
+                        HStack {
+                            Image(systemName: "envelope")
+                                .foregroundColor(.gray)
+                            TextField("Email", text: $viewModel.email)
+                                .foregroundColor(Color("primaryText"))
+                                .autocapitalization(.none)
+                                .keyboardType(.emailAddress)
+                        }
+                    }
+
+                    FieldContainer {
+                        HStack {
+                            Image(systemName: "lock")
+                                .foregroundColor(.gray)
+                            SecureField("Password", text: $viewModel.password)
+                                .foregroundColor(Color("primaryText"))
+                        }
+                    }
+
+                    Button(action: {
+                        viewModel.signInUser()
+                    }) {
+                        Text("Login")
+                            .bold()
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color("primaryAccent"))
+                            .cornerRadius(10)
+                    }
+
+                    // Optional: Forgot Password / Report A Problem...
+                }
+                .padding()
+                .padding(.bottom, 20)
+                .background(Color("primaryCard"))
+                .cornerRadius(20)
             }
-            .navigationBarHidden(true)
         }
+        .navigationBarHidden(true)
     }
 }
+
 
 // MARK: - Social Login Button
 struct SocialIconBox: View {

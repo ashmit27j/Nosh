@@ -6,7 +6,7 @@ struct NoshApp: App {
     var body: some Scene {
         WindowGroup {
 //            SplashScreen()
-            UserSignIn()
+            AuthFlowView()
         }
     }
 }
