@@ -21,7 +21,7 @@ struct UserSignUp: View {
                     VStack(spacing: 24) {
                         // Header
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Sign Up")
+                            Text("Welcome Aboard!")
                                 .font(.largeTitle)
                                 .bold()
                                 .foregroundColor(Color("primaryText"))
@@ -93,7 +93,7 @@ struct UserSignUp: View {
                             Button(action: {
                                 // viewModel.sendPasswordReset()
                             }) {
-                                Text("Forgot Password?")
+                                Text("FAQs")
                                     .bold()
                                     .font(.subheadline)
                                     .foregroundColor(Color("primaryText"))
@@ -123,7 +123,7 @@ struct UserSignUp: View {
                             Rectangle()
                                 .frame(height: 1)
                                 .foregroundColor(.gray.opacity(0.3))
-                            Text("Or Sign In with")
+                            Text("Or Sign Up with")
                                 .bold()
                                 .font(.subheadline)
                                 .foregroundColor(Color("primaryText"))

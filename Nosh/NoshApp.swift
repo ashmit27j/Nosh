@@ -7,6 +7,7 @@ struct NoshApp: App {
         WindowGroup {
 //            SplashScreen()
             AuthFlowView()
+            
         }
     }
 }

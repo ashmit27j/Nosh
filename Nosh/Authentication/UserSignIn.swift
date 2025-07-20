@@ -22,7 +22,7 @@ struct UserSignIn: View {
 
                 VStack(spacing: 24) {
                     VStack(spacing: 10) {
-                        Text("Sign In")
+                        Text("Welcome Back!")
                             .font(.largeTitle)
                             .bold()
                             .foregroundColor(Color("primaryText"))
@@ -61,18 +61,10 @@ struct UserSignIn: View {
                                 .foregroundColor(Color("primaryText"))
                         }
                     }
-
-                    Button(action: {
+                    
+                    // MARK: Sign In button
+                    CTAButton(title: "Sign In") {
                         viewModel.signInUser()
-                    }) {
-                        Text("Sign In")
-                            .bold()
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color("primaryAccent"))
-                            .cornerRadius(10)
                     }
 
                     HStack(spacing: 16) {
