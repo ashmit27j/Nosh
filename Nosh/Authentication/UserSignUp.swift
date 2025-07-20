@@ -53,6 +53,18 @@ struct UserSignUp: View {
                             }
                         }
 
+                        // Username Field
+                        FieldContainer {
+                            HStack {
+                                Image(systemName: "person.crop.circle")
+                                    .foregroundColor(.gray)
+                                TextField("Username", text: $viewModel.username)
+                                    .foregroundColor(Color("primaryText"))
+                                    .autocapitalization(.none)
+                            }
+                        }
+
+                        
                         // Password Field
                         FieldContainer {
                             HStack {

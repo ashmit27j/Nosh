@@ -10,4 +10,5 @@ struct AuthFlowView: View {
             UserSignUp(switchToSignIn: { showSignIn = true })
         }
     }
+    
 }

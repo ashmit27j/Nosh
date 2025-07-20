@@ -25,17 +25,19 @@ struct AuthDataResultModel {
 //    }
 //}
 
+import Foundation
+import FirebaseAuth
+
 final class AuthenticationManager {
     static let shared = AuthenticationManager()
-    private init() { }
 
-    func createUser(email: String, password: String) async throws -> AuthDataResultModel {
-        let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
-        return AuthDataResultModel(user: authDataResult.user)
+    private init() {}
+
+    func signIn(email: String, password: String) async throws -> AuthDataResult {
+        return try await Auth.auth().signIn(withEmail: email, password: password)
     }
 
-    func signIn(email: String, password: String) async throws -> AuthDataResultModel {
-        let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
-        return AuthDataResultModel(user: authDataResult.user)
+    func signUp(email: String, password: String) async throws -> AuthDataResult {
+        return try await Auth.auth().createUser(withEmail: email, password: password)
     }
 }

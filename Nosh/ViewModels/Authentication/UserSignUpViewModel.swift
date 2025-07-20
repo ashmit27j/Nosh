@@ -1,8 +1,10 @@
 import FirebaseAuth
+import FirebaseFirestore
 import Foundation
 
 final class UserSignUpViewModel: ObservableObject {
     @Published var email = ""
+    @Published var username = ""
     @Published var password = ""
     @Published var confirmPassword = ""
 
@@ -18,12 +20,27 @@ final class UserSignUpViewModel: ObservableObject {
             return
         }
 
-        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
-            if let error = error {
-                print("Error signing up: \(error.localizedDescription)")
-            } else {
-                print("User account created successfully.")
+        Task {
+            do {
+                // Create user
+                let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+                let uid = authResult.user.uid
+
+                // Store user data in Firestore
+                let data: [String: Any] = [
+                    "username": self.username,
+                    "email": self.email
+                ]
+
+                try await Firestore.firestore()
+                    .collection("users")
+                    .document(uid)
+                    .setData(data)
+
+                print("User account created and data saved to Firestore.")
                 // Navigate to main app screen if needed
+            } catch {
+                print("Error signing up: \(error.localizedDescription)")
             }
         }
     }
