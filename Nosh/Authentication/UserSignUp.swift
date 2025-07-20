@@ -2,7 +2,7 @@ import SwiftUI
 
 struct UserSignUp: View {
     @StateObject private var viewModel = UserSignUpViewModel()
-    var switchToSignIn: () -> Void  
+    var switchToSignIn: () -> Void
     var body: some View {
             ZStack {
                 LinearGradient(

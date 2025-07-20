@@ -6,21 +6,20 @@ final class UserSignInViewModel: ObservableObject {
     @Published var password = ""
 
     // Sign in logic
-    func signInUser() {
+    func signInUser() async {
         guard isValidEmail(email) else {
             print("Invalid email format")
             return
         }
-
-        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
-            if let error = error {
-                print("Error signing in: \(error.localizedDescription)")
-            } else {
-                print("User signed in successfully.")
-                // Navigate to main app screen if needed
-            }
+        do {
+            let returnedUserData = try await AuthenticationManager.shared.signIn(email: email, password: password)
+            print("Signed in successfully")
+            print(returnedUserData)
+        } catch {
+            print("Error signing in: \(error.localizedDescription)")
         }
     }
+
 
     // Optional helper
     private func isValidEmail(_ email: String) -> Bool {

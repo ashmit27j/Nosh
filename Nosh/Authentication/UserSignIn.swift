@@ -2,7 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct UserSignIn: View {
-    @ObservedObject var viewModel = UserSignInViewModel()
+    @StateObject var viewModel = UserSignInViewModel()
     var switchToSignUp: () -> Void  // <-- Accept closure
 
     var body: some View {
@@ -64,7 +64,9 @@ struct UserSignIn: View {
                     
                     // MARK: Sign In button
                     CTAButton(title: "Sign In") {
-                        viewModel.signInUser()
+                        Task {
+                            await viewModel.signInUser()
+                        }
                     }
 
                     HStack(spacing: 16) {
