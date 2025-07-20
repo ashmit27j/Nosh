@@ -1,7 +1,11 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
+import SDWebImageSwiftUI // make sure this package is added via SPM
 
 struct Profile: View {
+    @StateObject private var viewModel = UserProfileViewModel()
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -9,14 +13,12 @@ struct Profile: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        // Spacer to offset the floating header
-//                        Color.clear.frame(height: 72)
-
                         VStack(spacing: 20) {
                             ProfileCard
 
                             ProfileSection(title: "Account", items: [
                                 ProfileItem(icon: "person.crop.circle", iconColor: .orange, title: "Edit Profile", enabled: true),
+                                ProfileItem(icon: "creditcard", iconColor: .blue, title: "Subscription & Billing", enabled: true),
                                 ProfileItem(icon: "bell.fill", iconColor: .blue, title: "Notifications", enabled: true),
                                 ProfileItem(icon: "lock.shield", iconColor: .gray, title: "Privacy & Security", enabled: true)
                             ])
@@ -48,18 +50,16 @@ struct Profile: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 100)
-                        
-                        // bottom padding to ignore navbar
+
                         Spacer().padding(.bottom, 80)
                     }
                 }
 
-                ProfileHeader // floating fixed header like in Nosh
+                ProfileHeader
             }
         }
     }
 
-    // 🟢 Floating Header aligned with Nosh
     private var ProfileHeader: some View {
         HStack {
             Text("Profile")
@@ -67,19 +67,6 @@ struct Profile: View {
                 .foregroundColor(Color("primaryText"))
 
             Spacer()
-
-            Button {
-                print("AI Profile Insights tapped")
-            } label: {
-                Image("cookIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18, height: 18)
-                    .foregroundColor(Color("secondaryAccent"))
-                    .padding(12)
-                    .background(Color("primaryAccent"))
-                    .cornerRadius(16)
-            }
         }
         .padding(.horizontal)
         .padding(.vertical, 20)
@@ -87,17 +74,87 @@ struct Profile: View {
     }
 
     private var ProfileCard: some View {
-        HStack(alignment: .center) {
-            Image(systemName: "person.crop.circle.fill")
-                .resizable()
-                .frame(width: 60, height: 60)
-                .foregroundColor(.gray)
+//        HStack(alignment: .center) {
+//            if let photoURL = viewModel.photoURL {
+//                WebImage(url: photoURL)
+//                    .resizable()
+//                    .onFailure { error in
+//                        print("Image failed to load:", error.localizedDescription)
+//                    }
+//                    .indicator(.activity)
+//                    .transition(.fade(duration: 0.25))
+//                    .frame(width: 60, height: 60)
+//                    .clipShape(Circle())
+//                    .overlay(
+//                        Group {
+//                            if photoURL == nil {
+//                                Image(systemName: "person.crop.circle.fill")
+//                                    .resizable()
+//                                    .foregroundColor(.gray)
+//                            }
+//                        }
+//                    )
+//            } else {
+//                Image(systemName: "person.crop.circle.fill")
+//                    .resizable()
+//                    .frame(width: 60, height: 60)
+//                    .foregroundColor(.gray)
+//            }
+//
+//            VStack(alignment: .leading) {
+//                Text(viewModel.username)
+//                    .font(.headline)
+//                    .foregroundColor(.primary)
+//
+//                Text("Plan: ") + Text("Freemium").foregroundColor(.green)
+//            }
+//
+//            Spacer()
+//
+//            Button("Edit") {
+//                // Handle edit action
+//            }
+//            .padding(.horizontal, 16)
+//            .padding(.vertical, 8)
+//            .background(Color.green)
+//            .foregroundColor(.white)
+//            .clipShape(Capsule())
+//        }
+//        .padding()
+//        .background(Color("primaryCard"))
+//        .cornerRadius(16)
 
-            VStack(alignment: .leading) {
-                Text("User Name")
+        HStack(alignment: .center, spacing: 16) {
+            if let photoURL = viewModel.photoURL {
+                WebImage(url: photoURL)
+                    .resizable()
+                    .onFailure { error in
+                        print("Image failed to load:", error.localizedDescription)
+                    }
+                    .indicator(.activity)
+                    .transition(.fade(duration: 0.25))
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 60, height: 60)
+                    .foregroundColor(.gray)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(viewModel.username)
                     .font(.headline)
+                    .foregroundColor(.primary)
 
-                Text("Plan: ") + Text("Freemium").foregroundColor(.green)
+                HStack(spacing: 4) {
+                    Text("Plan:")
+                        .foregroundColor(.secondary)
+                    Text("Freemium")
+                        .foregroundColor(.green)
+                }
             }
 
             Spacer()

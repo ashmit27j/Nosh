@@ -34,6 +34,7 @@
 		1789B3262E1FD37C001BB0EF /* FirebaseVertexAI in Frameworks */ = {isa = PBXBuildFile; productRef = 1789B3252E1FD37C001BB0EF /* FirebaseVertexAI */; };
 		17D439202E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 17D4391F2E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta */; };
 		17D439222E2CE80D000AC5E0 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 17D439212E2CE80D000AC5E0 /* FirebaseMessaging */; };
+		17D4392F2E2D2527000AC5E0 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 17D4392E2E2D2527000AC5E0 /* SDWebImageSwiftUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +111,7 @@
 		1795F6E32E0C05710013DC7C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				17D4392F2E2D2527000AC5E0 /* SDWebImageSwiftUI in Frameworks */,
 				17D439222E2CE80D000AC5E0 /* FirebaseMessaging in Frameworks */,
 				1789B3122E1FD37C001BB0EF /* FirebaseFunctions in Frameworks */,
 				1789B30A2E1FD37C001BB0EF /* FirebaseDatabase in Frameworks */,
@@ -225,6 +227,7 @@
 				1789B3252E1FD37C001BB0EF /* FirebaseVertexAI */,
 				17D4391F2E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta */,
 				17D439212E2CE80D000AC5E0 /* FirebaseMessaging */,
+				17D4392E2E2D2527000AC5E0 /* SDWebImageSwiftUI */,
 			);
 			productName = Nosh;
 			productReference = 1795F6E62E0C05710013DC7C /* Nosh.app */;
@@ -306,6 +309,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1740AD9A2E1FAEFE00F37F0C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				17D4392D2E2D2527000AC5E0 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 1795F6E72E0C05710013DC7C /* Products */;
@@ -664,6 +668,14 @@
 				minimumVersion = 11.15.0;
 			};
 		};
+		17D4392D2E2D2527000AC5E0 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -781,6 +793,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1740AD9A2E1FAEFE00F37F0C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		17D4392E2E2D2527000AC5E0 /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17D4392D2E2D2527000AC5E0 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

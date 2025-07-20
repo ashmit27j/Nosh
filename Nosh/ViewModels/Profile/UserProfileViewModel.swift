@@ -3,26 +3,30 @@ import FirebaseAuth
 import FirebaseFirestore
 
 final class UserProfileViewModel: ObservableObject {
-    @Published var username: String = ""
-    @Published var profileImageURL: URL?
+    @Published var username: String = "Loading..."
+    @Published var photoURL: URL?
 
     init() {
         fetchUserProfile()
     }
 
     func fetchUserProfile() {
-        guard let user = Auth.auth().currentUser else { return }
+        guard let user = Auth.auth().currentUser else {
+            self.username = "Not signed in"
+            return
+        }
+
+        self.photoURL = user.photoURL
 
         let uid = user.uid
         Firestore.firestore().collection("users").document(uid).getDocument { snapshot, error in
             if let data = snapshot?.data() {
-                self.username = data["username"] as? String ?? "Anonymous"
+                DispatchQueue.main.async {
+                    self.username = data["username"] as? String ?? "User"
+                }
+            } else {
+                print("Failed to load username: \(error?.localizedDescription ?? "unknown error")")
             }
-        }
-
-        // For Google profile image (if signed in with Google)
-        if let url = user.photoURL {
-            self.profileImageURL = url
         }
     }
 }
