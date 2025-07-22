@@ -2,21 +2,33 @@ import Foundation
 import Combine
 
 final class PantryViewModel: ObservableObject {
-    @Published var items: [String: [PantryItem]] = [:]
-
-    let tabs: [String]
+    private let manager = FileManager.default
+    private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    private let pantryFileURL: URL
     private var sortTimer: Timer?
 
+    @Published var items: [String: [PantryItem]] = [:]
+    let tabs: [String]
+
+    // MARK: - Init
     init(tabs: [String]) {
         self.tabs = tabs
-        setupDummyItems()
+        self.pantryFileURL = docs.appendingPathComponent("pantry.json")
+        
+        if UserDefaults.standard.data(forKey: "pantryItems") != nil {
+            loadPantry()
+        } else {
+            setupDummyItems()
+        }
     }
 
+    // MARK: - Setup Dummy Data
     private func setupDummyItems() {
         for tab in tabs where tab != "All" {
             items[tab] = dummyItems(for: tab)
         }
         updateAllTab()
+        savePantry()
     }
 
     func dummyItems(for tab: String) -> [PantryItem] {
@@ -34,7 +46,6 @@ final class PantryViewModel: ObservableObject {
     }
 
     // MARK: - Increment/Decrement
-
     func increment(_ item: PantryItem, in category: String) {
         updateItem(item, in: category, change: +1)
     }
@@ -49,15 +60,15 @@ final class PantryViewModel: ObservableObject {
         list[index].quantity = max(0, list[index].quantity + change)
         items[category] = list
 
-        debounceSort(for: category)
         updateAllTab()
+        savePantry()
+        debounceSort(for: category)
     }
 
-    // MARK: - Sorting
-
+    // MARK: - Debounced Sorting
     func debounceSort(for category: String) {
         sortTimer?.invalidate()
-        sortTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+        sortTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
             self.sortItems(for: category)
         }
     }
@@ -68,12 +79,7 @@ final class PantryViewModel: ObservableObject {
         list.sort {
             let rank1 = colorRank(for: $0.quantity)
             let rank2 = colorRank(for: $1.quantity)
-
-            if rank1 != rank2 {
-                return rank1 < rank2
-            } else {
-                return $0.quantity > $1.quantity
-            }
+            return rank1 != rank2 ? rank1 < rank2 : $0.quantity > $1.quantity
         }
 
         items[category] = list
@@ -88,17 +94,16 @@ final class PantryViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Add Custom Item Support
-
+    // MARK: - Add Custom Item
     func addCustomItem(to category: String, name: String, quantity: Int = 0) {
         let newItem = PantryItem(name: name, quantity: quantity)
         items[category, default: []].append(newItem)
-        sortItems(for: category)
         updateAllTab()
+        savePantry()
+        debounceSort(for: category)
     }
 
     // MARK: - Utility
-
     func updateAllTab() {
         let allItems = tabs
             .filter { $0 != "All" }
@@ -107,16 +112,12 @@ final class PantryViewModel: ObservableObject {
         let sortedAll = allItems.sorted {
             let rank1 = colorRank(for: $0.quantity)
             let rank2 = colorRank(for: $1.quantity)
-
-            if rank1 != rank2 {
-                return rank1 < rank2 // Sort by color group
-            } else {
-                return $0.quantity > $1.quantity // Sort within group
-            }
+            return rank1 != rank2 ? rank1 < rank2 : $0.quantity > $1.quantity
         }
 
         items["All"] = sortedAll
     }
+
     func findCategory(for item: PantryItem) -> String {
         for (category, list) in items where category != "All" {
             if list.contains(where: { $0.id == item.id }) {
@@ -124,5 +125,25 @@ final class PantryViewModel: ObservableObject {
             }
         }
         return "Unknown"
+    }
+
+    // MARK: - Save & Load Pantry
+    func savePantry() {
+        do {
+            let data = try JSONEncoder().encode(items)
+            UserDefaults.standard.set(data, forKey: "pantryItems")
+        } catch {
+            print("❌ Failed to save pantry: \(error)")
+        }
+    }
+
+    func loadPantry() {
+        guard let data = UserDefaults.standard.data(forKey: "pantryItems") else { return }
+        do {
+            items = try JSONDecoder().decode([String: [PantryItem]].self, from: data)
+            updateAllTab()
+        } catch {
+            print("❌ Failed to load pantry: \(error)")
+        }
     }
 }
