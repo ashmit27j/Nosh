@@ -1,280 +1,3 @@
-//import SwiftUI
-//import FirebaseAuth
-//import FirebaseFirestore
-//import SDWebImageSwiftUI
-//
-//struct Profile: View {
-//    @StateObject private var viewModel = UserProfileViewModel()
-//    @State private var navigateToEdit = false
-//    @State private var showCustomAlert = false
-//    @State private var showPopup = false
-//    @State private var popupTitle = false
-//    @State private var popupAction = false
-//    
-//    @State private var alertTitle = ""
-//    @State private var alertMessage = ""
-//    @State private var onConfirm: (() -> Void)? = nil
-//
-//
-//
-//    var body: some View {
-//        NavigationStack {
-//            ZStack(alignment: .top) {
-//                Color("primaryBackground").ignoresSafeArea()
-//
-//                ScrollView(showsIndicators: false) {
-//                    VStack(spacing: 20) {
-//                        VStack(spacing: 20) {
-//                            ProfileCard
-//                                .padding(.horizontal)
-//
-//                            SettingsSection(title: "Account", items: [
-//                                ProfileItem(icon: "creditcard", iconColor: .blue, title: "Subscription & Billing", enabled: true, destination: AnyView(subscriptionView())),
-//                                ProfileItem(icon: "bell.fill", iconColor: .blue, title: "Notifications", enabled: true, destination: AnyView(notificationsView())),
-//                                ProfileItem(icon: "lock.shield", iconColor: .gray, title: "Privacy & Security", enabled: true, destination: AnyView(privacyView()))
-//                            ])
-//
-//                            SettingsSection(title: "Meal Preferences", items: [
-//                                ProfileItem(icon: "leaf", iconColor: .green, title: "Diet Type", enabled: true, destination: AnyView(dietTypeView())),
-//                                ProfileItem(icon: "exclamationmark.triangle", iconColor: .red, title: "Allergens", enabled: true, destination: AnyView(allergensView())),
-//                                ProfileItem(icon: "calendar", iconColor: .purple, title: "Meal Schedule", enabled: true, destination: AnyView(mealScheduleView())),
-//                                ProfileItem(icon: "cart", iconColor: .blue, title: "Grocery Preferences", enabled: true, destination: AnyView(groceryPreferencesView()))
-//                            ])
-//
-//                            SettingsSection(title: "App Settings", items: [
-//                                ProfileItem(icon: "figure", iconColor: .blue, title: "Accessibility", enabled: true, destination: AnyView(accessibilityView())),
-//                                ProfileItem(icon: "paintbrush", iconColor: .blue, title: "Theme", enabled: true, destination: AnyView(themeView()))
-//                            ])
-//
-//                            SettingsSection(title: "Support", items: [
-//                                ProfileItem(icon: "headphones", iconColor: .blue, title: "Customer Support", enabled: true, destination: AnyView(customerSupportView())),
-//                                ProfileItem(icon: "doc.text", iconColor: .gray, title: "Terms of Use", enabled: true, destination: AnyView(termsOfUseView())),
-//                                ProfileItem(icon: "lock", iconColor: .gray, title: "Privacy Policy", enabled: true, destination: AnyView(privacyPolicyView()))
-//                            ])
-//
-////                            SettingsSection(title: "Danger Zone", items: [
-////                                ProfileItem(icon: "arrow.counterclockwise", iconColor: .orange, title: "Reset to Defaults", enabled: true, destination: AnyView(resetDefaultsView())),
-////                                ProfileItem(icon: "rectangle.portrait.and.arrow.right", iconColor: .red, title: "Log Out", enabled: true, destination: AnyView(logOutView())),
-////                                ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, destination: AnyView(deleteAccountView()))
-////                                ])
-//                            DangerSection(
-//                                items: [
-//                                    ProfileItem(icon: "arrow.counterclockwise", iconColor: .orange, title: "Reset to Defaults", enabled: true, destination: AnyView(EmptyView())),
-//                                    ProfileItem(icon: "rectangle.portrait.and.arrow.right", iconColor: .red, title: "Log Out", enabled: true, destination: AnyView(EmptyView())),
-//                                    ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, destination: AnyView(EmptyView()))
-//                                ],
-//                                showPopup: $showPopup,
-//                                popupTitle: $popupTitle,
-//                                popupAction: $popupAction
-//                            )
-//
-//                            
-//                        }
-//                        .padding(.top, 100)
-//
-//                        Spacer().padding(.bottom, 80)
-//                    }
-//                }
-//                //overlay working this is related to the customAlert
-//                .overlay(
-//                    Group {
-//                        if showCustomAlert {
-//                            Color.black.opacity(0.4)
-//                                .ignoresSafeArea()
-//
-//                            CustomAlert(
-//                                title: alertTitle,
-//                                message: alertMessage,
-//                                confirmAction: {
-//                                    onConfirm?()
-//                                    showCustomAlert = false
-//                                },
-//                                cancelAction: {
-//                                    showCustomAlert = false
-//                                }
-//                            )
-//                        }
-//                    }
-//                )
-//
-//
-//                
-//                ProfileHeader
-//            }
-//        }
-//    }
-//
-//    private var ProfileHeader: some View {
-//        HStack {
-//            Text("Profile")
-//                .font(.largeTitle.bold())
-//                .foregroundColor(Color("primaryText"))
-//            Spacer()
-//        }
-//        .padding(.horizontal)
-//        .padding(.vertical, 20)
-//        .background(Color("primaryCard"))
-//    }
-//
-//    private var ProfileCard: some View {
-//        HStack(alignment: .center, spacing: 16) {
-//            if let photoURL = viewModel.photoURL {
-//                WebImage(url: photoURL)
-//                    .resizable()
-//                    .onFailure { error in
-//                        print("Image failed to load:", error.localizedDescription)
-//                    }
-//                    .indicator(.activity)
-//                    .transition(.fade(duration: 0.25))
-//                    .scaledToFill()
-//                    .frame(width: 60, height: 60)
-//                    .clipShape(Circle())
-//            } else {
-//                Image(systemName: "person.crop.circle.fill")
-//                    .resizable()
-//                    .scaledToFit()
-//                    .frame(width: 60, height: 60)
-//                    .foregroundColor(.gray)
-//            }
-//
-//            VStack(alignment: .leading, spacing: 4) {
-//                Text(viewModel.username)
-//                    .font(.headline)
-//                    .foregroundColor(.primary)
-//
-//                HStack(spacing: 4) {
-//                    Text("Plan:")
-//                        .foregroundColor(.secondary)
-//                    Text("Freemium")
-//                        .foregroundColor(.green)
-//                }
-//            }
-//
-//            Spacer()
-//
-//            NavigationLink(destination: editProfileView(), isActive: $navigateToEdit) {
-//                EmptyView()
-//            }
-//
-//            Button(action: {
-//                navigateToEdit = true
-//            }) {
-//                Image(systemName: "chevron.right")
-//                    .foregroundColor(.white)
-//                    .padding(10)
-//                    .background(Color("secondaryIcon"))
-//                    .clipShape(Circle())
-//            }
-//        }
-//        .padding()
-//        .background(Color("primaryCard"))
-//        .cornerRadius(16)
-//    }
-//}
-//
-//struct ProfileItem: Identifiable {
-//    let id = UUID()
-//    let icon: String
-//    let iconColor: Color
-//    let title: String
-//    let enabled: Bool
-//    let destination: AnyView
-//}
-//
-//struct SettingsSection: View {
-//    let title: String
-//    let items: [ProfileItem]
-//
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 0) {
-//            Text(title)
-//                .font(.headline)
-//                .foregroundColor(Color("primaryText"))
-//                .padding(.horizontal)
-//                .padding(.top)
-//                .padding(.bottom, 10)
-//
-//            ForEach(items) { item in
-//                if item.enabled {
-//                    NavigationLink(destination: item.destination) {
-//                        HStack(spacing: 12) {
-//                            ZStack {
-//                                Circle()
-//                                    .fill(item.iconColor.opacity(0.2))
-//                                    .frame(width: 36, height: 36)
-//                                Image(systemName: item.icon)
-//                                    .foregroundColor(item.iconColor)
-//                            }
-//
-//                            Text(item.title)
-//                                .foregroundColor(.primary)
-//
-//                            Spacer()
-//
-//                            Image(systemName: "chevron.right")
-//                                .foregroundColor(.gray)
-//                        }
-//                        .padding(.horizontal)
-//                        .padding(.vertical, 10)
-//                    }
-//
-//                    Divider()
-//                        .padding(.leading, 64)
-//                }
-//            }
-//        }
-//        .background(Color("primaryCard"))
-//        .cornerRadius(16)
-//        .padding(.horizontal, 16)
-//    }
-//}
-//
-//struct DangerSection: View {
-//    let items: [ProfileItem]
-//
-//    @Binding var showPopup: Bool
-//    @Binding var popupTitle: String
-//    @Binding var popupAction: (() -> Void)?
-//
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 0) {
-//            Text("Danger Zone")
-//                .font(.headline)
-//                .foregroundColor(.red)
-//                .padding(.horizontal)
-//                .padding(.top)
-//
-//            ForEach(items) { item in
-//                Button {
-//                    popupTitle = item.title
-//                    popupAction = {
-//                        // handle item.title here if needed
-//                    }
-//                    showPopup = true
-//                } label: {
-//                    HStack(spacing: 12) {
-//                        Image(systemName: item.icon)
-//                            .foregroundColor(item.iconColor)
-//                            .frame(width: 24, height: 24)
-//
-//                        Text(item.title)
-//                            .foregroundColor(.primary)
-//
-//                        Spacer()
-//                    }
-//                    .padding(.horizontal)
-//                    .padding(.vertical, 10)
-//                    .background(Color("primaryCard"))
-//                }
-//
-//                Divider().padding(.leading, 52)
-//            }
-//        }
-//    }
-//}
-//
-
-// Revised SwiftUI code with proper ProfileItem support for optional actions and navigation
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -378,6 +101,7 @@ struct Profile: View {
         }
     }
 
+    // MARK: Profile header
     private var ProfileHeader: some View {
         HStack {
             Text("Profile")
@@ -390,6 +114,7 @@ struct Profile: View {
         .background(Color("primaryCard"))
     }
 
+    // MARK: User Profile card
     private var ProfileCard: some View {
         HStack(alignment: .center, spacing: 16) {
             if let photoURL = viewModel.photoURL {
@@ -429,10 +154,8 @@ struct Profile: View {
                 navigateToEdit = true
             }) {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(Color("secondaryIcon"))
-                    .clipShape(Circle())
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color("secondaryButton"))
             }
         }
         .padding()
@@ -440,6 +163,7 @@ struct Profile: View {
         .cornerRadius(16)
     }
 }
+
 
 struct ProfileItem: Identifiable {
     let id = UUID()
@@ -469,54 +193,35 @@ struct ProfileItem: Identifiable {
     }
 }
 
-struct SettingsSection: View {
-    let title: String
-    let items: [ProfileItem]
-    var isActionSection: Bool = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(Color("primaryText"))
-//                .foregroundColor(isActionSection ? .red : Color("primaryText"))
-                .padding(.horizontal)
-                .padding(.top)
-                .padding(.bottom, 10)
-
-            ForEach(items) { item in
-                if item.enabled {
-                    if let action = item.action {
-                        Button(action: action) {
-                            SettingsRow(item: item)
-                        }
-                    } else if let destination = item.destination {
-                        NavigationLink(destination: destination) {
-                            SettingsRow(item: item)
-                        }
-                    }
-
-                    Divider().padding(.leading, 64)
-                }
-            }
-        }
-        .background(Color("primaryCard"))
-        .cornerRadius(16)
-        .padding(.horizontal, 16)
-    }
-}
 
 struct SettingsRow: View {
     let item: ProfileItem
 
     var body: some View {
+        Group {
+            if let destination = item.destination {
+                NavigationLink(destination: destination) {
+                    RowContent
+                }
+            } else {
+                RowContent
+                    .onTapGesture {
+                        item.action?()
+                    }
+            }
+        }
+    }
+
+    private var RowContent: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(item.iconColor.opacity(0.2))
                     .frame(width: 36, height: 36)
+
                 Image(systemName: item.icon)
                     .foregroundColor(item.iconColor)
+                    .font(.system(size: 16, weight: .medium))
             }
 
             Text(item.title)
@@ -526,10 +231,69 @@ struct SettingsRow: View {
 
             if item.destination != nil {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Color("secondaryButton"))
             }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+       
     }
+    
 }
+
+// MARK: attemp to bring the line back,, kinda cooked abhi
+//struct SettingsRow: View {
+//    let item: ProfileItem
+//
+//    var body: some View {
+//        Group {
+//            if let destination = item.destination {
+//                NavigationLink(destination: destination) {
+//                    RowWithDivider
+//                }
+//            } else {
+//                RowWithDivider
+//                    .onTapGesture {
+//                        item.action?()
+//                    }
+//            }
+//        }
+//    }
+//
+//    private var RowWithDivider: some View {
+//        VStack(spacing: 0) {
+//            RowContent
+//                .padding(.bottom)
+//            Divider()
+//                .padding(.leading, 48)
+//        }
+//    }
+//
+//    private var RowContent: some View {
+//        HStack(spacing: 12) {
+//            ZStack {
+//                Circle()
+//                    .fill(item.iconColor.opacity(0.2))
+//                    .frame(width: 36, height: 36)
+//
+//                Image(systemName: item.icon)
+//                    .foregroundColor(item.iconColor)
+//                    .font(.system(size: 16, weight: .medium))
+//            }
+//
+//            Text(item.title)
+//                .foregroundColor(.primary)
+//
+//            Spacer()
+//
+//            if item.destination != nil {
+//                Image(systemName: "chevron.right")
+//                    .font(.system(size: 14, weight: .bold))
+//                    .foregroundColor(Color("secondaryButton"))
+//            }
+//        }
+//        .padding(.vertical, 2)
+//        .contentShape(Rectangle())
+//    }
+//}
