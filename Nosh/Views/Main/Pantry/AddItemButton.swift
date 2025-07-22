@@ -6,7 +6,7 @@ struct AddItemButton: View {
 
     var body: some View {
         Button(action: {
-            viewModel.addCustomItem(to: category)
+            viewModel.addCustomItem(to: category, name: "New Item")
         }) {
             HStack {
                 Spacer()

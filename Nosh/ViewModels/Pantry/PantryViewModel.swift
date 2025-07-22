@@ -1,17 +1,11 @@
-//
-//  PantryViewModel.swift
-//  Nosh
-//
-//  Created by MacBook on 09/07/25.
-//
-
-
 import Foundation
+import Combine
 
-class PantryViewModel: ObservableObject {
+final class PantryViewModel: ObservableObject {
     @Published var items: [String: [PantryItem]] = [:]
 
     let tabs: [String]
+    private var sortTimer: Timer?
 
     init(tabs: [String]) {
         self.tabs = tabs
@@ -22,9 +16,7 @@ class PantryViewModel: ObservableObject {
         for tab in tabs where tab != "All" {
             items[tab] = dummyItems(for: tab)
         }
-        items["All"] = tabs
-            .filter { $0 != "All" }
-            .flatMap { items[$0] ?? [] }
+        updateAllTab()
     }
 
     func dummyItems(for tab: String) -> [PantryItem] {
@@ -41,29 +33,96 @@ class PantryViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Increment/Decrement
+
     func increment(_ item: PantryItem, in category: String) {
-        guard var list = items[category], let index = list.firstIndex(of: item) else { return }
-        list[index].quantity += 1
-        items[category] = list
+        updateItem(item, in: category, change: +1)
     }
 
     func decrement(_ item: PantryItem, in category: String) {
-        guard var list = items[category], let index = list.firstIndex(of: item), list[index].quantity > 0 else { return }
-        list[index].quantity -= 1
+        updateItem(item, in: category, change: -1)
+    }
+
+    private func updateItem(_ item: PantryItem, in category: String, change: Int) {
+        guard var list = items[category], let index = list.firstIndex(of: item) else { return }
+
+        list[index].quantity = max(0, list[index].quantity + change)
         items[category] = list
+
+        debounceSort(for: category)
+        updateAllTab()
     }
 
-    func addCustomItem(to category: String) {
-        let newItem = PantryItem(name: "Custom Item", quantity: 0)
+    // MARK: - Sorting
+
+    func debounceSort(for category: String) {
+        sortTimer?.invalidate()
+        sortTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+            self.sortItems(for: category)
+        }
+    }
+
+    func sortItems(for category: String) {
+        guard var list = items[category] else { return }
+
+        list.sort {
+            let rank1 = colorRank(for: $0.quantity)
+            let rank2 = colorRank(for: $1.quantity)
+
+            if rank1 != rank2 {
+                return rank1 < rank2
+            } else {
+                return $0.quantity > $1.quantity
+            }
+        }
+
+        items[category] = list
+        updateAllTab()
+    }
+
+    private func colorRank(for quantity: Int) -> Int {
+        switch quantity {
+        case 5...: return 0 // Green
+        case 1...4: return 1 // Yellow
+        default: return 2 // Gray
+        }
+    }
+
+    // MARK: - Add Custom Item Support
+
+    func addCustomItem(to category: String, name: String, quantity: Int = 0) {
+        let newItem = PantryItem(name: name, quantity: quantity)
         items[category, default: []].append(newItem)
+        sortItems(for: category)
+        updateAllTab()
     }
 
+    // MARK: - Utility
+
+    func updateAllTab() {
+        let allItems = tabs
+            .filter { $0 != "All" }
+            .flatMap { items[$0] ?? [] }
+
+        let sortedAll = allItems.sorted {
+            let rank1 = colorRank(for: $0.quantity)
+            let rank2 = colorRank(for: $1.quantity)
+
+            if rank1 != rank2 {
+                return rank1 < rank2 // Sort by color group
+            } else {
+                return $0.quantity > $1.quantity // Sort within group
+            }
+        }
+
+        items["All"] = sortedAll
+    }
     func findCategory(for item: PantryItem) -> String {
-        for (category, items) in self.items {
-            if items.contains(item) {
+        for (category, list) in items where category != "All" {
+            if list.contains(where: { $0.id == item.id }) {
                 return category
             }
         }
-        return "Vegetables"
+        return "Unknown"
     }
 }

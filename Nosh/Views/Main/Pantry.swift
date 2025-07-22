@@ -30,7 +30,7 @@ struct Pantry: View {
             }
             .frame(height: 0)
 
-            VStack(spacing: 16) {
+            LazyVStack(spacing: 16) {
                 if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
                     ForEach(currentItems, id: \ .id) { item in
                         PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
@@ -44,6 +44,7 @@ struct Pantry: View {
             }
             .padding(.horizontal)
             .padding(.top, 188)
+            .animation(.default, value: viewModel.items)
         }
         .scrollIndicators(.hidden)
         .coordinateSpace(name: "scroll")
@@ -139,7 +140,9 @@ struct PantryItemCard: View {
     let item: PantryItem
     let selectedTab: String
     let viewModel: PantryViewModel
-
+    var category: String {
+        selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab
+    }
     var body: some View {
         HStack(spacing: 0) {
             Rectangle()
