@@ -59,7 +59,14 @@ struct Profile: View {
                                 ProfileItem(icon: "rectangle.portrait.and.arrow.right", iconColor: .red, title: "Log Out", enabled: true, action: {
                                     popupTitle = "Log Out"
                                     popupMessage = "Are you sure you want to log out?"
-                                    popupAction = { print("Logout action") }
+                                    popupAction = {
+                                        do {
+                                            try Auth.auth().signOut()
+                                            // Add navigation logic if needed
+                                        } catch {
+                                            print("Error signing out: \(error.localizedDescription)")
+                                        }
+                                    }
                                     showPopup = true
                                 }),
                                 ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, action: {
@@ -101,7 +108,6 @@ struct Profile: View {
         }
     }
 
-    // MARK: Profile header
     private var ProfileHeader: some View {
         HStack {
             Text("Profile")
@@ -114,7 +120,6 @@ struct Profile: View {
         .background(Color("primaryCard"))
     }
 
-    // MARK: User Profile card
     private var ProfileCard: some View {
         HStack(alignment: .center, spacing: 16) {
             if let photoURL = viewModel.photoURL {
@@ -164,7 +169,6 @@ struct Profile: View {
     }
 }
 
-
 struct ProfileItem: Identifiable {
     let id = UUID()
     let icon: String
@@ -192,7 +196,6 @@ struct ProfileItem: Identifiable {
         self.action = action
     }
 }
-
 
 struct SettingsRow: View {
     let item: ProfileItem
@@ -237,63 +240,5 @@ struct SettingsRow: View {
         }
         .padding(.vertical, 2)
         .contentShape(Rectangle())
-       
     }
-    
 }
-
-// MARK: attemp to bring the line back,, kinda cooked abhi
-//struct SettingsRow: View {
-//    let item: ProfileItem
-//
-//    var body: some View {
-//        Group {
-//            if let destination = item.destination {
-//                NavigationLink(destination: destination) {
-//                    RowWithDivider
-//                }
-//            } else {
-//                RowWithDivider
-//                    .onTapGesture {
-//                        item.action?()
-//                    }
-//            }
-//        }
-//    }
-//
-//    private var RowWithDivider: some View {
-//        VStack(spacing: 0) {
-//            RowContent
-//                .padding(.bottom)
-//            Divider()
-//                .padding(.leading, 48)
-//        }
-//    }
-//
-//    private var RowContent: some View {
-//        HStack(spacing: 12) {
-//            ZStack {
-//                Circle()
-//                    .fill(item.iconColor.opacity(0.2))
-//                    .frame(width: 36, height: 36)
-//
-//                Image(systemName: item.icon)
-//                    .foregroundColor(item.iconColor)
-//                    .font(.system(size: 16, weight: .medium))
-//            }
-//
-//            Text(item.title)
-//                .foregroundColor(.primary)
-//
-//            Spacer()
-//
-//            if item.destination != nil {
-//                Image(systemName: "chevron.right")
-//                    .font(.system(size: 14, weight: .bold))
-//                    .foregroundColor(Color("secondaryButton"))
-//            }
-//        }
-//        .padding(.vertical, 2)
-//        .contentShape(Rectangle())
-//    }
-//}
