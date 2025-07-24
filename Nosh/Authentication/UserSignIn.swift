@@ -3,14 +3,15 @@ import FirebaseAuth
 
 struct UserSignIn: View {
     @StateObject var viewModel = UserSignInViewModel()
-    var switchToSignUp: () -> Void  // <-- Accept closure
+    var switchToSignUp: () -> Void
+    @State private var showReportSheet = false
 
     var body: some View {
         ZStack {
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(red: 195/255, green: 255/255, blue: 0/255),
-                    Color(red: 64/255, green: 162/255, blue: 0/255)
+                    Color(red: 195/255, green: 255/255, blue: 0),
+                    Color(red: 64/255, green: 162/255, blue: 0)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -42,7 +43,10 @@ struct UserSignIn: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    FieldContainer {
+                    FieldContainer(
+                        isError: viewModel.errorMessage == "Please enter a valid email.",
+                        errorMessage: viewModel.errorMessage == "Please enter a valid email." ? viewModel.errorMessage : nil
+                    ) {
                         HStack {
                             Image(systemName: "envelope")
                                 .foregroundColor(.gray)
@@ -53,16 +57,28 @@ struct UserSignIn: View {
                         }
                     }
 
-                    FieldContainer {
+                    FieldContainer(
+                        isError: viewModel.errorMessage == "Password cannot be empty.",
+                        errorMessage: viewModel.errorMessage == "Password cannot be empty." ? viewModel.errorMessage : nil
+                    ) {
                         HStack {
                             Image(systemName: "lock")
                                 .foregroundColor(.gray)
-                            SecureField("Password", text: $viewModel.password)
-                                .foregroundColor(Color("primaryText"))
+                            if viewModel.showPassword {
+                                TextField("Password", text: $viewModel.password)
+                            } else {
+                                SecureField("Password", text: $viewModel.password)
+                            }
+                            Button(action: {
+                                viewModel.showPassword.toggle()
+                            }) {
+                                Image(systemName: viewModel.showPassword ? "eye.slash" : "eye")
+                                    .foregroundColor(.gray)
+                            }
                         }
+                        .foregroundColor(Color("primaryText"))
                     }
-                    
-                    // MARK: Sign In button
+
                     CTAButton(title: "Sign In") {
                         Task {
                             await viewModel.signInUser()
@@ -70,10 +86,7 @@ struct UserSignIn: View {
                     }
 
                     HStack(spacing: 16) {
-                        // Forgot Password Button
-                        Button(action: {
-                            // viewModel.sendPasswordReset()
-                        }) {
+                        NavigationLink(destination: ForgotPasswordView()) {
                             Text("Forgot Password?")
                                 .bold()
                                 .font(.subheadline)
@@ -84,9 +97,8 @@ struct UserSignIn: View {
                                 .cornerRadius(8)
                         }
 
-                        // Report a Problem Button
                         Button(action: {
-                            // viewModel.sendPasswordReset()
+                            showReportSheet = true
                         }) {
                             Text("Report A Problem")
                                 .bold()
@@ -99,42 +111,23 @@ struct UserSignIn: View {
                         }
                     }
 
-                    // MARK: - Divider
-                    HStack {
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(.gray.opacity(0.3))
-                        Text("Or Sign In with")
-                            .bold()
-                            .font(.subheadline)
-                            .foregroundColor(Color("primaryText"))
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(.gray.opacity(0.3))
-                    }
-
-                    // MARK: - Social Icons
-                    HStack(spacing: 16) {
-                        SocialIconBox(assetImage: "googleIcon")
-                        SocialIconBox(systemImage: "apple.logo")
-                        SocialIconBox(systemImage: "phone.fill")
-                    }
+                    DividerWithText(text: "Or Sign In with")
+                    SocialIconsRow()
                 }
                 .padding()
                 .padding(.bottom, 20)
                 .background(Color("primaryCard"))
                 .cornerRadius(20)
-//                .padding(.horizontal)
             }
-            //here
             .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showReportSheet) {
+            ReportProblemSheetView()
         }
         .navigationBarHidden(true)
     }
 }
 
-
-// MARK: - Social Login Button
 struct SocialIconBox: View {
     var systemImage: String? = nil
     var assetImage: String? = nil
@@ -171,48 +164,36 @@ struct SocialIconBox: View {
     }
 }
 
-
-// MARK: - Field Container
 struct FieldContainer<Content: View>: View {
+    let isError: Bool
+    let errorMessage: String?
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        content()
-            .padding()
-            .background(Color("secondaryButton"))
-            .cornerRadius(12)
+        VStack(alignment: .leading, spacing: 4) {
+            content()
+                .padding()
+                .background(Color("secondaryButton"))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isError ? Color.red : Color.clear, lineWidth: 2)
+                )
+                .cornerRadius(12)
+            if let msg = errorMessage, isError {
+                Text(msg)
+                    .foregroundColor(.red)
+                    .font(.caption)
+            }
+        }
     }
 }
 
-
-// MARK: - Social Icon Button
-struct SocialIconButton: View {
-    let imageName: String
-    let isSystemImage: Bool
-
+struct SocialIconsRow: View {
     var body: some View {
-        Button(action: {
-            print("\(imageName) tapped")
-        }) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white)
-                    .frame(width: 50, height: 50)
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-
-                if isSystemImage {
-                    Image(systemName: imageName)
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundColor(.black)
-                        .frame(width: 22, height: 22)
-                } else {
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 22, height: 22)
-                }
-            }
+        HStack(spacing: 16) {
+            SocialIconBox(assetImage: "googleIcon")
+            SocialIconBox(systemImage: "apple.logo")
+            SocialIconBox(systemImage: "phone.fill")
         }
     }
 }

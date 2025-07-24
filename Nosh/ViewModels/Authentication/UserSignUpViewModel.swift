@@ -1,51 +1,56 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
-
 final class UserSignUpViewModel: ObservableObject {
+    
     @Published var email = ""
     @Published var username = ""
     @Published var password = ""
     @Published var confirmPassword = ""
+    @Published var showPassword = false
+    @Published var showConfirmPassword = false
+    @Published var errorMessages: [String: String] = [:]
 
-    // Sign up logic
     func signUpUser() {
-        guard isValidEmail(email) else {
-            print("Invalid email format")
-            return
+        errorMessages = [:]
+
+        if !isValidEmail(email) {
+            errorMessages["email"] = "Please enter a valid email."
         }
 
-        guard password == confirmPassword else {
-            print("Passwords do not match")
-            return
+        if username.count < 3 {
+            errorMessages["username"] = "Username must be at least 3 characters."
         }
+
+        if password.count < 6 {
+            errorMessages["password"] = "Password must be at least 6 characters."
+        }
+
+        if password != confirmPassword {
+            errorMessages["confirmPassword"] = "Passwords do not match."
+        }
+
+        guard errorMessages.isEmpty else { return }
 
         Task {
             do {
-                // Create user
                 let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
                 let uid = authResult.user.uid
 
-                // Store user data in Firestore
                 let data: [String: Any] = [
-                    "username": self.username,
-                    "email": self.email
+                    "username": username,
+                    "email": email
                 ]
 
-                try await Firestore.firestore()
-                    .collection("users")
-                    .document(uid)
-                    .setData(data)
+                try await Firestore.firestore().collection("users").document(uid).setData(data)
 
-                print("User account created and data saved to Firestore.")
-                // Navigate to main app screen if needed
+                print("User signed up and data saved.")
             } catch {
-                print("Error signing up: \(error.localizedDescription)")
+                errorMessages["firebase"] = error.localizedDescription
             }
         }
     }
 
-    // Optional helper
     private func isValidEmail(_ email: String) -> Bool {
         let regex = #"^\S+@\S+\.\S+$"#
         return email.range(of: regex, options: .regularExpression) != nil

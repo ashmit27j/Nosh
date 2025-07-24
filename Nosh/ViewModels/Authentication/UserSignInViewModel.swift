@@ -1,30 +1,40 @@
+import Swift
 import FirebaseAuth
 import Foundation
-
 final class UserSignInViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
+    @Published var showPassword = false
+    @Published var errorMessage: String?
 
-    // Sign in logic
+    var isEmailInvalid: Bool {
+        errorMessage == "Please enter a valid email."
+    }
+
+    var isPasswordInvalid: Bool {
+        errorMessage == "Password cannot be empty."
+    }
+
     func signInUser() async {
         guard isValidEmail(email) else {
-            print("Invalid email format")
+            errorMessage = "Please enter a valid email."
             return
         }
+        guard !password.isEmpty else {
+            errorMessage = "Password cannot be empty."
+            return
+        }
+
         do {
-            let returnedUserData = try await AuthenticationManager.shared.signIn(email: email, password: password)
-            print("Signed in successfully")
-            print(returnedUserData)
+            let _ = try await Auth.auth().signIn(withEmail: email, password: password)
+            errorMessage = nil
         } catch {
-            print("Error signing in: \(error.localizedDescription)")
+            errorMessage = error.localizedDescription
         }
     }
 
-
-    // Optional helper
     private func isValidEmail(_ email: String) -> Bool {
-        let regex = #"^\S+@\S+\.\S+$"#
-        return email.range(of: regex, options: .regularExpression) != nil
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        return NSPredicate(format: "SELF MATCHES %@", emailRegEx).evaluate(with: email)
     }
 }
-
