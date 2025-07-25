@@ -174,8 +174,12 @@ struct Pantry: View {
 
             LazyVStack(spacing: 16) {
                 if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
-                    ForEach(currentItems, id: \.id) { item in
-                        PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
+                    ForEach(viewModel.items.keys.sorted(), id: \.self) { category in
+                        if let itemList = viewModel.items[category] {
+                            ForEach(itemList, id: \.id) { item in
+                                PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
+                            }
+                        }
                     }
 
                     AddItemButton(

@@ -3,6 +3,7 @@ import Combine
 
 final class PantryViewModel: ObservableObject {
     private let pantryFileURL: URL
+    
     private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
 
     @Published var items: [String: [PantryItem]] = [:]
@@ -43,33 +44,36 @@ final class PantryViewModel: ObservableObject {
         default: names = []
         }
 
-        return names.map { PantryItem(id: UUID().uuidString, name: $0, quantity: 0) }
+        return names.map { PantryItem(id: UUID().uuidString, name: $0, category: tab, quantity: 0) }
+
 
     }
 
     func increment(_ item: PantryItem, in category: String) {
-        guard var list = items[category],
-              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
-
-        list[index].quantity += 1
-        list = sortedList(list) // 👈 Sort here
-        items[category] = list
-
-        updateAllTab(shouldSort: true)
-        savePantry()
+        updateQuantity(of: item, in: category, by: 1)
     }
 
     func decrement(_ item: PantryItem, in category: String) {
+        updateQuantity(of: item, in: category, by: -1)
+    }
+    
+    private func updateQuantity(of item: PantryItem, in category: String, by amount: Int) {
         guard var list = items[category],
               let index = list.firstIndex(where: { $0.id == item.id }) else { return }
 
-        list[index].quantity = max(0, list[index].quantity - 1)
-        list = sortedList(list) // 👈 Sort here
-        items[category] = list
+        // Create a mutable copy of the item
+        var updatedItem = list[index]
+        updatedItem.quantity = max(0, updatedItem.quantity + amount)
 
-        updateAllTab(shouldSort: true)
+        // Update the list
+        list[index] = updatedItem
+        items[category] = list  // <- triggers SwiftUI update
+
+        // Also update the "All" tab to reflect this change
+        updateAllTab(shouldSort: false)
         savePantry()
     }
+
 
 
     private func updateItem(_ item: PantryItem, in category: String, change: Int) {
@@ -141,7 +145,7 @@ final class PantryViewModel: ObservableObject {
 
     // MARK: - Add Item
     func addCustomItem(to category: String, name: String, quantity: Int = 0) {
-        let newItem = PantryItem(id: UUID().uuidString, name: name, quantity: quantity)
+        let newItem = PantryItem(id: UUID().uuidString, name: name, category: category, quantity: quantity)
         items[category, default: []].append(newItem)
         updateAllTab(shouldSort: category == "All")
         savePantry()
