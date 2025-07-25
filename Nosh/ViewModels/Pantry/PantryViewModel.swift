@@ -2,10 +2,8 @@ import Foundation
 import Combine
 
 final class PantryViewModel: ObservableObject {
-    private let manager = FileManager.default
-    private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     private let pantryFileURL: URL
-    private var sortTimer: Timer?
+    private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
 
     @Published var items: [String: [PantryItem]] = [:]
     let tabs: [String]
@@ -14,7 +12,7 @@ final class PantryViewModel: ObservableObject {
     init(tabs: [String]) {
         self.tabs = tabs
         self.pantryFileURL = docs.appendingPathComponent("pantry.json")
-        
+
         if UserDefaults.standard.data(forKey: "pantryItems") != nil {
             loadPantry()
         } else {
@@ -22,57 +20,70 @@ final class PantryViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Setup Dummy Data
+    // MARK: - Dummy Data Setup
     private func setupDummyItems() {
         for tab in tabs where tab != "All" {
             items[tab] = dummyItems(for: tab)
         }
-        updateAllTab()
+        updateAllTab(shouldSort: false)
         savePantry()
     }
 
     func dummyItems(for tab: String) -> [PantryItem] {
+        let names: [String]
         switch tab {
-        case "Vegetables": return ["Tomato", "Onion", "Potato"].map { PantryItem(name: $0, quantity: 0) }
-        case "Fruits": return ["Apple", "Banana", "Mango"].map { PantryItem(name: $0, quantity: 0) }
-        case "Dairy": return ["Milk", "Cheese", "Curd"].map { PantryItem(name: $0, quantity: 0) }
-        case "Spices": return ["Turmeric", "Chili Powder", "Cumin"].map { PantryItem(name: $0, quantity: 0) }
-        case "Condiments": return ["Ketchup", "Mayonnaise", "Soy Sauce"].map { PantryItem(name: $0, quantity: 0) }
-        case "Oils": return ["Sunflower Oil", "Olive Oil"].map { PantryItem(name: $0, quantity: 0) }
-        case "Instant": return ["Noodles", "Soup Pack", "Instant Coffee"].map { PantryItem(name: $0, quantity: 0) }
-        case "Drinks": return ["Juice", "Cola", "Water Bottle"].map { PantryItem(name: $0, quantity: 0) }
-        default: return []
+        case "Vegetables": names = ["Tomato", "Onion", "Potato"]
+        case "Fruits": names = ["Apple", "Banana", "Mango"]
+        case "Dairy": names = ["Milk", "Cheese", "Curd"]
+        case "Spices": names = ["Turmeric", "Chili Powder", "Cumin"]
+        case "Condiments": names = ["Ketchup", "Mayonnaise", "Soy Sauce"]
+        case "Oils": names = ["Sunflower Oil", "Olive Oil"]
+        case "Instant": names = ["Noodles", "Soup Pack", "Instant Coffee"]
+        case "Drinks": names = ["Juice", "Cola", "Water Bottle"]
+        default: names = []
         }
+
+        return names.map { PantryItem(id: UUID().uuidString, name: $0, quantity: 0) }
+
     }
 
-    // MARK: - Increment/Decrement
     func increment(_ item: PantryItem, in category: String) {
-        updateItem(item, in: category, change: +1)
+        guard var list = items[category],
+              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
+
+        list[index].quantity += 1
+        list = sortedList(list) // 👈 Sort here
+        items[category] = list
+
+        updateAllTab(shouldSort: true)
+        savePantry()
     }
 
     func decrement(_ item: PantryItem, in category: String) {
-        updateItem(item, in: category, change: -1)
+        guard var list = items[category],
+              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
+
+        list[index].quantity = max(0, list[index].quantity - 1)
+        list = sortedList(list) // 👈 Sort here
+        items[category] = list
+
+        updateAllTab(shouldSort: true)
+        savePantry()
     }
 
+
     private func updateItem(_ item: PantryItem, in category: String, change: Int) {
-        guard var list = items[category], let index = list.firstIndex(of: item) else { return }
+        guard var list = items[category],
+              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
 
         list[index].quantity = max(0, list[index].quantity + change)
         items[category] = list
 
-        updateAllTab()
+        // Don't call updateAllTab here
         savePantry()
-        debounceSort(for: category)
     }
 
-    // MARK: - Debounced Sorting
-    func debounceSort(for category: String) {
-        sortTimer?.invalidate()
-        sortTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
-            self.sortItems(for: category)
-        }
-    }
-
+    // MARK: - Manual Sorting (called on Refresh Button)
     func sortItems(for category: String) {
         guard var list = items[category] else { return }
 
@@ -83,41 +94,42 @@ final class PantryViewModel: ObservableObject {
         }
 
         items[category] = list
-        updateAllTab()
+    }
+
+    func sortAllItems() {
+        for tab in tabs where tab != "All" {
+            sortItems(for: tab)
+        }
+        updateAllTab(shouldSort: true)
     }
 
     private func colorRank(for quantity: Int) -> Int {
         switch quantity {
-        case 5...: return 0 // Green
-        case 1...4: return 1 // Yellow
-        default: return 2 // Gray
+        case 5...: return 0
+        case 1...4: return 1
+        default: return 2
         }
     }
 
-    // MARK: - Add Custom Item
-    func addCustomItem(to category: String, name: String, quantity: Int = 0) {
-        let newItem = PantryItem(name: name, quantity: quantity)
-        items[category, default: []].append(newItem)
-        updateAllTab()
-        savePantry()
-        debounceSort(for: category)
-    }
-
-    // MARK: - Utility
-    func updateAllTab() {
+    // MARK: - All Tab Logic
+    func updateAllTab(shouldSort: Bool) {
         let allItems = tabs
             .filter { $0 != "All" }
             .flatMap { items[$0] ?? [] }
 
-        let sortedAll = allItems.sorted {
-            let rank1 = colorRank(for: $0.quantity)
-            let rank2 = colorRank(for: $1.quantity)
-            return rank1 != rank2 ? rank1 < rank2 : $0.quantity > $1.quantity
+        if shouldSort {
+            let sorted = allItems.sorted {
+                let r1 = colorRank(for: $0.quantity)
+                let r2 = colorRank(for: $1.quantity)
+                return r1 != r2 ? r1 < r2 : $0.quantity > $1.quantity
+            }
+            items["All"] = sorted
+        } else {
+            items["All"] = allItems
         }
-
-        items["All"] = sortedAll
     }
 
+    // MARK: - Category Helper
     func findCategory(for item: PantryItem) -> String {
         for (category, list) in items where category != "All" {
             if list.contains(where: { $0.id == item.id }) {
@@ -127,7 +139,15 @@ final class PantryViewModel: ObservableObject {
         return "Unknown"
     }
 
-    // MARK: - Save & Load Pantry
+    // MARK: - Add Item
+    func addCustomItem(to category: String, name: String, quantity: Int = 0) {
+        let newItem = PantryItem(id: UUID().uuidString, name: name, quantity: quantity)
+        items[category, default: []].append(newItem)
+        updateAllTab(shouldSort: category == "All")
+        savePantry()
+    }
+
+    // MARK: - Persistence
     func savePantry() {
         do {
             let data = try JSONEncoder().encode(items)
@@ -141,9 +161,17 @@ final class PantryViewModel: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: "pantryItems") else { return }
         do {
             items = try JSONDecoder().decode([String: [PantryItem]].self, from: data)
-            updateAllTab()
+            updateAllTab(shouldSort: false)
         } catch {
             print("❌ Failed to load pantry: \(error)")
         }
     }
+    private func sortedList(_ list: [PantryItem]) -> [PantryItem] {
+        return list.sorted {
+            let r1 = colorRank(for: $0.quantity)
+            let r2 = colorRank(for: $1.quantity)
+            return r1 != r2 ? r1 < r2 : $0.quantity > $1.quantity
+        }
+    }
+
 }
