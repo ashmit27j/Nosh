@@ -70,10 +70,48 @@ struct Profile: View {
                                     showPopup = true
                                 }),
                                 ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, action: {
-                                    popupTitle = "Delete Account"
-                                    popupMessage = "This cannot be undone. Are you sure?"
-                                    popupAction = { print("Delete action") }
+//                                    popupTitle = "Delete Account"
+//                                    popupMessage = "This cannot be undone. Are you sure?"
+//                                    popupAction = { print("Delete action") }
+//                                    showPopup = true
+                                    popupTitle = "Confirm Deletion"
+                                    popupMessage = "Are you sure you want to delete your account? This action is permanent."
+                                    popupAction = {
+                                        guard let user = Auth.auth().currentUser else {
+                                            popupTitle = "Error"
+                                            popupMessage = "No user is currently signed in."
+                                            showPopup = true
+                                            return
+                                        }
+
+                                        let db = Firestore.firestore()
+                                        
+                                        // Step 1: Delete Firestore user data
+                                        db.collection("users").document(user.uid).delete { firestoreError in
+                                            if let firestoreError = firestoreError {
+                                                popupTitle = "Error"
+                                                popupMessage = "Failed to delete user data: \(firestoreError.localizedDescription)"
+                                                showPopup = true
+                                                return
+                                            }
+
+                                            // Step 2: Delete Firebase Auth user
+                                            user.delete { authError in
+                                                if let authError = authError {
+                                                    popupTitle = "Error"
+                                                    popupMessage = "Failed to delete account: \(authError.localizedDescription)"
+                                                    showPopup = true
+                                                } else {
+                                                    popupTitle = "Account Deleted"
+                                                    popupMessage = "Your account has been deleted successfully."
+                                                    showPopup = true
+                                                    // Optionally, log out or navigate to login screen
+                                                }
+                                            }
+                                        }
+                                    }
                                     showPopup = true
+
                                 })
                             ], isActionSection: true)
                         }
