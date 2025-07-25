@@ -1,3 +1,268 @@
+//import SwiftUI
+//import FirebaseAuth
+//
+//struct UserSignIn: View {
+//    @StateObject var viewModel = UserSignInViewModel()
+//    var switchToSignUp: () -> Void
+//    @State private var showReportSheet = false
+//
+//    var body: some View {
+//        ZStack {
+//            LinearGradient(
+//                gradient: Gradient(colors: [
+//                    Color(red: 195/255, green: 255/255, blue: 0),
+//                    Color(red: 64/255, green: 162/255, blue: 0)
+//                ]),
+//                startPoint: .topLeading,
+//                endPoint: .bottomTrailing
+//            )
+//            .ignoresSafeArea()
+//
+//            VStack {
+//                Spacer()
+//
+//                VStack(spacing: 24) {
+//                    VStack(spacing: 10) {
+//                        Text("Welcome Back!")
+//                            .font(.largeTitle)
+//                            .bold()
+//                            .foregroundColor(Color("primaryText"))
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//
+//                        HStack {
+//                            Text("Don't have an account?")
+//                                .foregroundColor(Color("secondaryText"))
+//                            Button(action: {
+//                                switchToSignUp()
+//                            }) {
+//                                Text("Sign Up")
+//                                    .foregroundColor(Color("primaryAccent"))
+//                                    .bold()
+//                            }
+//                        }
+//                        .frame(maxWidth: .infinity, alignment: .leading)
+//                    }
+//
+//                    FieldContainer(
+//                        isError: viewModel.errorMessage == "Please enter a valid email." || viewModel.isEmailDoesNotExist,
+//                        errorMessage: viewModel.isEmailDoesNotExist ? "Email does not exist" :
+//                                       viewModel.errorMessage == "Please enter a valid email." ? viewModel.errorMessage : nil
+//                    ) {
+//                        HStack {
+//                            Image(systemName: "envelope")
+//                                .foregroundColor(.gray)
+//                            TextField("Email", text: $viewModel.email)
+//                                .foregroundColor(Color("primaryText"))
+//                                .autocapitalization(.none)
+//                                .keyboardType(.emailAddress)
+//                        }
+//                    }
+//
+//                    FieldContainer(
+//                        isError: viewModel.errorMessage == "Password cannot be empty." || viewModel.isPasswordInvalidAuth,
+//                        errorMessage: viewModel.isPasswordInvalidAuth ? "Invalid password" :
+//                                       viewModel.errorMessage == "Password cannot be empty." ? viewModel.errorMessage : nil
+//                    ) {
+//                        HStack {
+//                            Image(systemName: "lock")
+//                                .foregroundColor(.gray)
+//                            if viewModel.showPassword {
+//                                TextField("Password", text: $viewModel.password)
+//                            } else {
+//                                SecureField("Password", text: $viewModel.password)
+//                            }
+//                            Button(action: {
+//                                viewModel.showPassword.toggle()
+//                            }) {
+//                                Image(systemName: viewModel.showPassword ? "eye.slash" : "eye")
+//                                    .foregroundColor(.gray)
+//                            }
+//                        }
+//                        .foregroundColor(Color("primaryText"))
+//                    }
+//
+//
+//                    CTAButton(title: "Sign In") {
+//                        Task {
+//                            await viewModel.signInUser()
+//                        }
+//                    }
+//
+//                    HStack(spacing: 16) {
+//                        NavigationLink(destination: ForgotPasswordView()) {
+//                            Text("Forgot Password?")
+//                                .bold()
+//                                .font(.subheadline)
+//                                .foregroundColor(Color("primaryText"))
+//                                .padding(.vertical, 12)
+//                                .frame(maxWidth: .infinity)
+//                                .background(Color("secondaryButton"))
+//                                .cornerRadius(8)
+//                        }
+//
+//                        Button(action: {
+//                            showReportSheet = true
+//                        }) {
+//                            Text("Report A Problem")
+//                                .bold()
+//                                .font(.subheadline)
+//                                .foregroundColor(Color("primaryText"))
+//                                .padding(.vertical, 12)
+//                                .frame(maxWidth: .infinity)
+//                                .background(Color("secondaryButton"))
+//                                .cornerRadius(8)
+//                        }
+//                    }
+//
+//                    DividerWithText(text: "Or Sign In with")
+//                    SocialIconsRow()
+//                }
+//                .padding()
+//                .padding(.bottom, 20)
+//                .background(Color("primaryCard"))
+//                .cornerRadius(20)
+//            }
+//            .ignoresSafeArea()
+//        }
+//        .sheet(isPresented: $showReportSheet) {
+//            ReportProblemSheetView()
+//        }
+//        .navigationBarHidden(true)
+//    }
+//}
+//
+//
+//import SwiftUI
+//import FirebaseAuth
+//
+//struct UserSignIn: View {
+//    @StateObject var viewModel = UserSignInViewModel()
+//    var switchToSignUp: () -> Void
+//    @State private var showReportSheet = false
+//
+//    var body: some View {
+//        ZStack {
+//            LinearGradient(
+//                gradient: Gradient(colors: [
+//                    Color(red: 195/255, green: 255/255, blue: 0),
+//                    Color(red: 64/255, green: 162/255, blue: 0)
+//                ]),
+//                startPoint: .topLeading,
+//                endPoint: .bottomTrailing
+//            )
+//            .ignoresSafeArea()
+//
+//            VStack {
+//                Spacer()
+//
+//                VStack(spacing: 24) {
+//                    VStack(spacing: 10) {
+//                        Text("Welcome Back!")
+//                            .font(.largeTitle)
+//                            .bold()
+//                            .foregroundColor(Color("primaryText"))
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//
+//                        HStack {
+//                            Text("Don't have an account?")
+//                                .foregroundColor(Color("secondaryText"))
+//                            Button(action: {
+//                                switchToSignUp()
+//                            }) {
+//                                Text("Sign Up")
+//                                    .foregroundColor(Color("primaryAccent"))
+//                                    .bold()
+//                            }
+//                        }
+//                        .frame(maxWidth: .infinity, alignment: .leading)
+//                    }
+//
+//                    FieldContainer(
+//                        isError: viewModel.showInvalidCredentialsError,
+//                        errorMessage: viewModel.showInvalidCredentialsError ? "Invalid email or password" : nil
+//                    )
+//                        HStack {
+//                            Image(systemName: "envelope")
+//                                .foregroundColor(.gray)
+//                            TextField("Email", text: $viewModel.email)
+//                                .foregroundColor(Color("primaryText"))
+//                                .autocapitalization(.none)
+//                                .keyboardType(.emailAddress)
+//                        }
+//                    }
+//
+//                FieldContainer(
+//                    isError: viewModel.showInvalidCredentialsError,
+//                    errorMessage: viewModel.showInvalidCredentialsError ? "Invalid email or password" : nil
+//                )
+//                        HStack {
+//                            Image(systemName: "lock")
+//                                .foregroundColor(.gray)
+//                            if viewModel.showPassword {
+//                                TextField("Password", text: $viewModel.password)
+//                            } else {
+//                                SecureField("Password", text: $viewModel.password)
+//                            }
+//                            Button(action: {
+//                                viewModel.showPassword.toggle()
+//                            }) {
+//                                Image(systemName: viewModel.showPassword ? "eye.slash" : "eye")
+//                                    .foregroundColor(.gray)
+//                            }
+//                        }
+//                        .foregroundColor(Color("primaryText"))
+//                    }
+//
+//
+//                    CTAButton(title: "Sign In") {
+//                        Task {
+//                            await viewModel.signInUser()
+//                        }
+//                    }
+//
+//                    HStack(spacing: 16) {
+//                        NavigationLink(destination: ForgotPasswordView()) {
+//                            Text("Forgot Password?")
+//                                .bold()
+//                                .font(.subheadline)
+//                                .foregroundColor(Color("primaryText"))
+//                                .padding(.vertical, 12)
+//                                .frame(maxWidth: .infinity)
+//                                .background(Color("secondaryButton"))
+//                                .cornerRadius(8)
+//                        }
+//
+//                        Button(action: {
+//                            showReportSheet = true
+//                        }) {
+//                            Text("Report A Problem")
+//                                .bold()
+//                                .font(.subheadline)
+//                                .foregroundColor(Color("primaryText"))
+//                                .padding(.vertical, 12)
+//                                .frame(maxWidth: .infinity)
+//                                .background(Color("secondaryButton"))
+//                                .cornerRadius(8)
+//                        }
+//                    }
+//
+//                    DividerWithText(text: "Or Sign In with")
+//                    SocialIconsRow()
+//                }
+//                .padding()
+//                .padding(.bottom, 20)
+//                .background(Color("primaryCard"))
+//                .cornerRadius(20)
+//            }
+//            .ignoresSafeArea()
+//        }
+//        .sheet(isPresented: $showReportSheet) {
+//            ReportProblemSheetView()
+//        }
+//        .navigationBarHidden(true)
+//    }
+//}
+
 import SwiftUI
 import FirebaseAuth
 
@@ -43,9 +308,12 @@ struct UserSignIn: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
+                    // Email Field
                     FieldContainer(
-                        isError: viewModel.errorMessage == "Please enter a valid email.",
-                        errorMessage: viewModel.errorMessage == "Please enter a valid email." ? viewModel.errorMessage : nil
+                        isError: viewModel.isEmailInvalid || viewModel.showInvalidCredentialsError,
+                        errorMessage:
+                            viewModel.isEmailInvalid ? "Please enter a valid email." :
+                            viewModel.showInvalidCredentialsError ? "Invalid email or password" : nil
                     ) {
                         HStack {
                             Image(systemName: "envelope")
@@ -57,9 +325,12 @@ struct UserSignIn: View {
                         }
                     }
 
+                    // Password Field
                     FieldContainer(
-                        isError: viewModel.errorMessage == "Password cannot be empty.",
-                        errorMessage: viewModel.errorMessage == "Password cannot be empty." ? viewModel.errorMessage : nil
+                        isError: viewModel.isPasswordInvalid || viewModel.showInvalidCredentialsError,
+                        errorMessage:
+                            viewModel.isPasswordInvalid ? "Password cannot be empty." :
+                            viewModel.showInvalidCredentialsError ? "Invalid email or password" : nil
                     ) {
                         HStack {
                             Image(systemName: "lock")
@@ -125,8 +396,18 @@ struct UserSignIn: View {
             ReportProblemSheetView()
         }
         .navigationBarHidden(true)
+        .onChange(of: viewModel.email) { _ in
+            viewModel.errorMessage = nil
+            viewModel.showInvalidCredentialsError = false
+        }
+        .onChange(of: viewModel.password) { _ in
+            viewModel.errorMessage = nil
+            viewModel.showInvalidCredentialsError = false
+        }
     }
 }
+
+
 
 struct SocialIconBox: View {
     var systemImage: String? = nil
