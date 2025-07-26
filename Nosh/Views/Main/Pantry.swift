@@ -50,7 +50,8 @@ struct Pantry: View {
             }
             .padding(.horizontal)
             .padding(.top, 188)
-            .animation(nil, value: viewModel.items)
+            .animation(.easeInOut(duration: 0.3), value: viewModel.items)
+//            .animation(nil, value: viewModel.items)
         }
         .scrollIndicators(.hidden)
         .coordinateSpace(name: "scroll")
@@ -134,10 +135,6 @@ struct Pantry: View {
     // MARK: - Floating Refresh Button
     private var refreshButton: some View {
         Button {
-//            for tab in viewModel.tabs where tab != "All" {
-//                viewModel.sortItems(for: tab)
-//            }
-//            viewModel.sortAllItems()
             viewModel.refresh()
         } label: {
             Image(systemName: "arrow.clockwise")
