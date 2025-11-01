@@ -1,6 +1,8 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
+//final means that we will not inherit from this class
+//we are doing this cos performance benefit later
 final class UserSignUpViewModel: ObservableObject {
     
     @Published var email = ""

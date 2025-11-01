@@ -120,6 +120,7 @@ import Swift
 import FirebaseAuth
 import Foundation
 
+//final means that we will not inherit from this class 
 final class UserSignInViewModel: ObservableObject {
     @Published var email = ""
     @Published var password = ""
