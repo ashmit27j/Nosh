@@ -4,12 +4,35 @@ struct UpcomingMealsSection: View {
     @State private var currentIndex = 0
     let onViewAllTapped: () -> Void
 
-    let meals: [UpcomingMeal] = [
-        UpcomingMeal(imageName: "pancakeImage", name: "Pancakes"),
-        UpcomingMeal(imageName: "pastaImage", name: "Creamy Pasta"),
-        UpcomingMeal(imageName: "frankieImage", name: "Veggie Wrap"),
-        UpcomingMeal(imageName: "biryaniImage", name: "Veg Biryani"),
-        UpcomingMeal(imageName: "saladImage", name: "Fresh Salad")
+    let meals: [MealCard] = [
+        MealCard(
+            id: "1",
+            image: "frankieImage",
+            name: "Veggie Wrap",
+            timeToCook: 30,
+            difficulty: .easy
+        ),
+        MealCard(
+            id: "2",
+            image: "frankieImage",
+            name: "Spicy Pasta",
+            timeToCook: 45,
+            difficulty: .novice
+        ),
+        MealCard(
+            id: "3",
+            image: "frankieImage",
+            name: "Gourmet Pizza",
+            timeToCook: 60,
+            difficulty: .intermediate
+        ),
+        MealCard(
+            id: "4",
+            image: "frankieImage",
+            name: "Fancy Biryani",
+            timeToCook: 90,
+            difficulty: .professional
+        )
     ]
 
     var body: some View {
@@ -41,14 +64,13 @@ struct UpcomingMealsSection: View {
             // Carousel
             TabView(selection: $currentIndex) {
                 ForEach(meals.indices, id: \.self) { index in
-                    UpcomingMealCard(meal: meals[index])
+                    MealCardView(meal: meals[index])
+                        .padding(.horizontal, 4)
                         .tag(index)
-                        .transition(.opacity)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 380)
-
+            .frame(height: 280)
 
             // Dot indicators
             HStack(spacing: 6) {
