@@ -2,35 +2,40 @@ import SwiftUI
 
 struct UpcomingMealsSection: View {
     @State private var currentIndex = 0
+    @State private var cardHeight: CGFloat = 380 // Default height
     let onViewAllTapped: () -> Void
 
-    let meals: [MealCard] = [
-        MealCard(
+    let meals: [Meal] = [
+        Meal(
             id: "1",
-            image: "frankieImage",
             name: "Veggie Wrap",
+            imageName: "frankieImage",
             timeToCook: 30,
+            servingSize: 2,
             difficulty: .easy
         ),
-        MealCard(
+        Meal(
             id: "2",
-            image: "frankieImage",
             name: "Spicy Pasta",
+            imageName: "frankieImage",
             timeToCook: 45,
+            servingSize: 3,
             difficulty: .novice
         ),
-        MealCard(
+        Meal(
             id: "3",
-            image: "frankieImage",
             name: "Gourmet Pizza",
+            imageName: "frankieImage",
             timeToCook: 60,
+            servingSize: 4,
             difficulty: .intermediate
         ),
-        MealCard(
+        Meal(
             id: "4",
-            image: "frankieImage",
             name: "Fancy Biryani",
+            imageName: "frankieImage",
             timeToCook: 90,
+            servingSize: 4,
             difficulty: .professional
         )
     ]
@@ -67,10 +72,21 @@ struct UpcomingMealsSection: View {
                     MealCardView(meal: meals[index])
                         .padding(.horizontal, 4)
                         .tag(index)
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(key: CardHeightKey.self, value: geo.size.height)
+                            }
+                        )
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 280)
+            .frame(height: cardHeight)
+            .onPreferenceChange(CardHeightKey.self) { height in
+                if height > 0 {
+                    cardHeight = height
+                }
+            }
 
             // Dot indicators
             HStack(spacing: 6) {
@@ -82,5 +98,13 @@ struct UpcomingMealsSection: View {
             }
             .frame(maxWidth: .infinity)
         }
+    }
+}
+
+// MARK: - PreferenceKey for Card Height
+struct CardHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 380
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

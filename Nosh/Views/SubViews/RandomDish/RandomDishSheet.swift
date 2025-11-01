@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RandomDishSheet: View {
-    let meal: MealItem
+    let meal: Meal // ← Changed from MealItem
     let onRollAgain: () -> Void
 
     var body: some View {
@@ -15,7 +15,7 @@ struct RandomDishSheet: View {
                     .cornerRadius(100)
                     .padding(.horizontal, 16)
             }
-            .frame(maxWidth: .infinity) 
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
 
             VStack(spacing: 24) {
@@ -35,7 +35,7 @@ struct RandomDishSheet: View {
                             .font(.title2.bold())
                             .foregroundColor(.white)
 
-                        Text("\(meal.cookTime) mins | \(meal.servingSize) servings | Ready to cook!")
+                        Text("\(meal.timeToCook) mins | \(meal.servingSize) servings | Ready to cook!") // ← Changed cookTime to timeToCook
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     }

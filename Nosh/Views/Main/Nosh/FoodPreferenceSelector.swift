@@ -1,3 +1,11 @@
+//
+//  FoodPreferenceSelector.swift
+//  Nosh
+//
+//  Created by MacBook on 01/11/25.
+//
+
+
 import SwiftUI
 
 struct FoodPreferenceSelector: View {

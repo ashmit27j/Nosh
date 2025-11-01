@@ -61,7 +61,7 @@ struct DifficultySelector: View {
     let difficulties = [
         (name: "Beginner", icon: "beginnerIcon", color: Color("primaryAccent")),
         (name: "Novice", icon: "noviceIcon", color: Color("pastelGreen")),
-        (name: "Intermediate", icon: "intermediateIcon", color: Color.orange),
+        (name: "Intermediate", icon: "IntermediateIcon", color: Color.orange),
         (name: "Professional", icon: "professionalIcon", color: Color.red)
     ]
 

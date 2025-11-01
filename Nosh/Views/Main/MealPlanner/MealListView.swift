@@ -72,4 +72,16 @@ struct MealListView: View {
         }
         .coordinateSpace(name: "scroll")
     }
+    
+    // MARK: - Helper Function
+    private func sampleMeal() -> Meal {
+        return Meal(
+            name: "Sample Dish",
+            imageName: "frankieImage",
+            timeToCook: 30,
+            servingSize: 2,
+            difficulty: .easy,
+            isAvailableInPantry: false
+        )
+    }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 struct Home: View {
     // Home button vars
     @State private var showRandomDish = false
-    @State private var randomMeal: MealItem? = nil
+    @State private var randomMeal: Meal? = nil // ← ONLY CHANGE: MealItem to Meal
 
     // Other vars
     @State private var searchText = ""

@@ -20,13 +20,13 @@ struct TimeToCookSlider: View {
                         .bold()
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    Slider(value: $timeToCook, in: 0...60, step: 1)
+                    Slider(value: $timeToCook, in: 10...120, step: 5) // ← Changed to 10-120
                         .accentColor(Color("primaryAccent"))
 
                     HStack {
-                        Text("0")
+                        Text("10")
                         Spacer()
-                        Text("60")
+                        Text("120")
                     }
                     .font(.caption)
                     .foregroundColor(.gray)

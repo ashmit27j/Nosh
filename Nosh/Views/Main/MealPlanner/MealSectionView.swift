@@ -2,10 +2,10 @@ import SwiftUI
 
 struct MealSectionView: View {
     let title: String
-    let meals: [MealItem]
+    let meals: [Meal]
     let onEditTapped: () -> Void
     let onAdd: () -> Void
-    let onDelete: (MealItem) -> Void
+    let onDelete: (Meal) -> Void
     let isEditing: Bool
 
     var body: some View {
@@ -31,11 +31,19 @@ struct MealSectionView: View {
                 .cornerRadius(100)
 
             ForEach(meals) { meal in
-                MealCard(
-                    meal: meal,
-                    isEditing: isEditing,
-                    onDelete: { onDelete(meal) }
-                )
+                ZStack(alignment: .trailing) {
+                    MealItemView(meal: meal)
+                    
+                    if isEditing {
+                        Button(action: { onDelete(meal) }) {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(.red)
+                                .font(.title2)
+                                .padding(8)
+                        }
+                        .offset(x: -8, y: 0)
+                    }
+                }
             }
 
             if isEditing {
@@ -45,7 +53,7 @@ struct MealSectionView: View {
                             .foregroundColor(Color("primaryAccent"))
                         Text("Add \(title) Dish")
                             .fontWeight(.medium)
-                            .foregroundStyle(Color("secondaryText"))
+                            .foregroundColor(Color("secondaryText"))
                     }
                     .padding(.vertical, 8)
                 }

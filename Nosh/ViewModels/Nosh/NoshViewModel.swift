@@ -14,60 +14,93 @@ class NoshViewModel: ObservableObject {
         portionSize: Int,
         maxTimeToCook: Int,
         difficulty: String?,
-        foodPreference: String? // "Veg", "Non-Veg", or "Both"
+        foodPreference: String?
     ) {
         isLoading = true
         errorMessage = nil
+        meals = []
         
-        var query: Query = db.collection("recipes")
+        print("🔍 Starting search with:")
+        print("   Category: \(category ?? "All")")
+        print("   Portion Size: \(portionSize)")
+        print("   Max Time: \(maxTimeToCook)")
+        print("   Difficulty: \(difficulty ?? "Any")")
+        print("   Food Preference: \(foodPreference ?? "Both")")
         
-        // Filter by category
-        if let category = category, !category.isEmpty {
-            let categoryId = mapCategoryToId(category)
-            query = query.whereField("category_id", isEqualTo: categoryId)
-        }
-        
-        // Filter by time to cook (less than or equal to selected time)
-        query = query.whereField("time_to_cook", isLessThanOrEqualTo: maxTimeToCook)
-        
-        // Filter by serving size (greater than or equal to portion size)
-        query = query.whereField("serving_size", isGreaterThanOrEqualTo: portionSize)
-        
-        // Filter by difficulty
-        if let difficulty = difficulty, !difficulty.isEmpty {
-            let difficultyInt = mapDifficultyToInt(difficulty)
-            query = query.whereField("difficulty", isEqualTo: difficultyInt)
-        }
-        
-        // Filter by food preference
-        if let preference = foodPreference, preference != "Both" {
-            let preferenceInt = mapPreferenceToInt(preference)
-            query = query.whereField("preferences", isEqualTo: preferenceInt)
-        }
-        
-        // Execute query
-        query.getDocuments { [weak self] snapshot, error in
+        // Get ALL recipes (no index needed)
+        db.collection("recipes").getDocuments { [weak self] snapshot, error in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
                 self.isLoading = false
                 
                 if let error = error {
-                    self.errorMessage = "Error fetching meals: \(error.localizedDescription)"
-                    print("❌ Firestore error: \(error)")
+                    self.errorMessage = "Error: \(error.localizedDescription)"
+                    print("❌ Error: \(error)")
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
-                    self.meals = []
+                    print("❌ No documents")
                     return
                 }
                 
-                self.meals = documents.compactMap { doc -> Meal? in
-                    return Meal(from: doc.data())
+                print("📦 Got \(documents.count) total documents")
+                
+                // Parse all meals
+                let parsedMeals = documents.compactMap { Meal(from: $0.data()) }
+                print("✅ Parsed \(parsedMeals.count) meals")
+                
+                // Filter in memory
+                var filteredMeals = parsedMeals
+                
+                // ✅ Filter by time (0 to maxTimeToCook)
+                filteredMeals = filteredMeals.filter { $0.timeToCook <= maxTimeToCook }
+                print("⏱️ After time filter (0-\(maxTimeToCook)): \(filteredMeals.count) meals")
+                
+                // ✅ Filter by category (exact match)
+                if let category = category, !category.isEmpty, category != "All" {
+                    let categoryId = self.mapCategoryToId(category)
+                    filteredMeals = filteredMeals.filter { $0.categoryId == categoryId }
+                    print("📁 After category filter (\(category) only): \(filteredMeals.count) meals")
                 }
                 
-                print("✅ Found \(self.meals.count) meals matching criteria")
+                // ✅ Filter by serving size
+                filteredMeals = filteredMeals.filter { $0.servingSize >= portionSize }
+                print("🍽️ After serving size filter (>= \(portionSize)): \(filteredMeals.count) meals")
+                
+                // ✅ Filter by difficulty (inclusive - selected level and below)
+                if let difficulty = difficulty, !difficulty.isEmpty {
+                    let maxDifficultyInt = self.mapDifficultyToInt(difficulty)
+                    filteredMeals = filteredMeals.filter {
+                        self.mapDifficultyEnumToInt($0.difficulty) <= maxDifficultyInt
+                    }
+                    print("🎯 After difficulty filter (<= \(difficulty)): \(filteredMeals.count) meals")
+                }
+                
+                // ✅ Filter by food preference (Both = show all, Veg = 0 only, Non-Veg = 1 only)
+                if let preference = foodPreference {
+                    if preference == "Veg" {
+                        // Only veg (0)
+                        filteredMeals = filteredMeals.filter { $0.preferences == 0 }
+                        print("🥗 After veg filter (0 only): \(filteredMeals.count) meals")
+                    } else if preference == "Non-Veg" {
+                        // Only non-veg (1)
+                        filteredMeals = filteredMeals.filter { $0.preferences == 1 }
+                        print("🍗 After non-veg filter (1 only): \(filteredMeals.count) meals")
+                    }
+                    // "Both" = don't filter, show all (0 and 1)
+                }
+                
+                self.meals = filteredMeals
+                print("✅ FINAL RESULT: \(self.meals.count) meals")
+                
+                if self.meals.isEmpty {
+                    print("⚠️ No meals found. Try relaxing filters.")
+                } else {
+                    print("📋 Meal names:")
+                    self.meals.forEach { print("   - \($0.name) (difficulty: \($0.difficulty.rawValue), preference: \($0.preferences))") }
+                }
             }
         }
     }
@@ -77,7 +110,7 @@ class NoshViewModel: ObservableObject {
         switch category {
         case "Snack": return 1
         case "Drinks": return 2
-        case "Appetizer": return 5
+        case "Appetizer": return 3
         case "Full Meal": return 4
         default: return 4
         }
@@ -93,12 +126,12 @@ class NoshViewModel: ObservableObject {
         }
     }
     
-    private func mapPreferenceToInt(_ preference: String) -> Int {
-        switch preference {
-        case "Veg": return 1
-        case "Non-Veg": return 2
-        case "Both": return 0
-        default: return 0
+    private func mapDifficultyEnumToInt(_ difficulty: Meal.Difficulty) -> Int {
+        switch difficulty {
+        case .easy: return 1
+        case .novice: return 2
+        case .intermediate: return 3
+        case .professional: return 4
         }
     }
 }

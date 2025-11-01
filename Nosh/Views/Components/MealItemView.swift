@@ -5,15 +5,21 @@ struct MealItemView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Thumbnail
-            Image(meal.imageName)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 60, height: 60)
-                .cornerRadius(8)
-                .clipped()
+            // Thumbnail - AsyncImage
+            AsyncImage(url: URL(string: meal.imageName)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                ZStack {
+                    Color.gray.opacity(0.3)
+                    ProgressView()
+                }
+            }
+            .frame(width: 60, height: 60)
+            .cornerRadius(8)
+            .clipped()
             
-            // Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(meal.name)
                     .font(.subheadline)
@@ -21,7 +27,6 @@ struct MealItemView: View {
                     .foregroundColor(.primary)
                 
                 HStack(spacing: 12) {
-                    // Time
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.caption2)
@@ -30,7 +35,6 @@ struct MealItemView: View {
                     }
                     .foregroundColor(.secondary)
                     
-                    // Servings
                     HStack(spacing: 4) {
                         Image(systemName: "person.2")
                             .font(.caption2)
@@ -43,7 +47,6 @@ struct MealItemView: View {
             
             Spacer()
             
-            // Pantry indicator
             if meal.isAvailableInPantry {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
