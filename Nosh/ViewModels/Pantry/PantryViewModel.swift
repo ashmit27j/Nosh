@@ -17,30 +17,198 @@ final class PantryViewModel: ObservableObject {
         self.pantryFileURL = docs.appendingPathComponent("pantry.json")
     }
 
-    private func setupDummyItems() {
-        for tab in tabs where tab != "All" {
-            items[tab] = dummyItems(for: tab)
+    // MARK: - Initialization
+    
+    func initializeDefaultPantry() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            // No user - load from local or dummy
+            if UserDefaults.standard.data(forKey: "pantryItems") != nil {
+                loadFromUserDefaults()
+            } else {
+                setupDummyItems()
+            }
+            return
         }
-        refresh()
+        
+        // Check if already initialized
+        db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
+            if let data = snapshot?.data(), data["pantryInitialized"] as? Bool == true {
+                print("✅ Pantry already initialized")
+                self.loadPantry()
+                return
+            }
+            
+            print("🔄 Initializing default pantry for new user...")
+            
+            // Get default items
+            let defaultItems = self.getDefaultPantryItems()
+            
+            // Populate items dictionary
+            for (category, itemList) in defaultItems {
+                self.items[category] = itemList
+            }
+            
+            self.updateAllTab()
+            self.savePantry()
+            
+            // Mark as initialized
+            self.db.collection("users").document(userId).setData([
+                "pantryInitialized": true
+            ], merge: true) { error in
+                if let error = error {
+                    print("❌ Error marking pantry initialized: \(error)")
+                } else {
+                    print("✅ Pantry initialized with default items")
+                }
+            }
+        }
+    }
+    
+    private func getDefaultPantryItems() -> [String: [PantryItem]] {
+        var items: [String: [PantryItem]] = [:]
+        
+        // Grains & Flours
+        items["Grains & Flours"] = [
+            PantryItem(id: UUID(), name: "All-purpose flour", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Wheat flour", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Rice", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Popcorn kernels", quantity: 0, incrementBy: 50)
+        ]
+        
+        // Baking
+        items["Baking"] = [
+            PantryItem(id: UUID(), name: "Baking powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Baking soda", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Cocoa powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Vanilla extract", quantity: 0, incrementBy: 1)
+        ]
+        
+        // Dairy
+        items["Dairy"] = [
+            PantryItem(id: UUID(), name: "Butter", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Milk", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Full cream milk", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Cream", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Whipped cream", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Yogurt", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Paneer", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Shredded cheese", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Sour cream", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Milk powder", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Eggs", quantity: 0, incrementBy: 1)
+        ]
+        
+        // Vegetables
+        items["Vegetables"] = [
+            PantryItem(id: UUID(), name: "Onions", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Tomatoes", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Potatoes", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Bell peppers", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Cherry tomatoes", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Green peas", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Spinach", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Zucchini", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Jalapeños", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Mixed vegetables", quantity: 0, incrementBy: 100)
+        ]
+        
+        // Proteins
+        items["Proteins"] = [
+            PantryItem(id: UUID(), name: "Chicken", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Chicken breast", quantity: 0, incrementBy: 100)
+        ]
+        
+        // Spices
+        items["Spices"] = [
+            PantryItem(id: UUID(), name: "Salt", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Black pepper", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Red chili powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Cumin powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Cumin seeds", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Garam masala", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Biryani masala", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Chaat masala", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Cardamom powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Paprika", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Garlic powder", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Kasuri methi", quantity: 0, incrementBy: 1)
+        ]
+        
+        // Oils
+        items["Oils"] = [
+            PantryItem(id: UUID(), name: "Oil", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Olive oil", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Ghee", quantity: 0, incrementBy: 50)
+        ]
+        
+        // Aromatics
+        items["Aromatics"] = [
+            PantryItem(id: UUID(), name: "Garlic cloves", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Ginger-garlic paste", quantity: 0, incrementBy: 1)
+        ]
+        
+        // Herbs
+        items["Herbs"] = [
+            PantryItem(id: UUID(), name: "Fresh mint leaves", quantity: 0, incrementBy: 10),
+            PantryItem(id: UUID(), name: "Mint leaves", quantity: 0, incrementBy: 10),
+            PantryItem(id: UUID(), name: "Parsley", quantity: 0, incrementBy: 10)
+        ]
+        
+        // Sweeteners
+        items["Sweeteners"] = [
+            PantryItem(id: UUID(), name: "Sugar", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Honey", quantity: 0, incrementBy: 10)
+        ]
+        
+        // Condiments
+        items["Condiments"] = [
+            PantryItem(id: UUID(), name: "Tomato puree", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Salsa", quantity: 0, incrementBy: 50)
+        ]
+        
+        // Beverages
+        items["Beverages"] = [
+            PantryItem(id: UUID(), name: "Coffee", quantity: 0, incrementBy: 10),
+            PantryItem(id: UUID(), name: "Water", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Hot water", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Soda water", quantity: 0, incrementBy: 100)
+        ]
+        
+        // Fruits
+        items["Fruits"] = [
+            PantryItem(id: UUID(), name: "Lime", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Lime slices", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Lemon juice", quantity: 0, incrementBy: 10),
+            PantryItem(id: UUID(), name: "Fresh mangoes", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Watermelon", quantity: 0, incrementBy: 100)
+        ]
+        
+        // Specialty
+        items["Specialty"] = [
+            PantryItem(id: UUID(), name: "Saffron", quantity: 0, incrementBy: 0.1),
+            PantryItem(id: UUID(), name: "Rose water", quantity: 0, incrementBy: 10),
+            PantryItem(id: UUID(), name: "Dark chocolate", quantity: 0, incrementBy: 50)
+        ]
+        
+        // Snacks
+        items["Snacks"] = [
+            PantryItem(id: UUID(), name: "Bread loaf", quantity: 0, incrementBy: 1),
+            PantryItem(id: UUID(), name: "Tortilla chips", quantity: 0, incrementBy: 50),
+            PantryItem(id: UUID(), name: "Black olives", quantity: 0, incrementBy: 10)
+        ]
+        
+        // Others
+        items["Others"] = [
+            PantryItem(id: UUID(), name: "Ice cubes", quantity: 0, incrementBy: 10)
+        ]
+        
+        return items
     }
 
-    func dummyItems(for tab: String) -> [PantryItem] {
-        let names: [String]
-        switch tab {
-        case "Vegetables": names = ["Tomato", "Onion", "Potato"]
-        case "Fruits": names = ["Apple", "Banana", "Mango"]
-        case "Dairy": names = ["Milk", "Cheese", "Curd"]
-        case "Spices": names = ["Turmeric", "Chili Powder", "Cumin"]
-        case "Condiments": names = ["Ketchup", "Mayonnaise", "Soy Sauce"]
-        case "Oils": names = ["Sunflower Oil", "Olive Oil"]
-        case "Instant": names = ["Noodles", "Soup Pack", "Instant Coffee"]
-        case "Drinks": names = ["Juice", "Cola", "Water Bottle"]
-        default: names = []
-        }
-
-        return names.map { PantryItem(id: UUID(), name: $0, quantity: 0, incrementBy: 0.5) }
-    }
-
+    // MARK: - CRUD Operations
+    
     func increment(_ item: PantryItem, in category: String) {
         guard var list = items[category],
               let index = list.firstIndex(where: { $0.id == item.id }) else { return }
@@ -80,6 +248,8 @@ final class PantryViewModel: ObservableObject {
         refresh()
     }
 
+    // MARK: - Refresh & Sorting
+    
     func refresh() {
         for tab in tabs where tab != "All" {
             sortItems(for: tab)
@@ -126,6 +296,8 @@ final class PantryViewModel: ObservableObject {
         return "Unknown"
     }
 
+    // MARK: - Save & Load
+    
     func savePantry() {
         // Local Save
         do {
@@ -149,6 +321,7 @@ final class PantryViewModel: ObservableObject {
 
     func loadPantry() {
         guard let userId = Auth.auth().currentUser?.uid else {
+            // No user - load from local
             if UserDefaults.standard.data(forKey: "pantryItems") != nil {
                 loadFromUserDefaults()
             } else {
@@ -157,40 +330,30 @@ final class PantryViewModel: ObservableObject {
             return
         }
         
+        // User logged in - load from Firestore
         db.collection("users").document(userId).collection("pantry").document("items").getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
             
             if let error = error {
                 print("❌ Failed to load from Firestore: \(error)")
-                if UserDefaults.standard.data(forKey: "pantryItems") != nil {
-                    self.loadFromUserDefaults()
-                } else {
-                    self.setupDummyItems()
-                }
                 return
             }
             
             guard let data = snapshot?.data(),
                   !data.isEmpty,
                   let jsonData = try? JSONSerialization.data(withJSONObject: data) else {
-                if UserDefaults.standard.data(forKey: "pantryItems") != nil {
-                    self.loadFromUserDefaults()
-                } else {
-                    self.setupDummyItems()
-                }
+                print("⚠️ No pantry data in Firestore")
                 return
             }
             
             do {
                 self.items = try JSONDecoder().decode([String: [PantryItem]].self, from: jsonData)
                 self.updateAllTab()
+                
+                // Also update UserDefaults
+                self.savePantry()
             } catch {
                 print("❌ Failed to decode Firestore data: \(error)")
-                if UserDefaults.standard.data(forKey: "pantryItems") != nil {
-                    self.loadFromUserDefaults()
-                } else {
-                    self.setupDummyItems()
-                }
             }
         }
     }
@@ -203,5 +366,35 @@ final class PantryViewModel: ObservableObject {
         } catch {
             print("❌ Failed to load pantry: \(error)")
         }
+    }
+    
+    func clearPantry() {
+        items = [:]
+        UserDefaults.standard.removeObject(forKey: "pantryItems")
+        print("🗑️ Pantry cleared")
+    }
+
+    // MARK: - Dummy Data (Fallback)
+    
+    private func setupDummyItems() {
+        for tab in tabs where tab != "All" {
+            items[tab] = dummyItems(for: tab)
+        }
+        refresh()
+    }
+
+    func dummyItems(for tab: String) -> [PantryItem] {
+        let names: [String]
+        switch tab {
+        case "Vegetables": names = ["Tomato", "Onion", "Potato"]
+        case "Fruits": names = ["Apple", "Banana", "Mango"]
+        case "Dairy": names = ["Milk", "Cheese", "Curd"]
+        case "Spices": names = ["Turmeric", "Chili Powder", "Cumin"]
+        case "Condiments": names = ["Ketchup", "Mayonnaise", "Soy Sauce"]
+        case "Oils": names = ["Sunflower Oil", "Olive Oil"]
+        default: names = []
+        }
+
+        return names.map { PantryItem(id: UUID(), name: $0, quantity: 0, incrementBy: 0.5) }
     }
 }

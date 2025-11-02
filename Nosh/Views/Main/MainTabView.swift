@@ -2,8 +2,30 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab: Tab = .home
-    @StateObject private var sharedViewModel = MealPlannerViewModel(tabs: [
+    
+    // Shared ViewModels
+    @StateObject private var mealPlannerViewModel = MealPlannerViewModel(tabs: [
         "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+    ])
+    
+    @StateObject private var pantryViewModel = PantryViewModel(tabs: [
+        "All",
+        "Grains & Flours",
+        "Baking",
+        "Dairy",
+        "Vegetables",
+        "Proteins",
+        "Spices",
+        "Oils",
+        "Aromatics",
+        "Herbs",
+        "Sweeteners",
+        "Condiments",
+        "Beverages",
+        "Fruits",
+        "Specialty",
+        "Snacks",
+        "Others"
     ])
 
     enum Tab: CaseIterable {
@@ -26,7 +48,7 @@ struct MainTabView: View {
                 switch selectedTab {
                 case .home:
                     Home(
-                        viewModel: sharedViewModel,
+                        viewModel: mealPlannerViewModel,
                         onSwitchToMealPlanner: {
                             withAnimation {
                                 selectedTab = .mealPlanner
@@ -34,13 +56,13 @@ struct MainTabView: View {
                         }
                     )
                 case .mealPlanner:
-                    MealPlanner(viewModel: sharedViewModel)
+                    MealPlanner(viewModel: mealPlannerViewModel)
                 case .nosh:
                     Nosh()
                 case .pantry:
-                    Pantry()
+                    Pantry(viewModel: pantryViewModel)
                 case .profile:
-                    Profile()
+                    Profile(pantryViewModel: pantryViewModel)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

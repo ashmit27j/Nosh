@@ -4,6 +4,7 @@ import FirebaseFirestore
 import SDWebImageSwiftUI
 
 struct Profile: View {
+    @ObservedObject var pantryViewModel: PantryViewModel
     @StateObject private var viewModel = UserProfileViewModel()
     @State private var navigateToEdit = false
     @State private var showPopup = false
@@ -111,13 +112,19 @@ struct Profile: View {
                                         popupMessage = "Are you sure you want to log out?"
                                         popupAction = {
                                             do {
+                                                // Clear pantry BEFORE signing out
+                                                pantryViewModel.clearPantry()
+                                                
                                                 try Auth.auth().signOut()
+                                                
+                                                print("✅ Logged out and pantry cleared")
                                             } catch {
                                                 print("Error signing out: \(error.localizedDescription)")
                                             }
                                         }
                                         showPopup = true
                                     }),
+
                                     ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, action: {
                                         popupTitle = "Confirm Deletion"
                                         popupMessage = "Are you sure you want to delete your account? This action is permanent."

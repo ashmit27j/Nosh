@@ -5,7 +5,7 @@ struct Nosh: View {
     @State private var selectedCategory: String? = "Full Meal"
     @State private var selectedPreference: String? = "Both"
     @State private var portionSize: Int = 1
-    @State private var timeToCook: Double = 60  // ← Start at 60 mins
+    @State private var timeToCook: Double = 60
     @State private var selectedDifficulty: String? = "Beginner"
     @State private var showResults: Bool = false
 
@@ -18,11 +18,12 @@ struct Nosh: View {
 
                         CategorySelector(selectedCategory: $selectedCategory)
                         FoodPreferenceSelector(selectedPreference: $selectedPreference)
-//                        PortionSizeSelector(portionSize: $portionSize)
                         DifficultySelector(selectedDifficulty: $selectedDifficulty)
                         TimeToCookSlider(timeToCook: $timeToCook)
-                        // Cook Now Button
+                        
+                        // Find Recipes Button
                         Button(action: {
+                            print("🔍 Find Recipes button tapped")
                             searchMeals()
                         }) {
                             if viewModel.isLoading {
@@ -40,11 +41,6 @@ struct Nosh: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .padding(.horizontal)
                         .disabled(viewModel.isLoading)
-                        
-                        // Results Section
-                        if showResults {
-                            ResultsSection
-                        }
                     }
                     .padding(.bottom, 100)
                     .padding(.top, 56)
@@ -55,51 +51,15 @@ struct Nosh: View {
                 NoshHeader
             }
             .sheet(isPresented: $showResults) {
+                print("📋 Sheet opening with \(viewModel.meals.count) meals")
+            } content: {
                 MealResultsView(meals: viewModel.meals)
             }
         }
     }
     
-    private var ResultsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .padding()
-            } else if viewModel.meals.isEmpty && !viewModel.isLoading {
-                VStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 50))
-                        .foregroundColor(.gray)
-                    Text("No recipes found")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                    Text("Try adjusting your filters")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-            } else {
-                Text("Found \(viewModel.meals.count) recipes")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
-                        ForEach(viewModel.meals) { meal in
-                            MealCardView(meal: meal)
-                                .frame(width: 280)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-            }
-        }
-        .padding(.top)
-    }
-    
     private func searchMeals() {
+        print("🎯 searchMeals() called")
         viewModel.searchMeals(
             category: selectedCategory,
             portionSize: portionSize,
@@ -107,36 +67,40 @@ struct Nosh: View {
             difficulty: selectedDifficulty,
             foodPreference: selectedPreference
         )
-        showResults = true
-    }
-}
-
-private var NoshHeader: some View {
-    HStack(alignment: .center) {
-        Text("Nosh")
-            .font(.largeTitle.bold())
-            .transition(.opacity)
-
-        Spacer()
-
-        Button {
-            print("AI Schedule generator tapped")
-        } label: {
-            HStack(spacing: 8) {
-                Image("cookIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18, height: 18)
-                    .foregroundColor(Color("secondaryAccent"))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .background(Color("primaryAccent"))
-            .cornerRadius(16)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("🍽️ Setting showResults = true with \(viewModel.meals.count) meals")
+            showResults = true
         }
     }
-    .padding(.horizontal)
-    .padding(.vertical, 20)
-    .frame(maxWidth: .infinity, alignment: .top)
-    .background(Color("primaryCard"))
+    
+    private var NoshHeader: some View {
+        HStack(alignment: .center) {
+            Text("Nosh")
+                .font(.largeTitle.bold())
+                .transition(.opacity)
+
+            Spacer()
+
+            Button {
+                print("AI Schedule generator tapped")
+            } label: {
+                HStack(spacing: 8) {
+                    Image("cookIcon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundColor(Color("secondaryAccent"))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+                .background(Color("primaryAccent"))
+                .cornerRadius(16)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .background(Color("primaryCard"))
+    }
 }

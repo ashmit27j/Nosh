@@ -9,10 +9,8 @@ struct Pantry: View {
     @State private var showShoppingList = false
 
     @Namespace private var underlineNamespace
-    @StateObject private var viewModel = PantryViewModel(tabs: [
-        "All", "Vegetables", "Fruits", "Dairy", "Spices", "Condiments", "Oils", "Instant", "Drinks"
-    ])
-
+    @ObservedObject var viewModel: PantryViewModel
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -34,7 +32,7 @@ struct Pantry: View {
                 ShoppingListView(viewModel: viewModel)
             }
             .onAppear {
-                viewModel.loadPantry()
+                viewModel.initializeDefaultPantry()
             }
         }
     }
