@@ -5,15 +5,36 @@ struct MealItemView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Thumbnail - AsyncImage
-            AsyncImage(url: URL(string: meal.imageName)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                ZStack {
+            // Thumbnail - AsyncImage with optional imageName
+            let imageURL: URL? = {
+                guard let imageName = meal.imageName,
+                      !imageName.isEmpty,
+                      let url = URL(string: imageName) else {
+                    return nil
+                }
+                return url
+            }()
+            
+            AsyncImage(url: imageURL) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.gray.opacity(0.3)
+                        ProgressView()
+                    }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    Image(systemName: "photo")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundColor(.gray)
+                        .padding(8)
+                        .background(Color.gray.opacity(0.2))
+                @unknown default:
                     Color.gray.opacity(0.3)
-                    ProgressView()
                 }
             }
             .frame(width: 60, height: 60)

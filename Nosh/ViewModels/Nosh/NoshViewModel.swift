@@ -28,9 +28,7 @@ class NoshViewModel: ObservableObject {
         print("   Food Preference: \(foodPreference ?? "Both")")
         
         // Get ALL recipes (no index needed)
-        db.collection("recipes").getDocuments { [weak self] snapshot, error in
-            guard let self = self else { return }
-            
+        db.collection("recipes").getDocuments { snapshot, error in
             DispatchQueue.main.async {
                 self.isLoading = false
                 
@@ -48,14 +46,16 @@ class NoshViewModel: ObservableObject {
                 print("📦 Got \(documents.count) total documents")
                 
                 // Parse all meals
-                let parsedMeals = documents.compactMap { Meal(from: $0.data()) }
+                let parsedMeals = documents.compactMap { doc in
+                    try? doc.data(as: Meal.self)
+                }
                 print("✅ Parsed \(parsedMeals.count) meals")
                 
                 // Filter in memory
                 var filteredMeals = parsedMeals
                 
-                // ✅ Filter by time (0 to maxTimeToCook)
-                filteredMeals = filteredMeals.filter { $0.timeToCook <= maxTimeToCook }
+                // ✅ Filter by time (0 to maxTimeToCook) - NOW USES timeInMinutes
+                filteredMeals = filteredMeals.filter { $0.timeInMinutes <= maxTimeToCook }
                 print("⏱️ After time filter (0-\(maxTimeToCook)): \(filteredMeals.count) meals")
                 
                 // ✅ Filter by category (exact match)

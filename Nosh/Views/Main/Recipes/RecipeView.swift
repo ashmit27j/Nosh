@@ -32,7 +32,16 @@ struct RecipeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     ZStack(alignment: .topTrailing) {
-                        AsyncImage(url: URL(string: meal.imageName.isEmpty ? "invalid" : meal.imageName)) { phase in
+                        let imageURL: URL? = {
+                            guard let imageName = meal.imageName,
+                                  !imageName.isEmpty,
+                                  let url = URL(string: imageName) else {
+                                return nil
+                            }
+                            return url
+                        }()
+                        
+                        AsyncImage(url: imageURL) { phase in
                             switch phase {
                             case .empty:
                                 ZStack {

@@ -8,7 +8,16 @@ struct MealCardView: View {
             RecipeView(meal: meal)
         } label: {
             VStack(alignment: .leading, spacing: 0) {
-                AsyncImage(url: URL(string: meal.imageName.isEmpty ? "invalid" : meal.imageName)) { phase in
+                let imageURL: URL? = {
+                    guard let imageName = meal.imageName,
+                          !imageName.isEmpty,
+                          let url = URL(string: imageName) else {
+                        return nil
+                    }
+                    return url
+                }()
+                
+                AsyncImage(url: imageURL) { phase in
                     switch phase {
                     case .empty:
                         ZStack {
@@ -51,7 +60,7 @@ struct MealCardView: View {
                             Image(systemName: "clock")
                                 .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
-                            Text("\(meal.timeToCook) min")
+                            Text(meal.timeToCook)  // Already a String like "100 mins"
                                 .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                         }

@@ -1,86 +1,59 @@
 import Foundation
+import FirebaseFirestore
 
 struct Meal: Identifiable, Hashable, Codable {
-    let id: String
+    @DocumentID var id: String?
     var name: String
     var description: String
-    var imageName: String
-    var timeToCook: Int // in minutes (maps to time_to_cook)
-    var servingSize: Int // maps to serving_size
+    var imageName: String?
+    var timeToCook: String
+    var servingSize: Int
     var difficulty: Difficulty
-    var categoryId: Int // maps to category_id (3 = cupcakes from your example)
-    var preferences: Int // 0 = both, 1 = veg, 2 = non-veg
-    var ingredients: [String] // array of ingredients
-    var steps: [String] // array of cooking steps
-    var nutritionalContent: String // e.g., "Calories: 333 kcal, Protein: 7g"
+    var categoryId: Int
+    var preferences: Int
+    var ingredients: [String]
+    var steps: [String]
+    var nutritionalContent: String
     var isAvailableInPantry: Bool
     
-    enum Difficulty: String, Codable {
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case description
+        case imageName = "image"
+        case timeToCook = "time_to_cook"
+        case servingSize = "serving_size"
+        case difficulty
+        case categoryId = "category_id"
+        case preferences
+        case ingredients
+        case steps
+        case nutritionalContent = "nutritional_content"
+        case isAvailableInPantry = "is_available_in_pantry"
+    }
+    
+    enum Difficulty: String, Codable, CaseIterable {
         case easy = "Easy"
         case novice = "Novice"
         case intermediate = "Intermediate"
         case professional = "Professional"
-        
-        var color: String {
-            switch self {
-            case .easy: return "green"
-            case .novice: return "blue"
-            case .intermediate: return "orange"
-            case .professional: return "red"
-            }
-        }
     }
     
-    // Category mapping
-    enum Category: Int {
-        case snack = 1
-        case drinks = 2
-        case cupcakes = 3 // from your data
-        case fullMeal = 4
-        case appetizer = 5
-        
-        var name: String {
-            switch self {
-            case .snack: return "Snack"
-            case .drinks: return "Drinks"
-            case .cupcakes: return "Dessert"
-            case .fullMeal: return "Full Meal"
-            case .appetizer: return "Appetizer"
-            }
+    // Helper to get numeric minutes
+    var timeInMinutes: Int {
+        let digits = timeToCook.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        if let minutes = Int(digits), minutes > 0 {
+            return minutes
         }
+        return 999
     }
     
-    // Preference mapping
-    enum FoodPreference: Int {
-        case both = 0
-        case veg = 1
-        case nonVeg = 2
-        
-        var displayName: String {
-            switch self {
-            case .both: return "Both"
-            case .veg: return "Veg"
-            case .nonVeg: return "Non-Veg"
-            }
-        }
-    }
-    
-    // Default initializer
-    init(
-        id: String = UUID().uuidString,
-        name: String,
-        description: String = "Delicious homemade dish",
-        imageName: String,
-        timeToCook: Int,
-        servingSize: Int,
-        difficulty: Difficulty,
-        categoryId: Int = 4,
-        preferences: Int = 0,
-        ingredients: [String] = [],
-        steps: [String] = [],
-        nutritionalContent: String = "",
-        isAvailableInPantry: Bool = false
-    ) {
+    // Memberwise initializer
+    init(id: String? = nil, name: String, description: String = "",
+         imageName: String? = nil, timeToCook: String, servingSize: Int,
+         difficulty: Difficulty, categoryId: Int = 4, preferences: Int = 0,
+         ingredients: [String] = [], steps: [String] = [],
+         nutritionalContent: String = "", isAvailableInPantry: Bool = false) {
         self.id = id
         self.name = name
         self.description = description
@@ -95,109 +68,58 @@ struct Meal: Identifiable, Hashable, Codable {
         self.nutritionalContent = nutritionalContent
         self.isAvailableInPantry = isAvailableInPantry
     }
-}
-
-// MARK: - Firestore Extension
-// In Meal.swift, update the init?(from document:) method
-extension Meal {
-    init?(from document: [String: Any]) {
-        // Debug: Print what we're receiving
-        print("📄 Parsing document data: \(document)")
+    
+    // Custom decoder - ALL fields have fallback values
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        guard let id = document["id"] as? String,
-              let name = document["name"] as? String else {
-            print("❌ Missing required fields: id or name")
-            return nil
-        }
+        // ID
+        id = try? container.decode(String.self, forKey: .id)
         
-        print("✅ Found ID: \(id), Name: \(name)")
+        // Name (required, defaults to "Untitled Recipe")
+        name = (try? container.decode(String.self, forKey: .name)) ?? "Untitled Recipe"
         
-        // Make image optional with fallback
-        let imageName = document["image"] as? String ?? "frankieImage"
+        // Description (defaults to empty)
+        description = (try? container.decode(String.self, forKey: .description)) ?? ""
         
-        // Parse time_to_cook - handle both String and Int
-        let timeToCook: Int
-        if let timeInt = document["time_to_cook"] as? Int {
-            timeToCook = timeInt
-        } else if let timeString = document["time_to_cook"] as? String {
-            // Extract number from string like "100 mins"
-            let numbers = timeString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-            timeToCook = Int(numbers) ?? 30
-        } else {
-            timeToCook = 30
-        }
+        // Image (optional, defaults to nil)
+        imageName = try? container.decode(String.self, forKey: .imageName)
         
-        // Parse serving_size
-        let servingSize = document["serving_size"] as? Int ?? 2
+        // Time to cook (defaults to "30 mins")
+        timeToCook = (try? container.decode(String.self, forKey: .timeToCook)) ?? "30 mins"
         
-        // Other fields with defaults
-        let description = document["description"] as? String ?? "Delicious dish"
-        let categoryId = document["category_id"] as? Int ?? 4
-        let preferences = document["preferences"] as? Int ?? 0
-        let nutritionalContent = document["nutritional_content"] as? String ?? ""
-        let isAvailable = document["is_available_in_pantry"] as? Bool ?? false
+        // Serving size (defaults to 1)
+        servingSize = (try? container.decode(Int.self, forKey: .servingSize)) ?? 1
         
-        // Parse ingredients array
-        let ingredients: [String]
-        if let ingredientsArray = document["ingredients"] as? [Any] {
-            ingredients = ingredientsArray.compactMap { item in
-                // Handle both string and dictionary formats
-                if let str = item as? String {
-                    return str
-                } else if let dict = item as? [String: Any] {
-                    // Get first value from dictionary
-                    return dict.values.first as? String
-                }
-                return nil
+        // Difficulty (handle Int or fallback to easy)
+        if let diffInt = try? container.decode(Int.self, forKey: .difficulty) {
+            switch diffInt {
+            case 1: difficulty = .easy
+            case 2: difficulty = .novice
+            case 3: difficulty = .intermediate
+            case 4: difficulty = .professional
+            default: difficulty = .easy
             }
-            print("   📝 Parsed \(ingredients.count) ingredients")
         } else {
-            ingredients = []
+            difficulty = .easy
         }
         
-        // Parse steps - handle dictionary format
-        let steps: [String]
-        if let stepsDict = document["steps"] as? [String: Any] {
-            // Dictionary format like {"0": "Mix flour", "1": "Add eggs"}
-            steps = stepsDict.keys.sorted().compactMap { key in
-                stepsDict[key] as? String
-            }
-            print("   📋 Parsed \(steps.count) steps from dictionary")
-        } else if let stepsArray = document["steps"] as? [String] {
-            steps = stepsArray
-            print("   📋 Parsed \(steps.count) steps from array")
-        } else {
-            steps = []
-        }
+        // Category ID (defaults to 4 = Full Meal)
+        categoryId = (try? container.decode(Int.self, forKey: .categoryId)) ?? 4
         
-        // Parse difficulty (integer in Firestore)
-        let difficultyInt = document["difficulty"] as? Int ?? 1
-        let difficulty: Difficulty = {
-            switch difficultyInt {
-            case 1: return .easy
-            case 2: return .novice
-            case 3: return .intermediate
-            case 4: return .professional
-            default: return .easy
-            }
-        }()
+        // Preferences (defaults to 0 = vegetarian)
+        preferences = (try? container.decode(Int.self, forKey: .preferences)) ?? 0
         
-        print("   ✅ Successfully parsed meal: \(name)")
+        // Ingredients (defaults to empty array)
+        ingredients = (try? container.decode([String].self, forKey: .ingredients)) ?? []
         
-        self.init(
-            id: id,
-            name: name,
-            description: description,
-            imageName: imageName,
-            timeToCook: timeToCook,
-            servingSize: servingSize,
-            difficulty: difficulty,
-            categoryId: categoryId,
-            preferences: preferences,
-            ingredients: ingredients,
-            steps: steps,
-            nutritionalContent: nutritionalContent,
-            isAvailableInPantry: isAvailable
-        )
+        // Steps (defaults to empty array)
+        steps = (try? container.decode([String].self, forKey: .steps)) ?? []
+        
+        // Nutritional content (defaults to empty)
+        nutritionalContent = (try? container.decode(String.self, forKey: .nutritionalContent)) ?? ""
+        
+        // Pantry availability (defaults to false)
+        isAvailableInPantry = (try? container.decode(Bool.self, forKey: .isAvailableInPantry)) ?? false
     }
 }

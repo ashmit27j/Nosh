@@ -75,13 +75,21 @@ struct MealListView: View {
     
     // MARK: - Helper Function
     private func sampleMeal() -> Meal {
-        return Meal(
+        let meal = Meal(
+            id: UUID().uuidString,
             name: "Sample Dish",
+            description: "Delicious homemade dish",
             imageName: "frankieImage",
-            timeToCook: 30,
+            timeToCook: "30 mins",  // Changed to String
             servingSize: 2,
             difficulty: .easy,
+            categoryId: 4,
+            preferences: 0,
+            ingredients: ["Sample ingredient"],
+            steps: ["Sample step"],
+            nutritionalContent: "",
             isAvailableInPantry: false
         )
+        return meal
     }
 }

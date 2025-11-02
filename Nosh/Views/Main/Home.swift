@@ -1,18 +1,21 @@
 import SwiftUI
 
-struct Home: View {
-    // Home button vars
-    @State private var showRandomDish = false
-    @State private var randomMeal: Meal? = nil // ← ONLY CHANGE: MealItem to Meal
+struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
 
-    // Other vars
+struct Home: View {
+    @State private var showRandomDish = false
+    @State private var randomMeal: Meal? = nil
+    @State private var isLoadingMeal = false
+
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
     @State private var isEditing = false
     @State private var selectedCategory: String? = ""
-    @State private var portionSize: Int = 1
-    @State private var timeToCook: Double = 45
-    @State private var selectedDifficulty: String? = "Beginner"
 
     let viewModel: MealPlannerViewModel
     let onSwitchToMealPlanner: () -> Void
@@ -41,8 +44,12 @@ struct Home: View {
                             get: { showRandomDish },
                             set: { newValue in
                                 if newValue {
-                                    randomMeal = viewModel.generateRandomMeal()
+                                    isLoadingMeal = true
                                     showRandomDish = true
+                                    viewModel.fetchRandomMeal { meal in
+                                        randomMeal = meal
+                                        isLoadingMeal = false
+                                    }
                                 } else {
                                     showRandomDish = false
                                 }
@@ -61,7 +68,6 @@ struct Home: View {
                     }
                     .padding(.top, 146)
                     .padding(.bottom, 100)
-                    #warning("this is the thing that pushes all content down by 100 pixels")
                 }
                 .scrollIndicators(.hidden)
                 .coordinateSpace(name: "scroll")
@@ -75,14 +81,17 @@ struct Home: View {
                     .zIndex(1)
             }
             .sheet(isPresented: $showRandomDish) {
-                if let meal = randomMeal {
-                    RandomDishSheet(meal: meal) {
-                        randomMeal = viewModel.generateRandomMeal()
+                RandomDishSheet(
+                    meal: randomMeal,
+                    isLoading: isLoadingMeal,
+                    onRollAgain: {
+                        isLoadingMeal = true
+                        viewModel.fetchRandomMeal { meal in
+                            randomMeal = meal
+                            isLoadingMeal = false
+                        }
                     }
-                } else {
-                    ProgressView("Loading...")
-                        .padding()
-                }
+                )
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -103,7 +112,6 @@ struct Home: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 18, height: 18)
-//                        .foregroundColor(Color("secondaryAccent"))
                         .foregroundColor(.white)
                         .padding(12)
                         .background(Color("secondaryButton"))
@@ -131,12 +139,5 @@ struct Home: View {
         }
         .padding()
         .background(Color("primaryCard"))
-    }
-}
-
-struct ScrollOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
