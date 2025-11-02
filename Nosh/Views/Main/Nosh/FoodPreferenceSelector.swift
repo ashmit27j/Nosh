@@ -1,11 +1,3 @@
-//
-//  FoodPreferenceSelector.swift
-//  Nosh
-//
-//  Created by MacBook on 01/11/25.
-//
-
-
 import SwiftUI
 
 struct FoodPreferenceSelector: View {
@@ -23,7 +15,7 @@ struct FoodPreferenceSelector: View {
                 Text("Food Preference")
                     .font(.headline)
 
-                HStack {
+                HStack(spacing: 12) {
                     ForEach(preferences.indices, id: \.self) { index in
                         let preference = preferences[index]
                         VStack(spacing: 10) {
@@ -34,7 +26,8 @@ struct FoodPreferenceSelector: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 28, height: 28)
-                                    .frame(width: 70, height: 70)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 70)
                                     .foregroundColor(.white)
                                     .background(
                                         selectedPreference == preference.name
@@ -48,9 +41,7 @@ struct FoodPreferenceSelector: View {
                                 .font(.caption)
                                 .foregroundColor(.primary)
                         }
-                        if index != preferences.count - 1 {
-                            Spacer()
-                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
             }

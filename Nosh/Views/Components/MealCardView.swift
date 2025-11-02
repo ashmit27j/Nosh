@@ -36,37 +36,47 @@ struct MealCardView: View {
                 
                 VStack(alignment: .leading, spacing: 12) {
                     Text(meal.name)
-                        .font(.headline)
+                        .font(.title3)
+                        .fontWeight(.semibold)
                         .foregroundColor(Color("primaryText"))
                         .lineLimit(1)
                     
                     Text(meal.description)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundColor(Color("secondaryText"))
                         .lineLimit(2)
                     
                     HStack(spacing: 16) {
                         HStack(spacing: 4) {
                             Image(systemName: "clock")
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                             Text("\(meal.timeToCook) min")
-                                .font(.caption)
+                                .font(.subheadline)
+                                .foregroundColor(Color("secondaryText"))
+                        }
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.2")
+                                .font(.subheadline)
+                                .foregroundColor(Color("secondaryText"))
+                            Text("\(meal.servingSize)")
+                                .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                         }
                         
                         HStack(spacing: 4) {
                             Circle()
                                 .fill(difficultyColor(for: meal.difficulty))
-                                .frame(width: 6, height: 6)
+                                .frame(width: 8, height: 8)
                             Text(meal.difficulty.rawValue)
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                         }
                     }
                     
                     Text("Cook Now")
-                        .font(.subheadline)
+                        .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(Color("primaryButtonText"))
                         .frame(maxWidth: .infinity)

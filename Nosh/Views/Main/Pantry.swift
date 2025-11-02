@@ -5,6 +5,8 @@ struct Pantry: View {
     @State private var searchText = ""
     @State private var isEditing = false
     @State private var selectedTab = "All"
+    @State private var showAddItemSheet = false
+    @State private var showShoppingList = false
 
     @Namespace private var underlineNamespace
     @StateObject private var viewModel = PantryViewModel(tabs: [
@@ -21,43 +23,45 @@ struct Pantry: View {
             .navigationBarTitleDisplayMode(.inline)
             .overlay(
                 refreshButton
-                    .padding(.bottom, 80)
+                    .padding(.bottom, 100)
                     .padding(.trailing)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             )
+            .sheet(isPresented: $showAddItemSheet) {
+                AddItemSheet(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showShoppingList) {
+                ShoppingListView(viewModel: viewModel)
+            }
+            .onAppear {
+                viewModel.loadPantry()
+            }
         }
     }
 
     private var ScrollContent: some View {
-        ScrollView {
-            GeometryReader { geo in
-                Color.clear
-                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
-            }
-            .frame(height: 0)
-
-            LazyVStack(spacing: 16) {
-                if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
-                    ForEach(currentItems, id: \.id) { item in
-                        PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
-                    }
-
-                    AddItemButton(
-                        category: selectedTab == "All" ? "Vegetables" : selectedTab,
-                        viewModel: viewModel
-                    )
+        List {
+            if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
+                ForEach(currentItems, id: \.id) { item in
+                    PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
+                
+                AddItemButton(
+                    category: selectedTab == "All" ? "Vegetables" : selectedTab,
+                    showAddItemSheet: $showAddItemSheet
+                )
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
-            .padding(.horizontal)
-            .padding(.top, 188)
-            .animation(.easeInOut(duration: 0.3), value: viewModel.items)
-//            .animation(nil, value: viewModel.items)
         }
+        .listStyle(.plain)
         .scrollIndicators(.hidden)
-        .coordinateSpace(name: "scroll")
-        .onPreferenceChange(ScrollOffsetKey.self) { value in
-            scrollOffset = value
-        }
+        .scrollContentBackground(.hidden)
+        .padding(.top, 188)
     }
 
     private var Header: some View {
@@ -70,7 +74,7 @@ struct Pantry: View {
                 Spacer()
 
                 Button {
-                    print("Add tapped")
+                    showShoppingList = true
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "cart.fill")
@@ -132,7 +136,6 @@ struct Pantry: View {
         .animation(.easeInOut(duration: 0.3), value: scrollOffset)
     }
 
-    // MARK: - Floating Refresh Button
     private var refreshButton: some View {
         Button {
             viewModel.refresh()
@@ -148,14 +151,38 @@ struct Pantry: View {
     }
 }
 
+struct AddItemButton: View {
+    let category: String
+    @Binding var showAddItemSheet: Bool
+    
+    var body: some View {
+        Button {
+            showAddItemSheet = true
+        } label: {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                    .foregroundColor(Color("primaryAccent"))
+                Text("Add New Item")
+                    .foregroundColor(Color("primaryText"))
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color("primaryCard"))
+            .cornerRadius(12)
+        }
+    }
+}
 
 struct PantryItemCard: View {
     let item: PantryItem
     let selectedTab: String
     let viewModel: PantryViewModel
+    @State private var showEditSheet = false
+    
     var category: String {
         selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab
     }
+    
     var body: some View {
         HStack(spacing: 0) {
             Rectangle()
@@ -163,34 +190,40 @@ struct PantryItemCard: View {
                 .frame(width: 12, height: 60)
 
             HStack {
-                Text(item.name)
-                    .foregroundColor(item.quantity == 0 ? Color("secondaryButton") : Color("primaryText"))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 2)
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Text(item.name)
+                        .foregroundColor(item.quantity == 0 ? Color("secondaryButton") : Color("primaryText"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 2)
+                }
+                .buttonStyle(.plain)
 
                 HStack(spacing: 4) {
                     Button {
-                        viewModel.decrement(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+                        viewModel.decrement(item, in: category)
                     } label: {
                         Image(systemName: "minus")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Color("secondaryText"))
                             .frame(width: 20, height: 20)
                     }
+                    .buttonStyle(.plain)
 
-                    Text("\(item.quantity)")
-                        .frame(width: 24)
+                    Text(String(format: "%.1f", item.quantity))
+                        .frame(width: 40)
                         .foregroundColor(Color("primaryText"))
 
                     Button {
-                        viewModel.increment(item, in: selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab)
+                        viewModel.increment(item, in: category)
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Color("secondaryText"))
                             .frame(width: 20, height: 20)
                     }
-
+                    .buttonStyle(.plain)
                 }
                 .padding(4)
                 .background(Color("secondaryButton").opacity(item.quantity == 0 ? 0.5 : 0.7))
@@ -201,14 +234,25 @@ struct PantryItemCard: View {
             .background(Color("primaryCard"))
         }
         .cornerRadius(12)
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                withAnimation {
+                    viewModel.deleteItem(item, from: category)
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditItemSheet(item: item, category: category, viewModel: viewModel)
+        }
     }
 
-    private func color(for quantity: Int) -> Color {
+    private func color(for quantity: Double) -> Color {
         switch quantity {
         case 5...: return Color("primaryAccent")
-        case 1...4: return Color("pastelYellow")
+        case 1..<5: return Color("pastelYellow")
         default: return Color("secondaryButton")
         }
     }
 }
-

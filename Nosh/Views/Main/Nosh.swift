@@ -18,10 +18,9 @@ struct Nosh: View {
 
                         CategorySelector(selectedCategory: $selectedCategory)
                         FoodPreferenceSelector(selectedPreference: $selectedPreference)
-                        PortionSizeSelector(portionSize: $portionSize)
-                        TimeToCookSlider(timeToCook: $timeToCook)
+//                        PortionSizeSelector(portionSize: $portionSize)
                         DifficultySelector(selectedDifficulty: $selectedDifficulty)
-                        
+                        TimeToCookSlider(timeToCook: $timeToCook)
                         // Cook Now Button
                         Button(action: {
                             searchMeals()

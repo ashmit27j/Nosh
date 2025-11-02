@@ -1,3 +1,11 @@
+//
+//  EditItemSheet.swift
+//  Nosh
+//
+//  Created by MacBook on 02/11/25.
+//
+
+
 import SwiftUI
 
 struct EditItemSheet: View {
