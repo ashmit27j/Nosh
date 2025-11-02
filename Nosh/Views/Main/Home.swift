@@ -11,6 +11,7 @@ struct Home: View {
     @State private var showRandomDish = false
     @State private var randomMeal: Meal? = nil
     @State private var isLoadingMeal = false
+    @State private var selectedMealForCooking: Meal? = nil  // NEW
 
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
@@ -80,7 +81,15 @@ struct Home: View {
                 HomeHeader
                     .zIndex(1)
             }
-            .sheet(isPresented: $showRandomDish) {
+            // Random dish sheet
+            .sheet(isPresented: $showRandomDish, onDismiss: {
+                // When random sheet closes, check if we need to show cooking view
+                if selectedMealForCooking != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        // Trigger the second sheet
+                    }
+                }
+            }) {
                 RandomDishSheet(
                     meal: randomMeal,
                     isLoading: isLoadingMeal,
@@ -90,8 +99,16 @@ struct Home: View {
                             randomMeal = meal
                             isLoadingMeal = false
                         }
+                    },
+                    onCookNowTapped: { meal in
+                        selectedMealForCooking = meal
+                        showRandomDish = false  // Close random sheet
                     }
                 )
+            }
+            // Cook Now sheet (opens after random sheet closes)
+            .sheet(item: $selectedMealForCooking) { meal in
+                RecipeView(meal: meal)
             }
         }
         .navigationBarTitleDisplayMode(.inline)

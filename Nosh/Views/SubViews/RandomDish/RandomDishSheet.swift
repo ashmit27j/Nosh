@@ -4,6 +4,7 @@ struct RandomDishSheet: View {
     let meal: Meal?
     let isLoading: Bool
     let onRollAgain: () -> Void
+    var onCookNowTapped: ((Meal) -> Void)? = nil  // NEW
 
     var body: some View {
         NavigationStack {
@@ -26,8 +27,11 @@ struct RandomDishSheet: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 400)
                     } else if let meal = meal {
-                        MealCardView(meal: meal)
-                            .padding(.horizontal)
+                        MealCardView(
+                            meal: meal,
+                            onCookNowTapped: onCookNowTapped  // Pass callback
+                        )
+                        .padding(.horizontal)
                     } else {
                         VStack(spacing: 16) {
                             Image(systemName: "exclamationmark.triangle")
