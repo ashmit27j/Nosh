@@ -181,6 +181,20 @@ struct PantryItemCard: View {
         selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab
     }
     
+    // ✅ Smart formatter with proper rounding: shows decimal only if needed
+    private var formattedQuantity: String {
+        let value = item.quantity
+        let rounded = (value * 10).rounded() / 10  // Round to 1 decimal place
+        
+        // Check if rounded value is a whole number
+        if rounded.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(format: "%.0f", rounded)  // No decimal: "5", "100"
+        } else {
+            return String(format: "%.1f", rounded)  // With decimal: "5.3", "5.6"
+        }
+    }
+
+    
     var body: some View {
         HStack(spacing: 0) {
             Rectangle()
@@ -209,8 +223,10 @@ struct PantryItemCard: View {
                     }
                     .buttonStyle(.plain)
 
-                    Text(String(format: "%.1f", item.quantity))
-                        .frame(width: 40)
+                    // ✅ Wider frame + smart formatting
+                    Text(formattedQuantity)
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .frame(width: 60)  // Increased from 40 to 60
                         .foregroundColor(Color("primaryText"))
 
                     Button {
@@ -254,3 +270,4 @@ struct PantryItemCard: View {
         }
     }
 }
+
