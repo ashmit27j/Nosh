@@ -2,7 +2,7 @@ import SwiftUI
 
 struct Nosh: View {
     @StateObject private var viewModel = NoshViewModel()
-    @State private var selectedCategory: String? = "Full Meal"
+    @State private var selectedCategories: Set<String> = ["Full Meal"]  // Changed to Set
     @State private var selectedPreference: String? = "Both"
     @State private var portionSize: Int = 1
     @State private var timeToCook: Double = 60
@@ -16,7 +16,10 @@ struct Nosh: View {
                     VStack(spacing: 20) {
                         Color.clear.frame(height: 72)
 
-                        CategorySelector(selectedCategory: $selectedCategory)
+                        CategorySelector(
+                            selectedCategories: $selectedCategories,
+                            allowMultipleSelection: false  // Single-select for Nosh
+                        )
                         FoodPreferenceSelector(selectedPreference: $selectedPreference)
                         DifficultySelector(selectedDifficulty: $selectedDifficulty)
                         TimeToCookSlider(timeToCook: $timeToCook)
@@ -61,7 +64,7 @@ struct Nosh: View {
     private func searchMeals() {
         print("🎯 searchMeals() called")
         viewModel.searchMeals(
-            category: selectedCategory,
+            categories: Array(selectedCategories),  // Convert Set to Array
             portionSize: portionSize,
             maxTimeToCook: Int(timeToCook),
             difficulty: selectedDifficulty,

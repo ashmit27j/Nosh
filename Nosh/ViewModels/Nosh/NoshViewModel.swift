@@ -1,16 +1,13 @@
-import Foundation
+import SwiftUI
 import FirebaseFirestore
-import Combine
 
 class NoshViewModel: ObservableObject {
     @Published var meals: [Meal] = []
-    @Published var isLoading: Bool = false
+    @Published var isLoading = false
     @Published var errorMessage: String?
     
-    private let db = Firestore.firestore()
-    
     func searchMeals(
-        category: String?,
+        categories: [String]?,
         portionSize: Int,
         maxTimeToCook: Int,
         difficulty: String?,
@@ -18,120 +15,113 @@ class NoshViewModel: ObservableObject {
     ) {
         isLoading = true
         errorMessage = nil
-        meals = []
         
         print("🔍 Starting search with:")
-        print("   Category: \(category ?? "All")")
+        print("   Categories: \(categories ?? [])")
         print("   Portion Size: \(portionSize)")
         print("   Max Time: \(maxTimeToCook)")
-        print("   Difficulty: \(difficulty ?? "Any")")
-        print("   Food Preference: \(foodPreference ?? "Both")")
+        print("   Difficulty: \(difficulty ?? "nil")")
+        print("   Food Preference: \(foodPreference ?? "nil")")
         
-        // Get ALL recipes (no index needed)
-        db.collection("recipes").getDocuments { snapshot, error in
+        let db = Firestore.firestore()
+        
+        db.collection("recipes").getDocuments { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
             DispatchQueue.main.async {
                 self.isLoading = false
                 
                 if let error = error {
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                    print("❌ Error: \(error)")
+                    print("❌ Error: \(error.localizedDescription)")
+                    self.errorMessage = "Failed to fetch meals: \(error.localizedDescription)"
                     return
                 }
                 
                 guard let documents = snapshot?.documents else {
-                    print("❌ No documents")
+                    print("❌ No documents found")
+                    self.meals = []
                     return
                 }
                 
                 print("📦 Got \(documents.count) total documents")
                 
                 // Parse all meals
-                let parsedMeals = documents.compactMap { doc in
+                let allMeals = documents.compactMap { doc -> Meal? in
                     try? doc.data(as: Meal.self)
                 }
-                print("✅ Parsed \(parsedMeals.count) meals")
                 
-                // Filter in memory
-                var filteredMeals = parsedMeals
+                print("✅ Parsed \(allMeals.count) meals")
                 
-                // ✅ Filter by time (0 to maxTimeToCook) - NOW USES timeInMinutes
-                filteredMeals = filteredMeals.filter { $0.timeInMinutes <= maxTimeToCook }
+                var filteredMeals = allMeals
+                
+                // Filter by time
+                filteredMeals = filteredMeals.filter { meal in
+                    let timeInMinutes = self.parseTime(meal.timeToCook)
+                    return timeInMinutes <= maxTimeToCook
+                }
                 print("⏱️ After time filter (0-\(maxTimeToCook)): \(filteredMeals.count) meals")
                 
-                // ✅ Filter by category (exact match)
-                if let category = category, !category.isEmpty, category != "All" {
-                    let categoryId = self.mapCategoryToId(category)
-                    filteredMeals = filteredMeals.filter { $0.categoryId == categoryId }
-                    print("📁 After category filter (\(category) only): \(filteredMeals.count) meals")
+                // Filter by categories (using categoryId)
+                if let categories = categories, !categories.isEmpty {
+                    let categoryIds = categories.map { CategoryHelper.nameToId($0) }
+                    print("📁 Filtering by category IDs: \(categoryIds) (from \(categories))")
+                    filteredMeals = filteredMeals.filter { meal in
+                        categoryIds.contains(meal.categoryId)
+                    }
+                    print("📁 After category filter: \(filteredMeals.count) meals")
                 }
                 
-                // ✅ Filter by serving size
+                // Filter by serving size
                 filteredMeals = filteredMeals.filter { $0.servingSize >= portionSize }
                 print("🍽️ After serving size filter (>= \(portionSize)): \(filteredMeals.count) meals")
                 
-                // ✅ Filter by difficulty (inclusive - selected level and below)
-                if let difficulty = difficulty, !difficulty.isEmpty {
-                    let maxDifficultyInt = self.mapDifficultyToInt(difficulty)
-                    filteredMeals = filteredMeals.filter {
-                        self.mapDifficultyEnumToInt($0.difficulty) <= maxDifficultyInt
+                // Filter by difficulty
+                if let difficultyStr = difficulty {
+                    let maxDifficultyLevel = self.difficultyLevel(for: difficultyStr)
+                    filteredMeals = filteredMeals.filter { meal in
+                        self.difficultyLevel(for: meal.difficulty.rawValue) <= maxDifficultyLevel
                     }
-                    print("🎯 After difficulty filter (<= \(difficulty)): \(filteredMeals.count) meals")
+                    print("🎯 After difficulty filter (<= \(difficultyStr)): \(filteredMeals.count) meals")
                 }
                 
-                // ✅ Filter by food preference (Both = show all, Veg = 0 only, Non-Veg = 1 only)
-                if let preference = foodPreference {
-                    if preference == "Veg" {
-                        // Only veg (0)
-                        filteredMeals = filteredMeals.filter { $0.preferences == 0 }
-                        print("🥗 After veg filter (0 only): \(filteredMeals.count) meals")
-                    } else if preference == "Non-Veg" {
-                        // Only non-veg (1)
-                        filteredMeals = filteredMeals.filter { $0.preferences == 1 }
-                        print("🍗 After non-veg filter (1 only): \(filteredMeals.count) meals")
-                    }
-                    // "Both" = don't filter, show all (0 and 1)
+                // Filter by food preference
+                if let preference = foodPreference, preference != "Both" {
+                    let preferenceValue = preference == "Vegetarian" ? 0 : 1
+                    filteredMeals = filteredMeals.filter { $0.preferences == preferenceValue }
+                    print("🥗 After food preference filter (\(preference)): \(filteredMeals.count) meals")
                 }
                 
                 self.meals = filteredMeals
-                print("✅ FINAL RESULT: \(self.meals.count) meals")
                 
-                if self.meals.isEmpty {
-                    print("⚠️ No meals found. Try relaxing filters.")
-                } else {
-                    print("📋 Meal names:")
-                    self.meals.forEach { print("   - \($0.name) (difficulty: \($0.difficulty.rawValue), preference: \($0.preferences))") }
+                print("✅ FINAL RESULT: \(self.meals.count) meals")
+                print("📋 Meal names:")
+                for meal in self.meals {
+                    print("   - \(meal.name) (categoryId: \(meal.categoryId), difficulty: \(meal.difficulty.rawValue), preferences: \(meal.preferences))")
                 }
             }
         }
     }
     
-    // MARK: - Helper Mappings
-    private func mapCategoryToId(_ category: String) -> Int {
-        switch category {
-        case "Snack": return 1
-        case "Drinks": return 2
-        case "Appetizer": return 3
-        case "Full Meal": return 4
-        default: return 4
+    private func parseTime(_ timeString: String) -> Int {
+        let components = timeString.lowercased().components(separatedBy: CharacterSet.decimalDigits.inverted)
+        let numbers = components.compactMap { Int($0) }
+        
+        if timeString.contains("hour") || timeString.contains("hr") {
+            let hours = numbers.first ?? 0
+            let minutes = numbers.count > 1 ? numbers[1] : 0
+            return hours * 60 + minutes
+        } else {
+            return numbers.first ?? 0
         }
     }
     
-    private func mapDifficultyToInt(_ difficulty: String) -> Int {
+    private func difficultyLevel(for difficulty: String) -> Int {
         switch difficulty {
-        case "Beginner": return 1
+        case "Easy": return 1
         case "Novice": return 2
         case "Intermediate": return 3
         case "Professional": return 4
-        default: return 1
-        }
-    }
-    
-    private func mapDifficultyEnumToInt(_ difficulty: Meal.Difficulty) -> Int {
-        switch difficulty {
-        case .easy: return 1
-        case .novice: return 2
-        case .intermediate: return 3
-        case .professional: return 4
+        default: return 0
         }
     }
 }
