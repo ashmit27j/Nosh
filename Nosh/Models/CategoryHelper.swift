@@ -7,7 +7,7 @@ struct CategoryHelper {
         case "Drinks": return 2
         case "Appetizer": return 3
         case "Full Meal": return 4
-        default: return 0
+        default: return 4
         }
     }
     
@@ -17,7 +17,7 @@ struct CategoryHelper {
         case 2: return "Drinks"
         case 3: return "Appetizer"
         case 4: return "Full Meal"
-        default: return "Unknown"
+        default: return "Full Meal"
         }
     }
 }

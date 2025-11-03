@@ -1,11 +1,3 @@
-//
-//  RecipesViewModel.swift
-//  Nosh
-//
-//  Created by MacBook on 02/11/25.
-//
-
-
 import SwiftUI
 import FirebaseFirestore
 
@@ -16,29 +8,43 @@ class RecipesViewModel: ObservableObject {
     func fetchMeals(categories: [String]) {
         isLoading = true
         
+        let categoryIds = categories.map { CategoryHelper.nameToId($0) }
+        
+        print("🔍 Fetching meals for categories: \(categories) (IDs: \(categoryIds))")
+        
         let db = Firestore.firestore()
         
         db.collection("recipes")
-            .whereField("category", in: categories)
-            .getDocuments { snapshot, error in
+            .whereField("category_id", in: categoryIds)
+            .getDocuments { [weak self] snapshot, error in
                 DispatchQueue.main.async {
-                    self.isLoading = false
+                    self?.isLoading = false
                     
                     if let error = error {
-                        print("Error fetching meals: \(error.localizedDescription)")
+                        print("❌ Error fetching meals: \(error.localizedDescription)")
                         return
                     }
                     
                     guard let documents = snapshot?.documents else {
-                        self.meals = []
+                        print("⚠️ No documents returned")
+                        self?.meals = []
                         return
                     }
                     
-                    self.meals = documents.compactMap { doc in
-                        try? doc.data(as: Meal.self)
+                    print("📦 Got \(documents.count) documents")
+                    
+                    self?.meals = documents.compactMap { doc in
+                        do {
+                            let meal = try doc.data(as: Meal.self)
+                            print("   ✓ \(meal.name) (categoryId: \(meal.categoryId))")
+                            return meal
+                        } catch {
+                            print("   ✗ Failed to parse \(doc.documentID): \(error)")
+                            return nil
+                        }
                     }
                     
-                    print("✅ Fetched \(self.meals.count) meals for categories: \(categories)")
+                    print("✅ Final count: \(self?.meals.count ?? 0) meals")
                 }
             }
     }

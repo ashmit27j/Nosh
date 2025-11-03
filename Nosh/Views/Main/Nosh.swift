@@ -2,11 +2,11 @@ import SwiftUI
 
 struct Nosh: View {
     @StateObject private var viewModel = NoshViewModel()
-    @State private var selectedCategories: Set<String> = ["Full Meal"]  // Changed to Set
+    @State private var selectedCategories: Set<String> = ["Full Meal"]
     @State private var selectedPreference: String? = "Both"
     @State private var portionSize: Int = 1
     @State private var timeToCook: Double = 60
-    @State private var selectedDifficulty: String? = "Beginner"
+    @State private var selectedDifficulty: String? = "Professional"  // Changed default
     @State private var showResults: Bool = false
 
     var body: some View {
@@ -18,13 +18,12 @@ struct Nosh: View {
 
                         CategorySelector(
                             selectedCategories: $selectedCategories,
-                            allowMultipleSelection: false  // Single-select for Nosh
+                            allowMultipleSelection: false
                         )
                         FoodPreferenceSelector(selectedPreference: $selectedPreference)
                         DifficultySelector(selectedDifficulty: $selectedDifficulty)
                         TimeToCookSlider(timeToCook: $timeToCook)
                         
-                        // Find Recipes Button
                         Button(action: {
                             print("🔍 Find Recipes button tapped")
                             searchMeals()
@@ -59,22 +58,38 @@ struct Nosh: View {
                 MealResultsView(meals: viewModel.meals)
             }
         }
+        .onChange(of: viewModel.showResults) { oldValue, newValue in
+            if newValue {
+                showResults = true
+            }
+        }
     }
     
     private func searchMeals() {
         print("🎯 searchMeals() called")
-        viewModel.searchMeals(
-            categories: Array(selectedCategories),  // Convert Set to Array
-            portionSize: portionSize,
-            maxTimeToCook: Int(timeToCook),
-            difficulty: selectedDifficulty,
-            foodPreference: selectedPreference
-        )
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            print("🍽️ Setting showResults = true with \(viewModel.meals.count) meals")
-            showResults = true
+        // Convert String difficulty to Meal.Difficulty enum
+        let difficultyEnum: Meal.Difficulty
+        switch selectedDifficulty {
+        case "Easy":
+            difficultyEnum = .easy
+        case "Novice":
+            difficultyEnum = .novice
+        case "Intermediate":
+            difficultyEnum = .intermediate
+        case "Professional":
+            difficultyEnum = .professional
+        default:
+            difficultyEnum = .professional
         }
+        
+        viewModel.searchMeals(
+            categories: Array(selectedCategories),
+            portionSize: portionSize,
+            maxTime: Int(timeToCook),
+            difficulty: difficultyEnum,
+            foodPreference: selectedPreference ?? "Both"
+        )
     }
     
     private var NoshHeader: some View {

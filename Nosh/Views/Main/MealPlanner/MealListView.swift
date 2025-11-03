@@ -75,12 +75,12 @@ struct MealListView: View {
     
     // MARK: - Helper Function
     private func sampleMeal() -> Meal {
-        let meal = Meal(
-            id: UUID().uuidString,
+        // ✅ Create a sample meal using the memberwise initializer approach
+        var meal = Meal(
             name: "Sample Dish",
             description: "Delicious homemade dish",
             imageName: "frankieImage",
-            timeToCook: "30 mins",  // Changed to String
+            timeToCook: "30 mins",
             servingSize: 2,
             difficulty: .easy,
             categoryId: 4,
@@ -90,6 +90,7 @@ struct MealListView: View {
             nutritionalContent: "",
             isAvailableInPantry: false
         )
+        meal.id = UUID().uuidString
         return meal
     }
 }
