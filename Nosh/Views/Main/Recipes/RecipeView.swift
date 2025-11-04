@@ -418,44 +418,9 @@ struct RecipeView: View {
     }
     
     private var SuccessOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.7)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 24) {
-                Text("🎉")
-                    .font(.system(size: 80))
-                
-                Text("Recipe Completed!")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("Great job on making \(meal.name)!")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                Button(action: {
-                    showSuccessScreen = false
-                    dismiss()
-                }) {
-                    Text("Done")
-                        .font(.headline)
-                        .foregroundColor(Color("primaryText"))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(Color("primaryAccent"))
-                        .cornerRadius(16)
-                }
-            }
-            .padding(32)
-            .background(Color("primaryCard"))
-            .cornerRadius(24)
-            .padding()
-        }
+        MealSuccessShareView(meal: meal, dismiss: dismiss)
     }
+
     
     private func scaleIngredient(_ ingredient: String) -> String {
         let pattern = #"(\d+\.?\d*)\s*(g|kg|ml|l|cup|cups|tbsp|tsp|oz)?"#

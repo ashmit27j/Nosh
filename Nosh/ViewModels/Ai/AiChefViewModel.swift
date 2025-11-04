@@ -151,7 +151,7 @@ class AiChefViewModel: ObservableObject {
     
     private func searchOnlineAndRespond(query: String) async throws {
         let prompt = """
-        You are Chef Nash, a friendly and knowledgeable cooking assistant. A user asked: "\(query)"
+        You are Chef Nosh, a friendly and knowledgeable cooking assistant. A user asked: "\(query)"
         
         Please provide a recipe recommendation with the following details:
         - Recipe name

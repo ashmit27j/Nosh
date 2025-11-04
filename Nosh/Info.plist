@@ -41,6 +41,6 @@
     <string>We need camera access to take photos of your delicious meals!</string>
     
     <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access to process voice commands for Chef Nash</string>
+    <string>We need microphone access to process voice commands for Chef Nosh</string>
 </dict>
 </plist>

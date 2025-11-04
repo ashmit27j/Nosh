@@ -6,7 +6,7 @@ import SDWebImageSwiftUI
 struct Profile: View {
     @ObservedObject var pantryViewModel: PantryViewModel
     @StateObject private var viewModel = UserProfileViewModel()
-    @State private var navigateToEdit = false
+    @State private var showEditProfile = false
     @State private var showPopup = false
     @State private var popupTitle = ""
     @State private var popupMessage = ""
@@ -20,14 +20,17 @@ struct Profile: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
                         VStack(spacing: 20) {
+                            // Tappable Profile Card
                             ProfileCard
                                 .padding(.horizontal)
+                                .onTapGesture {
+                                    showEditProfile = true
+                                }
 
-                            // Account Management Section
+                            // Your Account Section
                             SettingsSection(
-                                title: "Account Management",
+                                title: "Your Account",
                                 items: [
-                                    ProfileItem(icon: "person.circle.fill", iconColor: .blue, title: "Edit Profile", enabled: true, destination: AnyView(editProfileView())),
                                     ProfileItem(icon: "creditcard.fill", iconColor: .blue, title: "Subscription & Billing", enabled: true, destination: AnyView(subscriptionView())),
                                     ProfileItem(icon: "bell.fill", iconColor: .blue, title: "Notifications", enabled: true, destination: AnyView(notificationsView())),
                                     ProfileItem(icon: "lock.shield.fill", iconColor: .blue, title: "Privacy & Security", enabled: true, destination: AnyView(privacyView()))
@@ -45,39 +48,6 @@ struct Profile: View {
                                 ]
                             )
 
-                            // Security & Password Section
-                            SettingsSection(
-                                title: "Security & Password",
-                                items: [
-                                    ProfileItem(icon: "key.fill", iconColor: .blue, title: "Update Password", enabled: true, destination: AnyView(UpdatePasswordView())),
-                                    ProfileItem(icon: "lock.rotation", iconColor: .blue, title: "Reset Password", enabled: true, action: {
-                                        popupTitle = "Reset Password"
-                                        popupMessage = "A password reset link will be sent to your email."
-                                        popupAction = {
-                                            guard let email = Auth.auth().currentUser?.email else {
-                                                popupTitle = "Error"
-                                                popupMessage = "No email found for this account."
-                                                showPopup = true
-                                                return
-                                            }
-                                            
-                                            Auth.auth().sendPasswordReset(withEmail: email) { error in
-                                                if let error = error {
-                                                    popupTitle = "Error"
-                                                    popupMessage = error.localizedDescription
-                                                } else {
-                                                    popupTitle = "Success"
-                                                    popupMessage = "Password reset email sent to \(email)"
-                                                }
-                                                showPopup = true
-                                            }
-                                        }
-                                        showPopup = true
-                                    }),
-                                    ProfileItem(icon: "envelope.fill", iconColor: .blue, title: "Update Email", enabled: true, destination: AnyView(UpdateEmailView()))
-                                ]
-                            )
-
                             // App Settings Section
                             SettingsSection(
                                 title: "App Settings",
@@ -86,7 +56,7 @@ struct Profile: View {
                                     ProfileItem(icon: "paintbrush.fill", iconColor: .purple, title: "Theme", enabled: true, destination: AnyView(themeView())),
                                     ProfileItem(icon: "arrow.counterclockwise", iconColor: .purple, title: "Reset to Defaults", enabled: true, action: {
                                         popupTitle = "Reset to Defaults"
-                                        popupMessage = "Are you sure you want to reset all settings?"
+                                        popupMessage = "Are you sure you want to reset all app settings?"
                                         popupAction = { print("Reset action") }
                                         showPopup = true
                                     })
@@ -95,7 +65,7 @@ struct Profile: View {
 
                             // Support & Information Section
                             SettingsSection(
-                                title: "Support & Information",
+                                title: "Support",
                                 items: [
                                     ProfileItem(icon: "headphones", iconColor: .gray, title: "Customer Support", enabled: true, destination: AnyView(customerSupportView())),
                                     ProfileItem(icon: "doc.text.fill", iconColor: .gray, title: "Terms of Use", enabled: true, destination: AnyView(termsOfUseView())),
@@ -103,20 +73,17 @@ struct Profile: View {
                                 ]
                             )
 
-                            // Danger Zone Section
+                            // Account Actions Section (formerly Danger Zone)
                             SettingsSection(
-                                title: "Danger Zone",
+                                title: "Account Actions",
                                 items: [
                                     ProfileItem(icon: "rectangle.portrait.and.arrow.right", iconColor: .red, title: "Log Out", enabled: true, action: {
                                         popupTitle = "Log Out"
                                         popupMessage = "Are you sure you want to log out?"
                                         popupAction = {
                                             do {
-                                                // Clear pantry BEFORE signing out
                                                 pantryViewModel.clearPantry()
-                                                
                                                 try Auth.auth().signOut()
-                                                
                                                 print("✅ Logged out and pantry cleared")
                                             } catch {
                                                 print("Error signing out: \(error.localizedDescription)")
@@ -124,10 +91,9 @@ struct Profile: View {
                                         }
                                         showPopup = true
                                     }),
-
                                     ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, action: {
-                                        popupTitle = "Confirm Deletion"
-                                        popupMessage = "Are you sure you want to delete your account? This action is permanent."
+                                        popupTitle = "Delete Account"
+                                        popupMessage = "This action is permanent and cannot be undone. All your data will be deleted."
                                         popupAction = {
                                             guard let user = Auth.auth().currentUser else {
                                                 popupTitle = "Error"
@@ -193,6 +159,9 @@ struct Profile: View {
 
                 ProfileHeader
             }
+            .sheet(isPresented: $showEditProfile) {
+                EditProfileView(viewModel: viewModel)
+            }
         }
     }
 
@@ -214,46 +183,59 @@ struct Profile: View {
                 WebImage(url: photoURL)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 60, height: 60)
+                    .frame(width: 70, height: 70)
                     .clipShape(Circle())
             } else {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 60, height: 60)
-                    .foregroundColor(.gray)
+                ZStack {
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 70, height: 70)
+                    
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 70, height: 70)
+                        .foregroundColor(.gray)
+                }
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(viewModel.username)
-                    .font(.headline)
+                    .font(.title3.bold())
                     .foregroundColor(.primary)
 
-                HStack(spacing: 4) {
-                    Text("Plan:")
+                if let email = Auth.auth().currentUser?.email {
+                    Text(email)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                    Text("Freemium")
-                        .foregroundColor(.green)
+                }
+
+                HStack(spacing: 4) {
+                    Image(systemName: "crown.fill")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
+                    Text("Freemium Plan")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
 
             Spacer()
 
-            NavigationLink(destination: editProfileView(), isActive: $navigateToEdit) {
-                EmptyView()
-            }
-
-            Button(action: {
-                navigateToEdit = true
-            }) {
+            VStack {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(Color("secondaryButton"))
+                
+                Text("Edit")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
         }
         .padding()
         .background(Color("primaryCard"))
         .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -317,6 +299,7 @@ struct SettingsRow: View {
 
             Text(item.title)
                 .foregroundColor(.primary)
+                .font(.body)
 
             Spacer()
 
@@ -326,7 +309,40 @@ struct SettingsRow: View {
                     .foregroundColor(Color("secondaryButton"))
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+}
+
+struct SettingsSection: View {
+    let title: String
+    let items: [ProfileItem]
+    var isActionSection: Bool = false
+
+    var body: some View {
+        SectionContainer {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .padding(.bottom, 4)
+
+                ForEach(items) { item in
+                    Group {
+                        if let destination = item.destination {
+                            NavigationLink(destination: destination) {
+                                SettingsRow(item: item)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        } else {
+                            SettingsRow(item: item)
+                                .onTapGesture {
+                                    item.action?()
+                                }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

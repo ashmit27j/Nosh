@@ -13,7 +13,7 @@ struct AiChefSection: View {
                     .padding(.leading, 4)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Chef Nash")
+                    Text("Chef Nosh")
                         .font(.headline)
                         .foregroundColor(Color("primaryText"))
 
