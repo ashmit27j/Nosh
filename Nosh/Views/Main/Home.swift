@@ -11,8 +11,7 @@ struct Home: View {
     @State private var showRandomDish = false
     @State private var randomMeal: Meal? = nil
     @State private var isLoadingMeal = false
-    @State private var selectedMealForCooking: Meal? = nil  // NEW
-
+    @State private var selectedMealForCooking: Meal? = nil
     @State private var searchText = ""
     @State private var showCollapsedTitle = false
     @State private var isEditing = false
@@ -20,6 +19,7 @@ struct Home: View {
 
     let viewModel: MealPlannerViewModel
     let onSwitchToMealPlanner: () -> Void
+    @Binding var isAiChefActive: Bool  // ADD THIS
 
     var body: some View {
         NavigationStack {
@@ -35,8 +35,8 @@ struct Home: View {
                     .frame(height: 0)
 
                     VStack(spacing: 20) {
-                        AiChefSection()
-                            .padding(.horizontal, 16)
+                        AiChefSection(isAiChefActive: $isAiChefActive)  // PASS BINDING
+                            .padding()
 
                         QuickBitesSection(selectedCategory: $selectedCategory)
                             .padding(.horizontal, 16)
@@ -81,12 +81,9 @@ struct Home: View {
                 HomeHeader
                     .zIndex(1)
             }
-            // Random dish sheet
             .sheet(isPresented: $showRandomDish, onDismiss: {
-                // When random sheet closes, check if we need to show cooking view
                 if selectedMealForCooking != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        // Trigger the second sheet
                     }
                 }
             }) {
@@ -102,16 +99,18 @@ struct Home: View {
                     },
                     onCookNowTapped: { meal in
                         selectedMealForCooking = meal
-                        showRandomDish = false  // Close random sheet
+                        showRandomDish = false
                     }
                 )
             }
-            // Cook Now sheet (opens after random sheet closes)
             .sheet(item: $selectedMealForCooking) { meal in
                 RecipeView(meal: meal)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            isAiChefActive = false  // RESET WHEN RETURNING TO HOME
+        }
     }
 
     private var HomeHeader: some View {

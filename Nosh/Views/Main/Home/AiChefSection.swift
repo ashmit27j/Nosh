@@ -1,28 +1,30 @@
 import SwiftUI
 
 struct AiChefSection: View {
+    @Binding var isAiChefActive: Bool  // ADD THIS
+    
     var body: some View {
-        HStack(spacing: 16) {
-            Image("chefImage")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 120)
-                .padding(.leading, 4)
+        NavigationLink(destination: AiChefView(isAiChefActive: $isAiChefActive)) {
+            HStack(spacing: 16) {
+                Image("chefImage")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 120)
+                    .padding(.leading, 4)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Chef Nash")
-                    .font(.headline)
-                    .foregroundColor(Color("primaryText"))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Chef Nash")
+                        .font(.headline)
+                        .foregroundColor(Color("primaryText"))
 
-                Text("Not sure what to cook? Ask your personal chef!")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text("Not sure what to cook? Ask your personal chef!")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Spacer(minLength: 2)
+                    Spacer(minLength: 2)
 
-                HStack(spacing: 12) {
-                    Button(action: {}) {
+                    HStack(spacing: 12) {
                         HStack {
                             Text("Ask Chef")
                                 .font(.subheadline)
@@ -44,14 +46,15 @@ struct AiChefSection: View {
                         .cornerRadius(14)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color("primaryCard"))
+            )
+            .contentShape(Rectangle())
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color("primaryCard"))
-        )
-//        .padding(.horizontal, 20)
+        .buttonStyle(PlainButtonStyle())
     }
 }

@@ -33,6 +33,9 @@ struct Pantry: View {
             }
             .onAppear {
                 viewModel.initializeDefaultPantry()
+                PantryManager.shared.pantryViewModel = viewModel
+                print("🔗 PantryManager connected: \(PantryManager.shared.pantryViewModel != nil)")
+                print("🔗 Pantry items count: \(viewModel.items.count)")
             }
         }
     }

@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct RecipeView: View {
@@ -11,8 +12,15 @@ struct RecipeView: View {
     @State private var checkedIngredients: Set<Int> = []
     @State private var checkedSteps: Set<Int> = []
     @State private var showSuccessScreen: Bool = false
-    @State private var showCopiedToast = false
-    @State private var showCamera = false
+    
+    // ✅ Pantry integration properties
+    private var hasIngredients: Bool {
+        PantryManager.shared.hasAllIngredients(for: meal, servingSize: servingSize)
+    }
+
+    private var missingIngredients: [String] {
+        PantryManager.shared.getMissingIngredients(for: meal, servingSize: servingSize)
+    }
     
     private var servingMultiplier: Double {
         Double(servingSize) / Double(meal.servingSize)
@@ -31,6 +39,7 @@ struct RecipeView: View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    // Header Image
                     ZStack(alignment: .topTrailing) {
                         let imageURL: URL? = {
                             guard let imageName = meal.imageName,
@@ -87,6 +96,7 @@ struct RecipeView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 20) {
+                        // Title & Description
                         VStack(alignment: .leading, spacing: 8) {
                             Text(meal.name)
                                 .font(.title)
@@ -98,6 +108,40 @@ struct RecipeView: View {
                                 .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                        // ✅ MISSING INGREDIENTS BOX (only if missing)
+                        if !missingIngredients.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.red)
+                                    Text("Missing Ingredients")
+                                        .font(.headline)
+                                        .foregroundColor(.red)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(missingIngredients, id: \.self) { item in
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.red)
+                                            Text(item)
+                                                .font(.subheadline)
+                                                .foregroundColor(Color("primaryText"))
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.red.opacity(0.3), lineWidth: 2)
+                            )
                         }
                         
                         ServingSizeSection
@@ -122,31 +166,9 @@ struct RecipeView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
-        .overlay(
-            Group {
-                if showCopiedToast {
-                    VStack {
-                        Text("Recipe Copied!")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.black.opacity(0.8))
-                            .cornerRadius(20)
-                            .padding(.top, 60)
-                        Spacer()
-                    }
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .zIndex(999)
-                }
-            }
-        )
-        .sheet(isPresented: $showCamera) {
-            CameraView()
-        }
     }
     
+    // ✅ Original Serving Size Section
     private var ServingSizeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -200,6 +222,7 @@ struct RecipeView: View {
         .cornerRadius(16)
     }
     
+    // ✅ Original Ingredients Section (collapsible with checkboxes)
     private var IngredientsSection: some View {
         VStack(spacing: 0) {
             Button(action: {
@@ -262,6 +285,7 @@ struct RecipeView: View {
         )
     }
     
+    // ✅ Original Recipe Steps Section (collapsible with numbered circles)
     private var RecipeStepsSection: some View {
         VStack(spacing: 0) {
             Button(action: {
@@ -356,6 +380,7 @@ struct RecipeView: View {
         )
     }
     
+    // ✅ Bottom Buttons with Cancel + Finish (pantry integrated)
     private var BottomButtons: some View {
         VStack(spacing: 12) {
             Button(action: {
@@ -371,18 +396,22 @@ struct RecipeView: View {
             }
             
             Button(action: {
-                showSuccessScreen = true
+                if hasIngredients && allStepsCompleted {
+                    // ✅ Deduct from pantry
+                    PantryManager.shared.deductIngredients(for: meal, servingSize: servingSize)
+                    showSuccessScreen = true
+                }
             }) {
-                Text("Finish")
+                Text(hasIngredients ? "Finish" : "Missing Ingredients")
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(Color("primaryText"))
                     .frame(maxWidth: .infinity)
                     .frame(height: 55)
-                    .background(allStepsCompleted ? Color("primaryAccent") : Color.gray.opacity(0.3))
+                    .background((hasIngredients && allStepsCompleted) ? Color("primaryAccent") : Color.gray.opacity(0.3))
                     .cornerRadius(16)
             }
-            .disabled(!allStepsCompleted)
+            .disabled(!hasIngredients || !allStepsCompleted)
         }
         .padding()
         .background(Color("primaryCard"))
@@ -408,31 +437,17 @@ struct RecipeView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                VStack(spacing: 12) {
-                    Button(action: {
-                        shareRecipe()
-                    }) {
-                        Text("Share Photo")
-                            .font(.headline)
-                            .foregroundColor(Color("primaryText"))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 55)
-                            .background(Color("primaryAccent"))
-                            .cornerRadius(16)
-                    }
-                    
-                    Button(action: {
-                        showSuccessScreen = false
-                        dismiss()
-                    }) {
-                        Text("Maybe Later")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 55)
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(16)
-                    }
+                Button(action: {
+                    showSuccessScreen = false
+                    dismiss()
+                }) {
+                    Text("Done")
+                        .font(.headline)
+                        .foregroundColor(Color("primaryText"))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(Color("primaryAccent"))
+                        .cornerRadius(16)
                 }
             }
             .padding(32)
@@ -467,31 +482,45 @@ struct RecipeView: View {
             withTemplate: scaledString + (match.range(at: 2).location != NSNotFound ? " $2" : "")
         )
     }
+}
+
+struct MealSuccessScreen: View {
+    let meal: Meal
+    let dismiss: DismissAction
     
-    private func shareRecipe() {
-        let message = """
-        Hey I just made \(meal.name)! 🍽️
-        
-        It took \(meal.timeToCook) minutes and serves \(meal.servingSize) people.
-        Difficulty: \(meal.difficulty.rawValue)
-        
-        📖 View full recipe: [Recipe Link - Coming Soon]
-        📱 Download Nosh: [App Store Link - Coming Soon]
-        
-        #Nosh #HomeCooking #\(meal.name.replacingOccurrences(of: " ", with: ""))
-        """
-        
-        UIPasteboard.general.string = message
-        
-        withAnimation {
-            showCopiedToast = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                showCopiedToast = false
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            Text("🎉")
+                .font(.system(size: 80))
+            
+            Text("Meal Completed!")
+                .font(.title.bold())
+                .foregroundColor(Color("primaryText"))
+            
+            Text("You've successfully cooked \(meal.name)")
+                .font(.body)
+                .foregroundColor(Color("secondaryText"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Spacer()
+            
+            Button {
+                dismiss()
+            } label: {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(Color("primaryButtonText"))
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color("primaryAccent"))
+                    .cornerRadius(12)
             }
-            showCamera = true
+            .padding(.horizontal)
+            .padding(.bottom, 40)
         }
+        .padding()
     }
 }

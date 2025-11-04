@@ -21,7 +21,6 @@ final class PantryViewModel: ObservableObject {
     
     func initializeDefaultPantry() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            // No user - load from local or dummy
             if UserDefaults.standard.data(forKey: "pantryItems") != nil {
                 loadFromUserDefaults()
             } else {
@@ -30,7 +29,6 @@ final class PantryViewModel: ObservableObject {
             return
         }
         
-        // Check if already initialized
         db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
             
@@ -42,10 +40,8 @@ final class PantryViewModel: ObservableObject {
             
             print("🔄 Initializing default pantry for new user...")
             
-            // Get default items
             let defaultItems = self.getDefaultPantryItems()
             
-            // Populate items dictionary
             for (category, itemList) in defaultItems {
                 self.items[category] = itemList
             }
@@ -53,7 +49,6 @@ final class PantryViewModel: ObservableObject {
             self.updateAllTab()
             self.savePantry()
             
-            // Mark as initialized
             self.db.collection("users").document(userId).setData([
                 "pantryInitialized": true
             ], merge: true) { error in
@@ -287,14 +282,57 @@ final class PantryViewModel: ObservableObject {
         }
     }
 
+    // ✅ Keep ONLY this version - remove the duplicate
     func findCategory(for item: PantryItem) -> String {
         for (category, list) in items where category != "All" {
             if list.contains(where: { $0.id == item.id }) {
                 return category
             }
         }
-        return "Unknown"
+        return "Vegetables" // Default fallback
     }
+
+    // ✅ Update quantity for a specific item
+    // In your PantryViewModel, REPLACE the updateQuantity method with this:
+
+    func updateQuantity(for item: PantryItem, in category: String, to newQuantity: Double) {
+        print("  🔧 updateQuantity START")
+        print("     Item: '\(item.name)'")
+        print("     Category: '\(category)'")
+        print("     Current qty: \(item.quantity)")
+        print("     Target qty: \(newQuantity)")
+        
+        // ✅ Find the item in the category
+        guard var categoryItems = items[category] else {
+            print("     ❌ Category '\(category)' not found in items")
+            return
+        }
+        
+        guard let index = categoryItems.firstIndex(where: { $0.id == item.id }) else {
+            print("     ❌ Item not found in category")
+            return
+        }
+        
+        let oldQty = categoryItems[index].quantity
+        
+        // ✅ CRITICAL: Set the quantity DIRECTLY - do NOT call decrement or increment
+        categoryItems[index].quantity = newQuantity
+        
+        // ✅ Update the dictionary
+        items[category] = categoryItems
+        
+        print("     ✅ SUCCESS: \(oldQty) → \(newQuantity)")
+        
+        // Update "All" tab
+        updateAllTab()
+        
+        // Save to persistence
+        savePantry()
+    }
+
+
+
+
 
     // MARK: - Save & Load
     
@@ -321,7 +359,6 @@ final class PantryViewModel: ObservableObject {
 
     func loadPantry() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            // No user - load from local
             if UserDefaults.standard.data(forKey: "pantryItems") != nil {
                 loadFromUserDefaults()
             } else {
@@ -330,7 +367,6 @@ final class PantryViewModel: ObservableObject {
             return
         }
         
-        // User logged in - load from Firestore
         db.collection("users").document(userId).collection("pantry").document("items").getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
             
@@ -349,8 +385,6 @@ final class PantryViewModel: ObservableObject {
             do {
                 self.items = try JSONDecoder().decode([String: [PantryItem]].self, from: jsonData)
                 self.updateAllTab()
-                
-                // Also update UserDefaults
                 self.savePantry()
             } catch {
                 print("❌ Failed to decode Firestore data: \(error)")
