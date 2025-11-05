@@ -36,7 +36,7 @@ struct Home: View {
 
                     VStack(spacing: 20) {
                         AiChefSection(isAiChefActive: $isAiChefActive)  // PASS BINDING
-                            .padding()
+                            .padding(.horizontal)
 
                         QuickBitesSection(selectedCategory: $selectedCategory)
                             .padding(.horizontal, 16)

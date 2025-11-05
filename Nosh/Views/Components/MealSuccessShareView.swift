@@ -25,32 +25,50 @@ struct MealSuccessShareView: View {
         ZStack {
             Color.black.opacity(0.7)
                 .ignoresSafeArea()
-            VStack(spacing: 24) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.green)
-                Text("Recipe Completed!")
-                    .font(.title.bold())
-                    .foregroundColor(.white)
-                Text("Great job making \(meal.name)!")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                if let image = capturedImage {
-                    Image(uiImage: image)
+            
+            VStack(spacing: 20) {
+                // Show chef image only if no captured image
+                if capturedImage == nil {
+                    Image("chefImage")
                         .resizable()
                         .scaledToFit()
-                        .frame(maxHeight: 200)
-                        .cornerRadius(12)
-                        .shadow(radius: 4)
-                        .padding(.horizontal, 24)
-                    Text("Looking delicious!")
-                        .font(.caption)
-                        .foregroundColor(.white)
+                        .frame(width: 100, height: 100)
+                        .padding(.top, 20)
                 }
+                
+                VStack(spacing: 8) {
+                    Text("Recipe Completed!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color("primaryText"))
+                    
+                    Text("Great job making \(meal.name)!")
+                        .font(.body)
+                        .foregroundColor(Color("secondaryText"))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+                
+                // Show captured image if available
+                if let image = capturedImage {
+                    VStack(spacing: 8) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 180)
+                            .cornerRadius(12)
+                            .shadow(radius: 2)
+                        
+                        Text("Looking delicious! 🍳")
+                            .font(.subheadline)
+                            .foregroundColor(Color("secondaryText"))
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
                 Spacer()
+                
+                // Action buttons
                 VStack(spacing: 12) {
                     Button(action: {
                         if capturedImage == nil {
@@ -59,33 +77,37 @@ struct MealSuccessShareView: View {
                             showShareSheet = true
                         }
                     }) {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: capturedImage == nil ? "camera.fill" : "square.and.arrow.up")
                             Text(capturedImage == nil ? "Share with Photo" : "Share")
                         }
+                        .font(.headline)
+                        .foregroundColor(Color("primaryText"))
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(Color.green)
-                        .foregroundColor(.white)
+                        .background(Color("primaryAccent"))
                         .cornerRadius(12)
                     }
                     
-                    Button {
+                    Button(action: {
                         dismiss()
-                    } label: {
+                    }) {
                         Text("Maybe Later")
+                            .font(.headline)
+                            .foregroundColor(Color("primaryText"))
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(Color.gray.opacity(0.3))
-                            .foregroundColor(.white)
+                            .background(Color("secondaryButton").opacity(0.3))
                             .cornerRadius(12)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(24)
-            .padding()
+            .frame(maxWidth: 400)
+            .background(Color("primaryCard"))
+            .cornerRadius(20)
+            .padding(20)
         }
         .sheet(isPresented: $showCamera) {
             CameraView(capturedImage: $capturedImage)

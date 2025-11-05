@@ -7,6 +7,10 @@ struct AiChefView: View {
     @FocusState private var isInputFocused: Bool
     @Binding var isAiChefActive: Bool
     
+    // Sheet state for opening meal details
+    @State private var selectedMeal: Meal? = nil
+    @State private var showMealSheet = false
+    
     // Multiple greeting options for random display
     let greetings = [
         "Ready to whip up something amazing?",
@@ -131,8 +135,14 @@ struct AiChefView: View {
                         ScrollView {
                             LazyVStack(spacing: 12) {
                                 ForEach(viewModel.messages) { message in
-                                    ChatMessageRow(message: message)
-                                        .id(message.id)
+                                    ChatMessageRow(
+                                        message: message,
+                                        onMealTap: { meal in
+                                            selectedMeal = meal
+                                            showMealSheet = true
+                                        }
+                                    )
+                                    .id(message.id)
                                 }
                                 
                                 if viewModel.isLoading {
@@ -207,6 +217,13 @@ struct AiChefView: View {
         .navigationTitle("Chef Nosh")
         .toolbarBackground(Color("primaryCard"), for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showMealSheet) {
+            if let meal = selectedMeal {
+                NavigationStack {
+                    RecipeView(meal: meal)
+                }
+            }
+        }
         .onAppear {
             isAiChefActive = true
             viewModel.loadUserName()
@@ -228,6 +245,7 @@ struct AiChefView: View {
 
 struct ChatMessageRow: View {
     let message: ChatMessage
+    var onMealTap: ((Meal) -> Void)? = nil
     
     var body: some View {
         HStack {
@@ -236,7 +254,7 @@ struct ChatMessageRow: View {
             }
             
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
-                Text(message.content)
+                Text(cleanedText(message.content))
                     .font(.body)
                     .foregroundColor(message.isUser ? Color("primaryCard") : Color("primaryText"))
                     .padding(12)
@@ -247,7 +265,20 @@ struct ChatMessageRow: View {
                     )
                     .cornerRadius(16)
                 
-                if let recipes = message.recipes, !recipes.isEmpty {
+                // Show meal cards if available from database
+                if let meal = message.mealFromDatabase {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Found in Your Collection")
+                            .font(.headline)
+                            .foregroundColor(Color("primaryAccent"))
+                            .padding(.top, 4)
+                        
+                        MealCardView(meal: meal) { tappedMeal in
+                            onMealTap?(tappedMeal)
+                        }
+                    }
+                } else if let recipes = message.recipes, !recipes.isEmpty {
+                    // Show AI-generated recipes if no database match
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Chef's Recommendation")
                             .font(.headline)
@@ -255,11 +286,7 @@ struct ChatMessageRow: View {
                             .padding(.top, 4)
                         
                         ForEach(recipes) { recipe in
-                            Button(action: {
-                            }) {
-                                RecipeCardCompact(recipe: recipe)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+                            RecipeCardCompact(recipe: recipe)
                         }
                     }
                 }
@@ -270,6 +297,18 @@ struct ChatMessageRow: View {
                 Spacer()
             }
         }
+    }
+    
+    // Clean text by removing markdown formatting
+    private func cleanedText(_ text: String) -> String {
+        var cleaned = text
+        // Remove bold markers
+        cleaned = cleaned.replacingOccurrences(of: "**", with: "")
+        // Remove italic markers
+        cleaned = cleaned.replacingOccurrences(of: "*", with: "")
+        // Remove code markers
+        cleaned = cleaned.replacingOccurrences(of: "`", with: "")
+        return cleaned
     }
 }
 
@@ -328,5 +367,6 @@ struct ChatMessage: Identifiable {
     let content: String
     let isUser: Bool
     let recipes: [Recipe]?
+    let mealFromDatabase: Meal? // NEW: Add meal from database
     let timestamp: Date = Date()
 }

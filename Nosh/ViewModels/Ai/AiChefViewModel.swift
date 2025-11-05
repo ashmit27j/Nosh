@@ -62,38 +62,119 @@ class AiChefViewModel: ObservableObject {
     }
     
     func sendMessage(_ text: String) {
-        let userMessage = ChatMessage(content: text, isUser: true, recipes: nil)
-        messages.append(userMessage)
+        // Add user message
+        messages.append(ChatMessage(
+            content: text,
+            isUser: true,
+            recipes: nil,
+            mealFromDatabase: nil
+        ))
         
         isLoading = true
         
-        Task {
-            do {
-                let dbRecipes = try await searchDatabaseRecipes(query: text)
-                
-                if !dbRecipes.isEmpty {
-                    let response = generateDatabaseResponse(recipes: dbRecipes, query: text)
-                    let botMessage = ChatMessage(
-                        content: response,
-                        isUser: false,
-                        recipes: dbRecipes
-                    )
-                    messages.append(botMessage)
-                } else {
-                    try await searchOnlineAndRespond(query: text)
-                }
-                
-                isLoading = false
-            } catch {
-                let errorMessage = ChatMessage(
-                    content: "Sorry, I encountered an error. Please try again!",
+        // First, check if meal exists in database
+        checkDatabaseForMeal(query: text) { foundMeal in
+            if let meal = foundMeal {
+                // Found in database - show meal card directly
+                self.messages.append(ChatMessage(
+                    content: "I found this recipe in your collection!",
                     isUser: false,
-                    recipes: nil
-                )
-                messages.append(errorMessage)
-                isLoading = false
+                    recipes: nil,
+                    mealFromDatabase: meal
+                ))
+                self.isLoading = false
+            } else {
+                // Not in database - get AI response
+                Task {
+                    await self.getAIResponse(for: text)
+                }
             }
         }
+    }
+
+    private func checkDatabaseForMeal(query: String, completion: @escaping (Meal?) -> Void) {
+        let lowercaseQuery = query.lowercased()
+        
+        db.collection("recipes")
+            .getDocuments { snapshot, error in
+                guard let documents = snapshot?.documents else {
+                    completion(nil)
+                    return
+                }
+                
+                // Search for matching meal name
+                for doc in documents {
+                    if let meal = try? doc.data(as: Meal.self),
+                       meal.name.lowercased().contains(lowercaseQuery) ||
+                       lowercaseQuery.contains(meal.name.lowercased()) {
+                        completion(meal)
+                        return
+                    }
+                }
+                
+                completion(nil)
+            }
+    }
+
+    private func getAIResponse(for text: String) async {
+        let prompt = """
+        You are Chef Nosh, a friendly cooking assistant. Please respond naturally without using markdown formatting like asterisks or bold markers.
+        
+        User query: \(text)
+        
+        Provide a clear, conversational response with proper paragraphs and line breaks for readability. Do not use ** or * for formatting. Just write naturally.
+        """
+        
+        do {
+            let response = try await model.generateContent(prompt)
+            
+            guard let responseText = response.text else {
+                self.messages.append(ChatMessage(
+                    content: "Sorry, I couldn't generate a response. Please try again.",
+                    isUser: false,
+                    recipes: nil,
+                    mealFromDatabase: nil
+                ))
+                self.isLoading = false
+                return
+            }
+            
+            // Clean the response text
+            let cleanedText = cleanMarkdown(responseText)
+            
+            self.messages.append(ChatMessage(
+                content: cleanedText,
+                isUser: false,
+                recipes: nil,
+                mealFromDatabase: nil
+            ))
+            
+        } catch {
+            self.messages.append(ChatMessage(
+                content: "Sorry, I encountered an error. Please try again.",
+                isUser: false,
+                recipes: nil,
+                mealFromDatabase: nil
+            ))
+        }
+        
+        self.isLoading = false
+    }
+    
+    // Clean markdown formatting from text
+    private func cleanMarkdown(_ text: String) -> String {
+        var cleaned = text
+        // Remove bold markers
+        cleaned = cleaned.replacingOccurrences(of: "**", with: "")
+        // Remove italic markers (single asterisk not touching alphanumeric)
+        cleaned = cleaned.replacingOccurrences(of: "*", with: "")
+        // Remove code markers
+        cleaned = cleaned.replacingOccurrences(of: "`", with: "")
+        // Remove headers
+        cleaned = cleaned.replacingOccurrences(of: "###", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "##", with: "")
+        cleaned = cleaned.replacingOccurrences(of: "#", with: "")
+        return cleaned
     }
     
     private func searchDatabaseRecipes(query: String) async throws -> [Recipe] {
@@ -147,45 +228,6 @@ class AiChefViewModel: ObservableObject {
         ]
         
         return responses.randomElement() ?? responses[0]
-    }
-    
-    private func searchOnlineAndRespond(query: String) async throws {
-        let prompt = """
-        You are Chef Nosh, a friendly and knowledgeable cooking assistant. A user asked: "\(query)"
-        
-        Please provide a recipe recommendation with the following details:
-        - Recipe name
-        - Brief description (1-2 sentences)
-        - List of ingredients with quantities
-        - Step-by-step instructions
-        - Prep time (in minutes)
-        - Cook time (in minutes)
-        - Difficulty level (Beginner/Intermediate/Advanced)
-        - Servings
-        - Category (Full Meal/Breakfast/Lunch/Dinner/Dessert/Snack)
-        - Food preference (Vegetarian/Non-Vegetarian/Vegan)
-        
-        Format the response in a friendly, conversational way. Start with a brief greeting and explain the recipe you're suggesting.
-        """
-        
-        let response = try await model.generateContent(prompt)
-        
-        guard let text = response.text else {
-            throw NSError(domain: "AiChef", code: 1, userInfo: [NSLocalizedDescriptionKey: "No response"])
-        }
-        
-        let recipe = try parseGeminiResponse(text, query: query)
-        
-        let botMessage = ChatMessage(
-            content: text,
-            isUser: false,
-            recipes: recipe != nil ? [recipe!] : nil
-        )
-        messages.append(botMessage)
-    }
-    
-    private func parseGeminiResponse(_ text: String, query: String) throws -> Recipe? {
-        return nil
     }
     
     private func parseRecipe(from data: [String: Any], id: String) -> Recipe? {

@@ -211,10 +211,10 @@ struct Profile: View {
                 }
 
                 HStack(spacing: 4) {
-                    Image(systemName: "crown.fill")
+                    Image(systemName: "leaf.fill")
                         .font(.caption)
-                        .foregroundColor(.yellow)
-                    Text("Freemium Plan")
+                        .foregroundColor(.green)
+                    Text("Free Plan")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
