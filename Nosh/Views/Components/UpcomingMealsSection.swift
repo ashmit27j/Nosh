@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import FirebaseAuth
 
 struct UpcomingMealsSection: View {
     @State private var currentIndex = 0
@@ -13,7 +14,7 @@ struct UpcomingMealsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Upcoming meals")
+                Text("Today's meals")
                     .font(.title2.bold())
 
                 Spacer()
@@ -39,10 +40,39 @@ struct UpcomingMealsSection: View {
                     .frame(height: cardHeight)
                     .frame(maxWidth: .infinity)
             } else if meals.isEmpty {
-                Text("No meals available")
-                    .foregroundColor(.gray)
-                    .frame(height: cardHeight)
-                    .frame(maxWidth: .infinity)
+                // Empty state with "Add Recipes" button
+                VStack(spacing: 16) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 48))
+                        .foregroundColor(Color("secondaryText").opacity(0.5))
+                    
+                    Text("No meals planned for today")
+                        .font(.headline)
+                        .foregroundColor(Color("primaryText"))
+                    
+                    Text("Start planning your meals for the day")
+                        .font(.subheadline)
+                        .foregroundColor(Color("secondaryText"))
+                        .multilineTextAlignment(.center)
+                    
+                    Button(action: onViewAllTapped) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Recipes")
+                        }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color("primaryAccent"))
+                        .cornerRadius(12)
+                    }
+                }
+                .frame(height: 300)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color("primaryCard"))
+                .cornerRadius(12)
             } else {
                 TabView(selection: $currentIndex) {
                     ForEach(meals.indices, id: \.self) { index in
@@ -76,47 +106,67 @@ struct UpcomingMealsSection: View {
             }
         }
         .onAppear {
-            fetchUpcomingMeals()
+            fetchTodaysMeals()
         }
     }
     
-    private func fetchUpcomingMeals() {
-        print("🔄 Fetching upcoming meals...")
+    // MARK: - Fetch Today's Meals from Meal Planner
+    private func fetchTodaysMeals() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("❌ No user logged in")
+            isLoading = false
+            return
+        }
         
-        db.collection("recipes")
-            .limit(to: 5)
-            .getDocuments { snapshot, error in  // Remove [weak self]
-                // Use self directly instead of self?
+        print("🔄 Fetching today's meals from meal planner...")
+        
+        // Get today's date string
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayString = dateFormatter.string(from: Date())
+        
+        print("📅 Today's date: \(todayString)")
+        
+        db.collection("users")
+            .document(userId)
+            .collection("mealPlanner")
+            .document(todayString)
+            .getDocument { snapshot, error in
                 DispatchQueue.main.async {
                     self.isLoading = false
                     
                     if let error = error {
-                        print("❌ Error: \(error.localizedDescription)")
+                        print("❌ Error fetching today's meals: \(error.localizedDescription)")
                         return
                     }
                     
-                    guard let documents = snapshot?.documents else {
-                        print("❌ No documents")
+                    guard let snapshot = snapshot, snapshot.exists else {
+                        print("📭 No meal plan for today")
                         return
                     }
                     
-                    print("📦 Got \(documents.count) documents")
-                    
-                    self.meals = documents.compactMap { doc in
-                        do {
-                            return try doc.data(as: Meal.self)
-                        } catch {
-                            print("❌ Failed to decode: \(error)")
-                            return nil
-                        }
+                    do {
+                        let dayPlan = try snapshot.data(as: DayMealPlan.self)
+                        
+                        // Combine all meals (breakfast, lunch, dinner)
+                        var allMeals: [Meal] = []
+                        allMeals.append(contentsOf: dayPlan.breakfast)
+                        allMeals.append(contentsOf: dayPlan.lunch)
+                        allMeals.append(contentsOf: dayPlan.dinner)
+                        
+                        self.meals = allMeals
+                        
+                        print("✅ Loaded \(allMeals.count) meals for today")
+                        print("   - Breakfast: \(dayPlan.breakfast.count)")
+                        print("   - Lunch: \(dayPlan.lunch.count)")
+                        print("   - Dinner: \(dayPlan.dinner.count)")
+                        
+                    } catch {
+                        print("❌ Failed to decode meal plan: \(error)")
                     }
-                    
-                    print("✅ Parsed \(self.meals.count) meals")
-                    self.meals.forEach { print("   - \($0.name)") }
                 }
             }
     }
-
 }
 
 struct CardHeightKey: PreferenceKey {

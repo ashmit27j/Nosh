@@ -10,6 +10,7 @@ struct MealSectionView: View {
     
     @State private var showingTimeEdit = false
     @State private var mealTime: Date = Date()
+    @State private var selectedMealForViewing: Meal? = nil
     @StateObject private var viewModel = MealPlannerViewModel()
 
     var body: some View {
@@ -73,16 +74,11 @@ struct MealSectionView: View {
                             .offset(x: -8, y: 0)
                         }
                     } else {
-                        // Show chevron and navigate to YOUR OLD RecipeView
-                        NavigationLink(destination: RecipeView(meal: meal)) {
-                            HStack {
-                                MealItemView(meal: meal)
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(Color("primaryAccent"))
-                                    .padding(.trailing, 8)
-                            }
+                        // Tappable meal card - opens in sheet (NO CHEVRON)
+                        Button(action: {
+                            selectedMealForViewing = meal
+                        }) {
+                            MealItemView(meal: meal)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
@@ -114,6 +110,9 @@ struct MealSectionView: View {
             ) {
                 showingTimeEdit = false
             }
+        }
+        .sheet(item: $selectedMealForViewing) { meal in
+            RecipeView(meal: meal)
         }
     }
     

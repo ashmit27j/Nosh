@@ -344,6 +344,20 @@ class MealPlannerViewModel: ObservableObject {
                     }
                 }
                 
+                // Check if meal already exists (by ID or name) to prevent duplicates
+                let mealExists = existingMeals.contains { existingMeal in
+                    if let existingId = existingMeal.id, let newId = meal.id {
+                        return existingId == newId
+                    } else {
+                        return existingMeal.name == meal.name
+                    }
+                }
+                
+                if mealExists {
+                    print("⚠️ Meal already exists, skipping duplicate")
+                    return
+                }
+                
                 // Add new meal to existing meals
                 existingMeals.append(meal)
                 
@@ -373,6 +387,7 @@ class MealPlannerViewModel: ObservableObject {
                 }
             }
     }
+
     
     func removeMeal(from day: String, type mealType: String, meal: Meal) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
@@ -487,10 +502,74 @@ class MealPlannerViewModel: ObservableObject {
             }
         }
     }
-    
-    // MARK: - AI Meal Plan Generation
+    // MARK: - AI Meal Plan Generation (For Selected Day)
     func generateAIMealPlan() async throws {
-        print("Generating AI meal plan...")
+        print("🤖 Generating AI meal plan for \(dateToString(selectedDate))...")
+        
+        // TODO: Add your AI meal generation logic here
+        // This should:
+        // 1. Call your AI API to get meal recommendations
+        // 2. Add them to the selected date
+        // 3. For now, we'll add a placeholder
+        
+        // Example: Generate random meals for the selected day
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let dateString = dateToString(selectedDate)
+        
+        // For demonstration, let's fetch 3 random meals from recipes
+        db.collection("recipes").limit(to: 3).getDocuments { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Error generating meal plan: \(error)")
+                return
+            }
+            
+            guard let documents = snapshot?.documents, documents.count >= 3 else {
+                print("⚠️ Not enough recipes to generate meal plan")
+                return
+            }
+            
+            // Get 3 meals
+            let meals = documents.compactMap { try? $0.data(as: Meal.self) }
+            
+            guard meals.count >= 3 else { return }
+            
+            // Assign to breakfast, lunch, dinner
+            let breakfast = [meals[0]]
+            let lunch = [meals[1]]
+            let dinner = [meals[2]]
+            
+            do {
+                let breakfastData = try breakfast.map { try Firestore.Encoder().encode($0) }
+                let lunchData = try lunch.map { try Firestore.Encoder().encode($0) }
+                let dinnerData = try dinner.map { try Firestore.Encoder().encode($0) }
+                
+                self.db.collection("users")
+                    .document(userId)
+                    .collection("mealPlanner")
+                    .document(dateString)
+                    .setData([
+                        "date": Timestamp(date: self.selectedDate),
+                        "breakfast": breakfastData,
+                        "lunch": lunchData,
+                        "dinner": dinnerData
+                    ], merge: false) { error in
+                        if let error = error {
+                            print("❌ Error saving AI meal plan: \(error)")
+                        } else {
+                            print("✅ AI meal plan generated for \(dateString)!")
+                            Task { @MainActor in
+                                self.loadWeekMealPlans()
+                            }
+                        }
+                    }
+            } catch {
+                print("❌ Encoding error: \(error)")
+            }
+        }
     }
+
     
 }
