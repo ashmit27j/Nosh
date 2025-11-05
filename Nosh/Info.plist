@@ -42,5 +42,11 @@
     
     <key>NSMicrophoneUsageDescription</key>
     <string>We need microphone access to process voice commands for Chef Nosh</string>
+    
+    <!-- Cloudinary Configuration -->
+    <key>CLOUDINARY_CLOUD_NAME</key>
+    <string>ddq7wjsbo</string>
+    <key>CLOUDINARY_UPLOAD_PRESET</key>
+    <string>nosh_profile_photos</string>
 </dict>
 </plist>

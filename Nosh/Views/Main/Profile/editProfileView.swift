@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import SDWebImageSwiftUI
 import PhotosUI
+import Cloudinary // Add this import
 
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
@@ -17,9 +18,17 @@ struct EditProfileView: View {
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @State private var isLoading: Bool = false
+    @State private var isUploadingPhoto: Bool = false // New state for photo upload
     
     @State private var showPasswordResetView: Bool = false
     @State private var showUpdateEmailView: Bool = false
+    
+    // Cloudinary configuration
+    private let cloudinary = CLDCloudinary(configuration: CLDConfiguration(
+        cloudName: "YOUR_CLOUD_NAME", // Replace with your Cloudinary cloud name
+        secure: true
+    ))
+    private let uploadPreset = "nosh_profile_photos" // Replace with your upload preset name
     
     var body: some View {
         NavigationStack {
@@ -79,23 +88,38 @@ struct EditProfileView: View {
     private func buildProfilePhotoSection() -> some View {
         VStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                if let photoURL = viewModel.photoURL {
-                    WebImage(url: photoURL)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 120, height: 120)
-                        .clipShape(Circle())
-                } else {
-                    Circle()
-                        .fill(Color("secondaryButton").opacity(0.3))
-                        .frame(width: 120, height: 120)
-                        .overlay(
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 120, height: 120)
-                                .foregroundColor(Color("secondaryText"))
-                        )
+                // Show loading overlay when uploading
+                ZStack {
+                    if let photoURL = viewModel.photoURL {
+                        WebImage(url: photoURL)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                    } else {
+                        Circle()
+                            .fill(Color("secondaryButton").opacity(0.3))
+                            .frame(width: 120, height: 120)
+                            .overlay(
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 120, height: 120)
+                                    .foregroundColor(Color("secondaryText"))
+                            )
+                    }
+                    
+                    // Upload progress overlay
+                    if isUploadingPhoto {
+                        Circle()
+                            .fill(Color.black.opacity(0.6))
+                            .frame(width: 120, height: 120)
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.5)
+                            )
+                    }
                 }
                 
                 Button {
@@ -105,14 +129,15 @@ struct EditProfileView: View {
                         .fill(Color("primaryAccent"))
                         .frame(width: 36, height: 36)
                         .overlay(
-                            Image(systemName: "camera.fill")
+                            Image(systemName: isUploadingPhoto ? "hourglass" : "camera.fill")
                                 .foregroundColor(Color("primaryText"))
                                 .font(.system(size: 16))
                         )
                 }
+                .disabled(isUploadingPhoto)
             }
             
-            Text("Tap to change photo")
+            Text(isUploadingPhoto ? "Uploading..." : "Tap to change photo")
                 .font(.caption)
                 .foregroundColor(Color("secondaryText"))
         }
@@ -127,7 +152,6 @@ struct EditProfileView: View {
                 .foregroundColor(Color("primaryText"))
             
             buildUsernameField()
-            buildEmailField()
             buildSaveButton()
         }
         .padding()
@@ -150,26 +174,6 @@ struct EditProfileView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color("secondaryButton").opacity(0.3), lineWidth: 1)
                 )
-        }
-    }
-    
-    @ViewBuilder
-    private func buildEmailField() -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Email")
-                .font(.subheadline)
-                .foregroundColor(Color("secondaryText"))
-            
-            TextField("Enter your email", text: $newEmail)
-                .padding()
-                .background(Color("primaryBackground"))
-                .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color("secondaryButton").opacity(0.3), lineWidth: 1)
-                )
-                .disabled(true)
-                .opacity(0.6)
         }
     }
     
@@ -310,9 +314,98 @@ struct EditProfileView: View {
         }
     }
     
+    // MARK: - Cloudinary Upload
+    
     private func uploadProfilePhoto(_ image: UIImage) async {
-        alertTitle = "Coming Soon"
-        alertMessage = "Photo upload will be implemented"
-        showAlert = true
+        guard let user = Auth.auth().currentUser else { return }
+        
+        // Start loading state
+        await MainActor.run {
+            isUploadingPhoto = true
+        }
+        
+        // Compress image before upload (optional but recommended)
+        guard let imageData = compressImage(image, maxSizeKB: 1000) else {
+            await MainActor.run {
+                isUploadingPhoto = false
+                alertTitle = "Error"
+                alertMessage = "Failed to process image"
+                showAlert = true
+            }
+            return
+        }
+        
+        // Create upload parameters
+        let params = CLDUploadRequestParams()
+        params.setUploadPreset(uploadPreset)
+        params.setFolder("profile_photos") // Optional: organize photos in folder
+        params.setPublicId("user_\(user.uid)") // Use user ID as public ID for easy retrieval
+        params.setOverwrite(true) // Allow replacing existing photo
+        params.setResourceType(.image)
+        
+        // Perform upload
+        let request = cloudinary.createUploader().upload(
+            data: imageData,
+            uploadPreset: uploadPreset,
+            params: params
+        )
+        
+        request.response { result, error in
+            Task { @MainActor in
+                isUploadingPhoto = false
+                
+                if let error = error {
+                    alertTitle = "Upload Failed"
+                    alertMessage = error.localizedDescription
+                    showAlert = true
+                    return
+                }
+                
+                guard let result = result,
+                      let secureUrl = result.secureUrl else {
+                    alertTitle = "Upload Failed"
+                    alertMessage = "Could not get image URL"
+                    showAlert = true
+                    return
+                }
+                
+                // Save the Cloudinary URL to Firestore
+                savePhotoURLToFirestore(secureUrl)
+            }
+        }
+    }
+    
+    private func savePhotoURLToFirestore(_ urlString: String) {
+        guard let user = Auth.auth().currentUser else { return }
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(user.uid).updateData([
+            "photoURL": urlString
+        ]) { error in
+            if let error = error {
+                alertTitle = "Error"
+                alertMessage = "Photo uploaded but failed to save: \(error.localizedDescription)"
+            } else {
+                alertTitle = "Success"
+                alertMessage = "Profile photo updated successfully!"
+                // Refresh the user profile to show new photo
+                viewModel.fetchUserProfile()
+            }
+            showAlert = true
+        }
+    }
+    
+    // Helper function to compress image
+    private func compressImage(_ image: UIImage, maxSizeKB: Int) -> Data? {
+        let maxBytes = maxSizeKB * 1024
+        var compression: CGFloat = 1.0
+        var imageData = image.jpegData(compressionQuality: compression)
+        
+        while let data = imageData, data.count > maxBytes && compression > 0.1 {
+            compression -= 0.1
+            imageData = image.jpegData(compressionQuality: compression)
+        }
+        
+        return imageData
     }
 }

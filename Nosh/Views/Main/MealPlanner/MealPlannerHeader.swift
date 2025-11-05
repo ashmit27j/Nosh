@@ -1,86 +1,99 @@
 import SwiftUI
 
 struct MealPlannerHeader: View {
-    @Binding var searchText: String
-    @Binding var isEditing: Bool
     @Binding var selectedTab: String
-    let tabs: [String]
+    @ObservedObject var viewModel: MealPlannerViewModel
     var underlineNamespace: Namespace.ID
+    @Binding var showingDatePicker: Bool
+    let onDateChange: (Date) -> Void
+    var onGenerateAIMealPlan: () -> Void
+    
+    @State private var isGenerating = false
+    
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d, yyyy"
+        return formatter
+    }
 
     var body: some View {
         VStack(spacing: 8) {
-            // MARK: - Title and Calendar Button
+            // MARK: - Title and AI Button
             HStack(alignment: .center) {
                 Text("Schedule")
                     .font(.largeTitle.bold())
                     .transition(.opacity)
 
                 Spacer()
-
-//                Button {
-//                    print("AI Schedule generator tapped")
-//                } label: {
-//                    HStack(spacing: 8) {
-//                        Image("cookIcon")
-//                            .resizable()
-//                            .scaledToFit()
-//                            .frame(width: 18, height: 18)
-//                            .foregroundColor(Color("secondaryAccent"))
-//
-//                    }
-//                    .padding(.horizontal, 12)
-//                    .padding(.vertical, 12)
-//                    .background(Color("primaryAccent"))
-//                    .cornerRadius(16)
-//                }
                 
+                // AI Generate Button
                 Button {
-                    print("Calendar tapped")
+                    isGenerating = true
+                    onGenerateAIMealPlan()
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        isGenerating = false
+                    }
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "calendar")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 18, height: 18)
-                            .foregroundColor(Color("secondaryAccent"))
-
+                        if isGenerating {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color("secondaryAccent")))
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "sparkles")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 18, height: 18)
+                                .foregroundColor(Color("secondaryAccent"))
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .background(Color("primaryAccent"))
                     .cornerRadius(16)
                 }
+                .disabled(isGenerating)
             }
             .padding(.top, 0)
             .transition(.opacity)
 
-            // MARK: - Search Bar
-            HStack(spacing: 8) {
-                SearchBar(text: $searchText, isEditing: $isEditing)
-
-                if isEditing {
-                    Button("Cancel") {
-                        searchText = ""
-                        isEditing = false
-                        UIApplication.shared.sendAction(
-                            #selector(UIResponder.resignFirstResponder),
-                            to: nil, from: nil, for: nil
-                        )
-                    }
-                    .foregroundColor(.accentColor)
-                    .transition(.opacity.combined(with: .move(edge: .trailing)))
+            // MARK: - Date Display Button (Replaces Search Bar)
+            Button(action: {
+                showingDatePicker = true
+            }) {
+                HStack {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color("primaryAccent"))
+                    
+                    Text(dateFormatter.string(from: viewModel.selectedDate))
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(Color("primaryText"))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color("secondaryText"))
                 }
+                .padding(12)
+                .background(Color("secondaryButton").opacity(0.5))
+                .cornerRadius(10)
             }
-            .padding(.top, 8) // ✅ Add top padding to separate from the title row
-            .animation(.easeInOut(duration: 0.25), value: isEditing)
+            .padding(.top, 8)
 
-            // MARK: - Tabs
+            // MARK: - Tabs (Synced with viewModel)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
-                    ForEach(tabs, id: \.self) { tab in
+                    ForEach(viewModel.tabs, id: \.self) { tab in
                         VStack(spacing: 2) {
                             Button {
                                 selectedTab = tab
+                                // Update selected date when tab is tapped
+                                if let date = viewModel.dateFromDayString(tab) {
+                                    viewModel.changeDate(to: date)
+                                }
                             } label: {
                                 Text(tab)
                                     .fontWeight(selectedTab == tab ? .semibold : .regular)
@@ -100,5 +113,8 @@ struct MealPlannerHeader: View {
         }
         .padding()
         .background(Color("primaryCard"))
+        .onChange(of: viewModel.selectedTab) { newTab in
+            selectedTab = newTab
+        }
     }
 }

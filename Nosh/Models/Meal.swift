@@ -73,25 +73,13 @@ struct Meal: Identifiable, Hashable, Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // ID
         id = try? container.decode(String.self, forKey: .id)
-        
-        // Name (required, defaults to "Untitled Recipe")
         name = (try? container.decode(String.self, forKey: .name)) ?? "Untitled Recipe"
-        
-        // Description (defaults to empty)
         description = (try? container.decode(String.self, forKey: .description)) ?? ""
-        
-        // Image (optional, defaults to nil)
         imageName = try? container.decode(String.self, forKey: .imageName)
-        
-        // Time to cook (defaults to "30 mins")
         timeToCook = (try? container.decode(String.self, forKey: .timeToCook)) ?? "30 mins"
-        
-        // Serving size (defaults to 1)
         servingSize = (try? container.decode(Int.self, forKey: .servingSize)) ?? 1
         
-        // Difficulty (handle Int or fallback to easy)
         if let diffInt = try? container.decode(Int.self, forKey: .difficulty) {
             switch diffInt {
             case 1: difficulty = .easy
@@ -104,22 +92,97 @@ struct Meal: Identifiable, Hashable, Codable {
             difficulty = .easy
         }
         
-        // Category ID (defaults to 4 = Full Meal)
         categoryId = (try? container.decode(Int.self, forKey: .categoryId)) ?? 4
-        
-        // Preferences (defaults to 0 = vegetarian)
         preferences = (try? container.decode(Int.self, forKey: .preferences)) ?? 0
-        
-        // Ingredients (defaults to empty array)
         ingredients = (try? container.decode([String].self, forKey: .ingredients)) ?? []
-        
-        // Steps (defaults to empty array)
         steps = (try? container.decode([String].self, forKey: .steps)) ?? []
-        
-        // Nutritional content (defaults to empty)
         nutritionalContent = (try? container.decode(String.self, forKey: .nutritionalContent)) ?? ""
-        
-        // Pantry availability (defaults to false)
         isAvailableInPantry = (try? container.decode(Bool.self, forKey: .isAvailableInPantry)) ?? false
     }
+}
+
+// MARK: - Day Meal Plan Structure (UPDATED - Robust Decoding)
+struct DayMealPlan: Identifiable, Codable {
+    @DocumentID var id: String?
+    var date: Date
+    var breakfast: [Meal]
+    var lunch: [Meal]
+    var dinner: [Meal]
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case date
+        case breakfast
+        case lunch
+        case dinner
+    }
+    
+    // Custom initializer
+    init(id: String? = nil, date: Date, breakfast: [Meal], lunch: [Meal], dinner: [Meal]) {
+        self.id = id
+        self.date = date
+        self.breakfast = breakfast
+        self.lunch = lunch
+        self.dinner = dinner
+    }
+    
+    // Custom decoder with fallbacks
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Decode ID (optional)
+        id = try? container.decode(String.self, forKey: .id)
+        
+        // Decode date (required, fallback to now)
+        if let timestamp = try? container.decode(Timestamp.self, forKey: .date) {
+            date = timestamp.dateValue()
+        } else {
+            date = Date()
+        }
+        
+        // Decode breakfast array (fallback to empty array)
+        breakfast = (try? container.decode([Meal].self, forKey: .breakfast)) ?? []
+        
+        // Decode lunch array (fallback to empty array)
+        lunch = (try? container.decode([Meal].self, forKey: .lunch)) ?? []
+        
+        // Decode dinner array (fallback to empty array)
+        dinner = (try? container.decode([Meal].self, forKey: .dinner)) ?? []
+    }
+    
+    // Custom encoder
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encodeIfPresent(id, forKey: .id)
+        try container.encode(Timestamp(date: date), forKey: .date)
+        try container.encode(breakfast, forKey: .breakfast)
+        try container.encode(lunch, forKey: .lunch)
+        try container.encode(dinner, forKey: .dinner)
+    }
+}
+
+
+// MARK: - Meal Times (Stored at User Level)
+struct MealTimes: Codable {
+    var breakfastTime: Date
+    var lunchTime: Date
+    var dinnerTime: Date
+    
+    static var `default`: MealTimes {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        let breakfast = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: now) ?? now
+        let lunch = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) ?? now
+        let dinner = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: now) ?? now
+        
+        return MealTimes(breakfastTime: breakfast, lunchTime: lunch, dinnerTime: dinner)
+    }
+}
+
+enum MealType: String, CaseIterable {
+    case breakfast = "Breakfast"
+    case lunch = "Lunch"
+    case dinner = "Dinner"
 }

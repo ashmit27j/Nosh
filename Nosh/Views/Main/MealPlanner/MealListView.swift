@@ -5,24 +5,27 @@ struct MealListView: View {
     let selectedTab: String
 
     @State private var isEditing = false
+    @State private var showMealSelector = false
+    @State private var selectedMealType: String = ""
 
     var body: some View {
-        ScrollView {
-            GeometryReader { geo in
-                Color.clear
-                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
-            }
-            .frame(height: 0)
+        ScrollView(.vertical, showsIndicators: true) {
+//            GeometryReader { geo in
+//                Color.clear
+//                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
+//            }
+//            .frame(height: 0)
 
             VStack(spacing: 20) {
                 if let mealsByType = viewModel.items[selectedTab] {
-                    // Section 1
+                    // Section 1 - Breakfast
                     MealSectionView(
                         title: "Breakfast",
                         meals: mealsByType["breakfast"] ?? [],
                         onEditTapped: { isEditing.toggle() },
                         onAdd: {
-                            viewModel.addMeal(to: selectedTab, type: "breakfast", meal: sampleMeal())
+                            selectedMealType = "breakfast"
+                            showMealSelector = true
                         },
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "breakfast", meal: meal)
@@ -33,13 +36,14 @@ struct MealListView: View {
                     .background(Color("primaryCard"))
                     .cornerRadius(12)
 
-                    // Section 2
+                    // Section 2 - Lunch
                     MealSectionView(
                         title: "Lunch",
                         meals: mealsByType["lunch"] ?? [],
                         onEditTapped: { isEditing.toggle() },
                         onAdd: {
-                            viewModel.addMeal(to: selectedTab, type: "lunch", meal: sampleMeal())
+                            selectedMealType = "lunch"
+                            showMealSelector = true
                         },
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "lunch", meal: meal)
@@ -50,13 +54,14 @@ struct MealListView: View {
                     .background(Color("primaryCard"))
                     .cornerRadius(12)
 
-                    // Section 3
+                    // Section 3 - Dinner
                     MealSectionView(
                         title: "Dinner",
                         meals: mealsByType["dinner"] ?? [],
                         onEditTapped: { isEditing.toggle() },
                         onAdd: {
-                            viewModel.addMeal(to: selectedTab, type: "dinner", meal: sampleMeal())
+                            selectedMealType = "dinner"
+                            showMealSelector = true
                         },
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "dinner", meal: meal)
@@ -71,26 +76,12 @@ struct MealListView: View {
             .padding(.horizontal)
         }
         .coordinateSpace(name: "scroll")
-    }
-    
-    // MARK: - Helper Function
-    private func sampleMeal() -> Meal {
-        // ✅ Create a sample meal using the memberwise initializer approach
-        var meal = Meal(
-            name: "Sample Dish",
-            description: "Delicious homemade dish",
-            imageName: "frankieImage",
-            timeToCook: "30 mins",
-            servingSize: 2,
-            difficulty: .easy,
-            categoryId: 4,
-            preferences: 0,
-            ingredients: ["Sample ingredient"],
-            steps: ["Sample step"],
-            nutritionalContent: "",
-            isAvailableInPantry: false
-        )
-        meal.id = UUID().uuidString
-        return meal
+        .sheet(isPresented: $showMealSelector) {
+            MealSelectorSheet(
+                selectedTab: selectedTab,
+                mealType: selectedMealType,
+                viewModel: viewModel
+            )
+        }
     }
 }

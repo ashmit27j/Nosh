@@ -2,12 +2,10 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab: Tab = .home
-    @State private var isAiChefActive = false  // ADD THIS
+    @State private var isAiChefActive = false
     
-    // Shared ViewModels
-    @StateObject private var mealPlannerViewModel = MealPlannerViewModel(tabs: [
-        "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-    ])
+    // Shared ViewModels - UPDATED for Firestore
+    @StateObject private var mealPlannerViewModel = MealPlannerViewModel()
     
     @StateObject private var pantryViewModel = PantryViewModel(tabs: [
         "All",
@@ -55,7 +53,7 @@ struct MainTabView: View {
                                 selectedTab = .mealPlanner
                             }
                         },
-                        isAiChefActive: $isAiChefActive  // PASS BINDING
+                        isAiChefActive: $isAiChefActive
                     )
                 case .mealPlanner:
                     MealPlanner(viewModel: mealPlannerViewModel)
@@ -71,7 +69,7 @@ struct MainTabView: View {
             .background(Color("primaryBackground"))
 
             // Custom Tab Bar - HIDE WHEN AI CHEF IS ACTIVE
-            if !isAiChefActive {  // ADD THIS CONDITION
+            if !isAiChefActive {
                 HStack {
                     ForEach(Tab.allCases, id: \.self) { tab in
                         Spacer()
@@ -138,7 +136,7 @@ struct MainTabView: View {
                             .ignoresSafeArea(edges: .bottom)
                     }
                 )
-                .transition(.move(edge: .bottom))  // ADD SMOOTH TRANSITION
+                .transition(.move(edge: .bottom))
             }
         }
         .ignoresSafeArea()
@@ -147,9 +145,13 @@ struct MainTabView: View {
             PantryManager.shared.pantryViewModel = pantryViewModel
             pantryViewModel.initializeDefaultPantry()
             
+            // Load meal planner data from Firestore
+            print("🔗 MainTabView: Loading meal planner data from Firestore")
+            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 print("✅ PantryManager connected: \(PantryManager.shared.pantryViewModel != nil)")
                 print("✅ Pantry items count: \(pantryViewModel.items.count)")
+                print("✅ MealPlanner initialized for date: \(mealPlannerViewModel.selectedDate)")
             }
         }
     }
