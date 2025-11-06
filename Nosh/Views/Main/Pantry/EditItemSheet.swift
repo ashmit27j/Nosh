@@ -1,11 +1,3 @@
-//
-//  EditItemSheet.swift
-//  Nosh
-//
-//  Created by MacBook on 02/11/25.
-//
-
-
 import SwiftUI
 
 struct EditItemSheet: View {
@@ -36,6 +28,7 @@ struct EditItemSheet: View {
                             Image(systemName: "minus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
+                        .buttonStyle(.borderless) // Fix
 
                         Text(String(format: "%.1f", quantity))
                             .frame(width: 50)
@@ -46,6 +39,7 @@ struct EditItemSheet: View {
                             Image(systemName: "plus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
+                        .buttonStyle(.borderless) // Fix
                     }
                 }
 
@@ -61,6 +55,7 @@ struct EditItemSheet: View {
                             Image(systemName: "minus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
+                        .buttonStyle(.borderless) // Fix
 
                         Text(String(format: "%.1f", incrementBy))
                             .frame(width: 50)
@@ -71,6 +66,7 @@ struct EditItemSheet: View {
                             Image(systemName: "plus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
+                        .buttonStyle(.borderless) // Fix
                     }
                 }
             }
@@ -93,4 +89,3 @@ struct EditItemSheet: View {
         }
     }
 }
-
