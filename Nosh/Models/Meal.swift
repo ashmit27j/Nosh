@@ -99,6 +99,27 @@ struct Meal: Identifiable, Hashable, Codable {
         nutritionalContent = (try? container.decode(String.self, forKey: .nutritionalContent)) ?? ""
         isAvailableInPantry = (try? container.decode(Bool.self, forKey: .isAvailableInPantry)) ?? false
     }
+    
+    // Custom encoder - EXCLUDE ID when encoding for nested storage
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // DON'T encode id - let Firestore manage it
+        // try container.encodeIfPresent(id, forKey: .id)  // REMOVED
+        
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encodeIfPresent(imageName, forKey: .imageName)
+        try container.encode(timeToCook, forKey: .timeToCook)
+        try container.encode(servingSize, forKey: .servingSize)
+        try container.encode(difficulty.rawValue, forKey: .difficulty)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(preferences, forKey: .preferences)
+        try container.encode(ingredients, forKey: .ingredients)
+        try container.encode(steps, forKey: .steps)
+        try container.encode(nutritionalContent, forKey: .nutritionalContent)
+        try container.encode(isAvailableInPantry, forKey: .isAvailableInPantry)
+    }
 }
 
 // MARK: - Day Meal Plan Structure (UPDATED - Robust Decoding)
@@ -154,14 +175,13 @@ struct DayMealPlan: Identifiable, Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         
-        try container.encodeIfPresent(id, forKey: .id)
+        // Don't encode id for DayMealPlan either
         try container.encode(Timestamp(date: date), forKey: .date)
         try container.encode(breakfast, forKey: .breakfast)
         try container.encode(lunch, forKey: .lunch)
         try container.encode(dinner, forKey: .dinner)
     }
 }
-
 
 // MARK: - Meal Times (Stored at User Level)
 struct MealTimes: Codable {

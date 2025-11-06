@@ -118,13 +118,20 @@ struct ShoppingListView: View {
         for item in itemsToShop where checkedItems.contains(item.id) {
             let category = viewModel.findCategory(for: item)
             let additionalQuantity = quantities[item.id] ?? 0
+            // Directly mutate viewModel.items
             if var list = viewModel.items[category],
                let index = list.firstIndex(where: { $0.id == item.id }) {
                 list[index].quantity += additionalQuantity
+                // Persist the item, especially if linked to a database/backend!
                 viewModel.items[category] = list
             }
+            // If PantryItem is a class, you may not need to replace the array:
+            // if let index = viewModel.items[category]?.firstIndex(where: { $0.id == item.id }) {
+            //     viewModel.items[category]?[index].quantity += additionalQuantity
+            // }
         }
-        viewModel.refresh()
+        viewModel.refresh() // Ensure this triggers a redraw/sync
         dismiss()
     }
+
 }

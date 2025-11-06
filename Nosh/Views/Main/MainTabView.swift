@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var appState: AppState
     @State private var selectedTab: Tab = .home
     @State private var isAiChefActive = false
     
@@ -141,6 +142,7 @@ struct MainTabView: View {
         }
         .ignoresSafeArea()
         .onAppear {
+            NotificationManager.shared.scheduleMealNotifications(mealTimes: appState.mealTimes)
             print("🔗 MainTabView: Connecting PantryManager to shared pantryViewModel")
             PantryManager.shared.pantryViewModel = pantryViewModel
             pantryViewModel.initializeDefaultPantry()

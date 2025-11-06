@@ -16,8 +16,8 @@ class CloudinaryManager {
         self.cloudinary = CLDCloudinary(configuration: config)
     }
     
-    /// Upload profile photo to Cloudinary
-    /// Uses timestamp-based naming to ensure unique filenames
+    // Upload profile photo to Cloudinary
+    // Uses timestamp-based naming to ensure unique filenames
     func uploadProfilePhoto(
         image: UIImage,
         userId: String,

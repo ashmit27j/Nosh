@@ -3,7 +3,9 @@ import Firebase
 
 @main
 struct NoshApp: App {
+    
     @StateObject var appState = AppState()
+    @StateObject var accessibilityEnv = AccessibilityEnvironment.shared
 
     init() {
         FirebaseApp.configure()
@@ -14,6 +16,7 @@ struct NoshApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appState)
+                .environmentObject(accessibilityEnv) 
         }
     }
 }

@@ -4,6 +4,7 @@ import FirebaseFirestore
 
 @MainActor
 class AppState: ObservableObject {
+    @Published var mealTimes: MealTimes = .default
     @Published var isUserSignedIn: Bool = false
     @Published var showSplash: Bool = true
     @Published var user: UserProfile? = nil

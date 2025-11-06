@@ -41,9 +41,9 @@ struct Profile: View {
                             SettingsSection(
                                 title: "Meal Preferences",
                                 items: [
-                                    ProfileItem(icon: "leaf.fill", iconColor: .green, title: "Diet Type", enabled: true, destination: AnyView(dietTypeView())),
+//                                    ProfileItem(icon: "leaf.fill", iconColor: .green, title: "Diet Type", enabled: true, destination: AnyView(dietTypeView())),
                                     ProfileItem(icon: "exclamationmark.triangle.fill", iconColor: .orange, title: "Allergens", enabled: true, destination: AnyView(allergensView())),
-                                    ProfileItem(icon: "calendar", iconColor: .purple, title: "Meal Schedule", enabled: true, destination: AnyView(mealScheduleView())),
+//                                    ProfileItem(icon: "calendar", iconColor: .purple, title: "Meal Schedule", enabled: true, destination: AnyView(mealScheduleView())),
                                     ProfileItem(icon: "cart.fill", iconColor: .green, title: "Grocery Preferences", enabled: true, destination: AnyView(groceryPreferencesView()))
                                 ]
                             )
@@ -226,10 +226,6 @@ struct Profile: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(Color("secondaryButton"))
-                
-                Text("Edit")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
             }
         }
         .padding()

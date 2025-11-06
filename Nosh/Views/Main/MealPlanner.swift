@@ -33,6 +33,7 @@ struct MealPlanner: View {
                             showCollapsedTitle = offset < -20
                         }
                     }
+                Spacer(minLength: 80)
             }
             .background(Color("primaryBackground"))
             .sheet(isPresented: $showingDatePicker) {

@@ -3,6 +3,7 @@ import FirebaseFirestore
 import FirebaseAuth
 import Combine
 
+
 @MainActor
 class MealPlannerViewModel: ObservableObject {
     // MARK: - Firestore Properties
@@ -312,7 +313,7 @@ class MealPlannerViewModel: ObservableObject {
         let date = dateFromDayString(day) ?? selectedDate
         let dateString = dateToString(date)
         
-        print("📅 Adding meal to date: \(dateString), day: \(day), type: \(mealType)")
+        print("📅 Adding meal: \(meal.name) to date: \(dateString), day: \(day), type: \(mealType)")
         
         let mealField: String
         switch mealType.lowercased() {
@@ -344,22 +345,26 @@ class MealPlannerViewModel: ObservableObject {
                     }
                 }
                 
-                // Check if meal already exists (by ID or name) to prevent duplicates
+                // Check if meal already exists by ID (primary) or name (fallback)
                 let mealExists = existingMeals.contains { existingMeal in
-                    if let existingId = existingMeal.id, let newId = meal.id {
+                    // If both have IDs, compare by ID
+                    if let existingId = existingMeal.id, let newId = meal.id, !existingId.isEmpty, !newId.isEmpty {
                         return existingId == newId
-                    } else {
-                        return existingMeal.name == meal.name
                     }
+                    // Otherwise compare by name AND description for better accuracy
+                    return existingMeal.name.lowercased() == meal.name.lowercased() &&
+                           existingMeal.description == meal.description
                 }
                 
                 if mealExists {
-                    print("⚠️ Meal already exists, skipping duplicate")
+                    print("⚠️ Meal '\(meal.name)' already exists in \(mealType), skipping duplicate")
                     return
                 }
                 
                 // Add new meal to existing meals
                 existingMeals.append(meal)
+                
+                print("➕ Adding meal '\(meal.name)' (Total: \(existingMeals.count) meals in \(mealType))")
                 
                 do {
                     let mealsData = try existingMeals.map { try Firestore.Encoder().encode($0) }
@@ -375,7 +380,7 @@ class MealPlannerViewModel: ObservableObject {
                             if let error = error {
                                 print("❌ Error adding meal: \(error.localizedDescription)")
                             } else {
-                                print("✅ Meal added successfully!")
+                                print("✅ Meal '\(meal.name)' added successfully to \(mealType)!")
                                 // Reload the week to reflect changes
                                 Task { @MainActor in
                                     self.loadWeekMealPlans()
@@ -387,6 +392,7 @@ class MealPlannerViewModel: ObservableObject {
                 }
             }
     }
+
 
     
     func removeMeal(from day: String, type mealType: String, meal: Meal) {

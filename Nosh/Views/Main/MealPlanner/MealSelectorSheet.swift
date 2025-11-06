@@ -1,4 +1,5 @@
 //import SwiftUI
+//import FirebaseFirestore
 //
 //struct MealSelectorSheet: View {
 //    let selectedTab: String
@@ -113,9 +114,18 @@
 //        
 //        Task {
 //            do {
-//                let results = try await viewModel.searchMeals(query: "")
+//                // Load all recipes from Firestore
+//                let snapshot = try await Firestore.firestore()
+//                    .collection("recipes")
+//                    .limit(to: 100)
+//                    .getDocuments()
+//                
+//                let recipes = snapshot.documents.compactMap { doc -> Meal? in
+//                    try? doc.data(as: Meal.self)
+//                }
+//                
 //                await MainActor.run {
-//                    allRecipes = results
+//                    allRecipes = recipes
 //                    isLoading = false
 //                }
 //            } catch {
@@ -148,6 +158,7 @@
 //    
 //    // MARK: - Add Meal Function
 //    private func addMealToSchedule(_ meal: Meal) {
+//        print("🍽️ Adding meal: \(meal.name) to \(selectedTab) - \(mealType)")
 //        viewModel.addMeal(to: selectedTab, type: mealType, meal: meal)
 //        
 //        let generator = UINotificationFeedbackGenerator()
@@ -172,6 +183,7 @@ struct MealSelectorSheet: View {
     @State private var allRecipes: [Meal] = []
     @State private var searchResults: [Meal] = []
     @State private var isLoading = true
+    @State private var isAddingMeal = false  // NEW: Track if we're currently adding
     
     var displayedRecipes: [Meal] {
         searchText.isEmpty ? allRecipes : searchResults
@@ -180,7 +192,6 @@ struct MealSelectorSheet: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Darker background matching your app
                 Color("primaryBackground")
                     .ignoresSafeArea()
                 
@@ -253,6 +264,16 @@ struct MealSelectorSheet: View {
                         }
                     }
                 }
+                
+                // Loading overlay when adding meal
+                if isAddingMeal {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(.white)
+                }
             }
             .navigationTitle("Add \(mealType.capitalized)")
             .navigationBarTitleDisplayMode(.inline)
@@ -261,12 +282,14 @@ struct MealSelectorSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .disabled(isAddingMeal)  // Disable cancel while adding
                 }
             }
         }
         .onAppear {
             loadAllRecipes()
         }
+        .interactiveDismissDisabled(isAddingMeal)  // Prevent dismiss while adding
     }
     
     // MARK: - Load All Recipes
@@ -275,7 +298,6 @@ struct MealSelectorSheet: View {
         
         Task {
             do {
-                // Load all recipes from Firestore
                 let snapshot = try await Firestore.firestore()
                     .collection("recipes")
                     .limit(to: 100)
@@ -317,15 +339,28 @@ struct MealSelectorSheet: View {
         }
     }
     
-    // MARK: - Add Meal Function
+    // MARK: - Add Meal Function (FIXED)
     private func addMealToSchedule(_ meal: Meal) {
-        print("🍽️ Adding meal: \(meal.name) to \(selectedTab) - \(mealType)")
+        // Prevent multiple taps
+        guard !isAddingMeal else {
+            print("⚠️ Already adding a meal, ignoring tap")
+            return
+        }
+        
+        isAddingMeal = true
+        
+        print("🍽️ Starting to add meal: \(meal.name) to \(selectedTab) - \(mealType)")
+        
+        // Add the meal
         viewModel.addMeal(to: selectedTab, type: mealType, meal: meal)
         
+        // Haptic feedback
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Wait a bit longer for Firestore to complete, then dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            isAddingMeal = false
             dismiss()
         }
     }

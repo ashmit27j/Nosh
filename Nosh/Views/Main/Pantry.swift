@@ -8,9 +8,15 @@ struct Pantry: View {
     @State private var showAddItemSheet = false
     @State private var showShoppingList = false
 
+    @State private var editingItem: PantryItem? = nil
+    @State private var editingItemName: String = ""
+    @State private var editingQuantity: Double = 1.0
+    @State private var editingIncrementBy: Double = 0.5
+    @State private var editingCategory: String? = nil
+
     @Namespace private var underlineNamespace
     @ObservedObject var viewModel: PantryViewModel
-    
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -31,6 +37,16 @@ struct Pantry: View {
             .sheet(isPresented: $showShoppingList) {
                 ShoppingListView(viewModel: viewModel)
             }
+            .sheet(item: $editingItem) { item in
+                EditItemSheet(
+                    itemName: $editingItemName,
+                    quantity: $editingQuantity,
+                    incrementBy: $editingIncrementBy,
+                    item: item,
+                    category: editingCategory ?? "All",
+                    viewModel: viewModel
+                )
+            }
             .onAppear {
                 viewModel.initializeDefaultPantry()
                 PantryManager.shared.pantryViewModel = viewModel
@@ -44,12 +60,24 @@ struct Pantry: View {
         List {
             if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
                 ForEach(currentItems, id: \.id) { item in
-                    PantryItemCard(item: item, selectedTab: selectedTab, viewModel: viewModel)
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    PantryItemCard(
+                        item: item,
+                        selectedTab: selectedTab,
+                        viewModel: viewModel,
+                        onEdit: {
+                            tappedItem, category in
+                                    editingItem = tappedItem
+                                    editingCategory = category
+                                    editingItemName = tappedItem.name
+                                    editingQuantity = tappedItem.quantity
+                                    editingIncrementBy = tappedItem.incrementBy
+                        }
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 }
-                
+
                 AddItemButton(
                     category: selectedTab == "All" ? "Vegetables" : selectedTab,
                     showAddItemSheet: $showAddItemSheet
@@ -152,125 +180,5 @@ struct Pantry: View {
     }
 }
 
-struct AddItemButton: View {
-    let category: String
-    @Binding var showAddItemSheet: Bool
-    
-    var body: some View {
-        Button {
-            showAddItemSheet = true
-        } label: {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                    .foregroundColor(Color("primaryAccent"))
-                Text("Add New Item")
-                    .foregroundColor(Color("primaryText"))
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color("primaryCard"))
-            .cornerRadius(12)
-        }
-    }
-}
 
-struct PantryItemCard: View {
-    let item: PantryItem
-    let selectedTab: String
-    let viewModel: PantryViewModel
-    @State private var showEditSheet = false
-    
-    var category: String {
-        selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab
-    }
-    
-    // ✅ Smart formatter with proper rounding: shows decimal only if needed
-    private var formattedQuantity: String {
-        let value = item.quantity
-        let rounded = (value * 10).rounded() / 10  // Round to 1 decimal place
-        
-        // Check if rounded value is a whole number
-        if rounded.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(format: "%.0f", rounded)  // No decimal: "5", "100"
-        } else {
-            return String(format: "%.1f", rounded)  // With decimal: "5.3", "5.6"
-        }
-    }
-
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            Rectangle()
-                .fill(color(for: item.quantity))
-                .frame(width: 12, height: 60)
-
-            HStack {
-                Button {
-                    showEditSheet = true
-                } label: {
-                    Text(item.name)
-                        .foregroundColor(item.quantity == 0 ? Color("secondaryButton") : Color("primaryText"))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 2)
-                }
-                .buttonStyle(.plain)
-
-                HStack(spacing: 4) {
-                    Button {
-                        viewModel.decrement(item, in: category)
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color("secondaryText"))
-                            .frame(width: 20, height: 20)
-                    }
-                    .buttonStyle(.plain)
-
-                    // ✅ Wider frame + smart formatting
-                    Text(formattedQuantity)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .frame(width: 60)  // Increased from 40 to 60
-                        .foregroundColor(Color("primaryText"))
-
-                    Button {
-                        viewModel.increment(item, in: category)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Color("secondaryText"))
-                            .frame(width: 20, height: 20)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(4)
-                .background(Color("secondaryButton").opacity(item.quantity == 0 ? 0.5 : 0.7))
-                .cornerRadius(20)
-            }
-            .padding()
-            .frame(minHeight: 60)
-            .background(Color("primaryCard"))
-        }
-        .cornerRadius(12)
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                withAnimation {
-                    viewModel.deleteItem(item, from: category)
-                }
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        .sheet(isPresented: $showEditSheet) {
-            EditItemSheet(item: item, category: category, viewModel: viewModel)
-        }
-    }
-
-    private func color(for quantity: Double) -> Color {
-        switch quantity {
-        case 5...: return Color("primaryAccent")
-        case 1..<5: return Color("pastelYellow")
-        default: return Color("secondaryButton")
-        }
-    }
-}
 
