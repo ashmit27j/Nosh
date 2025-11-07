@@ -7,7 +7,11 @@ struct UpcomingMealsSection: View {
     @State private var cardHeight: CGFloat = 380
     @State private var meals: [Meal] = []
     @State private var isLoading = true
-    
+
+    // NEW: State variables for navigation
+    @State private var selectedMeal: Meal? = nil
+    @State private var showRecipe: Bool = false
+
     let onViewAllTapped: () -> Void
     private let db = Firestore.firestore()
 
@@ -18,13 +22,11 @@ struct UpcomingMealsSection: View {
                     .font(.title2.bold())
 
                 Spacer()
-
                 Button(action: onViewAllTapped) {
                     HStack(spacing: 4) {
                         Text("View All")
                             .font(.subheadline)
                             .foregroundColor(Color("primaryAccent"))
-
                         Image("triangleIcon")
                             .resizable()
                             .scaledToFit()
@@ -40,21 +42,17 @@ struct UpcomingMealsSection: View {
                     .frame(height: cardHeight)
                     .frame(maxWidth: .infinity)
             } else if meals.isEmpty {
-                // Empty state with "Add Recipes" button
                 VStack(spacing: 16) {
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 48))
                         .foregroundColor(Color("secondaryText").opacity(0.5))
-                    
                     Text("No meals planned for today")
                         .font(.headline)
                         .foregroundColor(Color("primaryText"))
-                    
                     Text("Start planning your meals for the day")
                         .font(.subheadline)
                         .foregroundColor(Color("secondaryText"))
                         .multilineTextAlignment(.center)
-                    
                     Button(action: onViewAllTapped) {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
@@ -76,15 +74,21 @@ struct UpcomingMealsSection: View {
             } else {
                 TabView(selection: $currentIndex) {
                     ForEach(meals.indices, id: \.self) { index in
-                        MealCardView(meal: meals[index])
-                            .padding(.horizontal, 4)
-                            .tag(index)
-                            .background(
-                                GeometryReader { geo in
-                                    Color.clear
-                                        .preference(key: CardHeightKey.self, value: geo.size.height)
-                                }
-                            )
+                        MealCardView(
+                            meal: meals[index],
+                            onCookNowTapped: { meal in
+                                selectedMeal = meal
+                                showRecipe = true
+                            }
+                        )
+                        .padding(.horizontal, 4)
+                        .tag(index)
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(key: CardHeightKey.self, value: geo.size.height)
+                            }
+                        )
                     }
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
@@ -108,8 +112,14 @@ struct UpcomingMealsSection: View {
         .onAppear {
             fetchTodaysMeals()
         }
+        // NEW: Sheet for RecipeView
+        .sheet(isPresented: $showRecipe) {
+            if let meal = selectedMeal {
+                RecipeView(meal: meal) // <-- Replace with your RecipeView
+            }
+        }
     }
-    
+
     // MARK: - Fetch Today's Meals from Meal Planner
     private func fetchTodaysMeals() {
         guard let userId = Auth.auth().currentUser?.uid else {
@@ -117,16 +127,15 @@ struct UpcomingMealsSection: View {
             isLoading = false
             return
         }
-        
+
         print("🔄 Fetching today's meals from meal planner...")
-        
-        // Get today's date string
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let todayString = dateFormatter.string(from: Date())
-        
+
         print("📅 Today's date: \(todayString)")
-        
+
         db.collection("users")
             .document(userId)
             .collection("mealPlanner")
@@ -134,33 +143,32 @@ struct UpcomingMealsSection: View {
             .getDocument { snapshot, error in
                 DispatchQueue.main.async {
                     self.isLoading = false
-                    
+
                     if let error = error {
                         print("❌ Error fetching today's meals: \(error.localizedDescription)")
                         return
                     }
-                    
+
                     guard let snapshot = snapshot, snapshot.exists else {
                         print("📭 No meal plan for today")
                         return
                     }
-                    
+
                     do {
                         let dayPlan = try snapshot.data(as: DayMealPlan.self)
-                        
-                        // Combine all meals (breakfast, lunch, dinner)
+
                         var allMeals: [Meal] = []
                         allMeals.append(contentsOf: dayPlan.breakfast)
                         allMeals.append(contentsOf: dayPlan.lunch)
                         allMeals.append(contentsOf: dayPlan.dinner)
-                        
+
                         self.meals = allMeals
-                        
+
                         print("✅ Loaded \(allMeals.count) meals for today")
                         print("   - Breakfast: \(dayPlan.breakfast.count)")
                         print("   - Lunch: \(dayPlan.lunch.count)")
                         print("   - Dinner: \(dayPlan.dinner.count)")
-                        
+
                     } catch {
                         print("❌ Failed to decode meal plan: \(error)")
                     }
@@ -169,6 +177,7 @@ struct UpcomingMealsSection: View {
     }
 }
 
+// Preference key for geometry reading.
 struct CardHeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 380
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {

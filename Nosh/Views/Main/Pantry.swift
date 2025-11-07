@@ -93,7 +93,7 @@ struct Pantry: View {
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
         .padding(.top, 188)
-        .padding(.bottom, 100x)
+        .padding(.bottom, 100)
     }
 
     private var Header: some View {

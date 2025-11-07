@@ -92,28 +92,56 @@ struct Nosh: View {
         )
     }
     
+//    private var NoshHeader: some View {
+//        HStack(alignment: .center) {
+//            Text("Nosh")
+//                .font(.largeTitle.bold())
+//                .transition(.opacity)
+//
+//            Spacer()
+//
+//            Button {
+//                print("AI Schedule generator tapped")
+//            } label: {
+//                HStack(spacing: 8) {
+//                    Image("cookIcon")
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 18, height: 18)
+//                        .foregroundColor(Color("secondaryAccent"))
+//                }
+//                .padding(.horizontal, 12)
+//                .padding(.vertical, 12)
+//                .background(Color("primaryAccent"))
+//                .cornerRadius(16)
+//            }
+//        }
+//        .padding(.horizontal)
+//        .padding(.vertical, 20)
+//        .frame(maxWidth: .infinity, alignment: .top)
+//        .background(Color("primaryCard"))
+//    }
+//}
+
     private var NoshHeader: some View {
         HStack(alignment: .center) {
             Text("Nosh")
                 .font(.largeTitle.bold())
                 .transition(.opacity)
-
+            
             Spacer()
-
+            
             Button {
-                print("AI Schedule generator tapped")
+                print("+ Add tapped")
+                // In future, add your navigation or sheet presentation here
             } label: {
-                HStack(spacing: 8) {
-                    Image("cookIcon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 18, height: 18)
-                        .foregroundColor(Color("secondaryAccent"))
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color("primaryAccent"))
-                .cornerRadius(16)
+                Text("+ Add")
+                    .font(.headline)
+                    .foregroundColor(Color("primaryButtonText"))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(Color("primaryAccent"))
+                    .cornerRadius(16)
             }
         }
         .padding(.horizontal)
