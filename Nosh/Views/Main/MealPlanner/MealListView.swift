@@ -3,7 +3,7 @@ import SwiftUI
 struct MealListView: View {
     @ObservedObject var viewModel: MealPlannerViewModel
     let selectedTab: String
-
+    let onGotoPantry: () -> Void
     @State private var isEditing = false
     @State private var showMealSelector = false
     @State private var selectedMealType: String = ""
@@ -30,7 +30,8 @@ struct MealListView: View {
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "breakfast", meal: meal)
                         },
-                        isEditing: isEditing
+                        isEditing: isEditing,
+                        onGotoPantry: onGotoPantry
                     )
                     .padding(16)
                     .background(Color("primaryCard"))
@@ -48,7 +49,8 @@ struct MealListView: View {
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "lunch", meal: meal)
                         },
-                        isEditing: isEditing
+                        isEditing: isEditing,
+                        onGotoPantry: onGotoPantry
                     )
                     .padding(16)
                     .background(Color("primaryCard"))
@@ -66,7 +68,8 @@ struct MealListView: View {
                         onDelete: { meal in
                             viewModel.removeMeal(from: selectedTab, type: "dinner", meal: meal)
                         },
-                        isEditing: isEditing
+                        isEditing: isEditing,
+                        onGotoPantry: onGotoPantry
                     )
                     .padding(16)
                     .background(Color("primaryCard"))

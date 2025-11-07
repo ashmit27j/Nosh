@@ -4,28 +4,13 @@ struct MainTabView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedTab: Tab = .home
     @State private var isAiChefActive = false
-    
-    // Shared ViewModels - UPDATED for Firestore
+    @State private var shouldGoToPantry = false
+
     @StateObject private var mealPlannerViewModel = MealPlannerViewModel()
-    
     @StateObject private var pantryViewModel = PantryViewModel(tabs: [
-        "All",
-        "Grains & Flours",
-        "Baking",
-        "Dairy",
-        "Vegetables",
-        "Proteins",
-        "Spices",
-        "Oils",
-        "Aromatics",
-        "Herbs",
-        "Sweeteners",
-        "Condiments",
-        "Beverages",
-        "Fruits",
-        "Specialty",
-        "Snacks",
-        "Others"
+        "All", "Grains & Flours", "Baking", "Dairy", "Vegetables", "Proteins", "Spices",
+        "Oils", "Aromatics", "Herbs", "Sweeteners", "Condiments", "Beverages", "Fruits",
+        "Specialty", "Snacks", "Others"
     ])
 
     enum Tab: CaseIterable {
@@ -44,32 +29,28 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Group {
-                switch selectedTab {
-                case .home:
-                    Home(
-                        viewModel: mealPlannerViewModel,
-                        onSwitchToMealPlanner: {
-                            withAnimation {
-                                selectedTab = .mealPlanner
-                            }
-                        },
-                        isAiChefActive: $isAiChefActive
-                    )
-                case .mealPlanner:
-                    MealPlanner(viewModel: mealPlannerViewModel)
-                case .nosh:
-                    Nosh()
-                case .pantry:
-                    Pantry(viewModel: pantryViewModel)
-                case .profile:
-                    Profile(pantryViewModel: pantryViewModel)
-                }
+            switch selectedTab {
+            case .home:
+                Home(
+                    viewModel: mealPlannerViewModel,
+                    onSwitchToMealPlanner: {
+                        withAnimation { selectedTab = .mealPlanner }
+                    },
+                    isAiChefActive: $isAiChefActive
+                )
+            case .mealPlanner:
+                MealPlanner(
+                    viewModel: mealPlannerViewModel,
+                    onGotoPantry: { shouldGoToPantry = true }
+                )
+            case .nosh:
+                Nosh()
+            case .pantry:
+                Pantry(viewModel: pantryViewModel)
+            case .profile:
+                Profile(pantryViewModel: pantryViewModel)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color("primaryBackground"))
 
-            // Custom Tab Bar - HIDE WHEN AI CHEF IS ACTIVE
             if !isAiChefActive {
                 HStack {
                     ForEach(Tab.allCases, id: \.self) { tab in
@@ -89,7 +70,6 @@ struct MainTabView: View {
                                         Circle()
                                             .fill(Color("primaryAccent"))
                                             .frame(width: 40, height: 40)
-
                                         Group {
                                             if selectedTab == .nosh {
                                                 Image(systemName: "xmark")
@@ -146,14 +126,17 @@ struct MainTabView: View {
             print("🔗 MainTabView: Connecting PantryManager to shared pantryViewModel")
             PantryManager.shared.pantryViewModel = pantryViewModel
             pantryViewModel.initializeDefaultPantry()
-            
-            // Load meal planner data from Firestore
             print("🔗 MainTabView: Loading meal planner data from Firestore")
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 print("✅ PantryManager connected: \(PantryManager.shared.pantryViewModel != nil)")
                 print("✅ Pantry items count: \(pantryViewModel.items.count)")
                 print("✅ MealPlanner initialized for date: \(mealPlannerViewModel.selectedDate)")
+            }
+        }
+        .onChange(of: shouldGoToPantry) { newValue in
+            if newValue {
+                selectedTab = .pantry
+                shouldGoToPantry = false // Reset for next time
             }
         }
     }

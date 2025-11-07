@@ -1,10 +1,10 @@
-
 import SwiftUI
 
 struct RecipeView: View {
     @Environment(\.dismiss) var dismiss
     let meal: Meal
-    
+    var onGotoPantry: (() -> Void)?   // propagate pantry trigger
+
     @State private var servingSize: Int
     @State private var isFavorite: Bool = false
     @State private var isIngredientsExpanded: Bool = false
@@ -12,34 +12,32 @@ struct RecipeView: View {
     @State private var checkedIngredients: Set<Int> = []
     @State private var checkedSteps: Set<Int> = []
     @State private var showSuccessScreen: Bool = false
-    
-    // ✅ Pantry integration properties
+
+    // Pantry integration (assumes PantryManager exists)
     private var hasIngredients: Bool {
         PantryManager.shared.hasAllIngredients(for: meal, servingSize: servingSize)
     }
-
     private var missingIngredients: [String] {
         PantryManager.shared.getMissingIngredients(for: meal, servingSize: servingSize)
     }
-    
     private var servingMultiplier: Double {
         Double(servingSize) / Double(meal.servingSize)
     }
-    
     private var allStepsCompleted: Bool {
         checkedSteps.count == meal.steps.count
     }
-    
-    init(meal: Meal) {
+
+    init(meal: Meal, onGotoPantry: (() -> Void)? = nil) {
         self.meal = meal
+        self.onGotoPantry = onGotoPantry
         _servingSize = State(initialValue: meal.servingSize)
     }
-    
+
     var body: some View {
         ZStack {
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Header Image
+                    // Header with Image
                     ZStack(alignment: .topTrailing) {
                         let imageURL: URL? = {
                             guard let imageName = meal.imageName,
@@ -49,7 +47,7 @@ struct RecipeView: View {
                             }
                             return url
                         }()
-                        
+
                         AsyncImage(url: imageURL) { phase in
                             switch phase {
                             case .empty:
@@ -74,14 +72,14 @@ struct RecipeView: View {
                         }
                         .frame(height: 300)
                         .clipped()
-                        
+
                         LinearGradient(
                             gradient: Gradient(colors: [Color.black.opacity(0.4), Color.clear]),
                             startPoint: .top,
                             endPoint: .center
                         )
                         .frame(height: 300)
-                        
+
                         Button(action: {
                             isFavorite.toggle()
                         }) {
@@ -94,7 +92,7 @@ struct RecipeView: View {
                         }
                         .padding()
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 20) {
                         // Title & Description
                         VStack(alignment: .leading, spacing: 8) {
@@ -103,14 +101,14 @@ struct RecipeView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(Color("primaryText"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            
+
                             Text(meal.description)
                                 .font(.subheadline)
                                 .foregroundColor(Color("secondaryText"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        
-                        // ✅ MISSING INGREDIENTS BOX (only if missing)
+
+                        // MISSING INGREDIENTS BOX (all tappable)
                         if !missingIngredients.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 8) {
@@ -120,7 +118,6 @@ struct RecipeView: View {
                                         .font(.headline)
                                         .foregroundColor(.red)
                                 }
-                                
                                 VStack(alignment: .leading, spacing: 6) {
                                     ForEach(missingIngredients, id: \.self) { item in
                                         HStack(spacing: 6) {
@@ -133,6 +130,10 @@ struct RecipeView: View {
                                         }
                                     }
                                 }
+//                                Text("Hint: Add to Pantry")
+//                                    .font(.footnote)
+//                                    .foregroundColor(.red)
+//                                    .italic()
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,8 +143,15 @@ struct RecipeView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.red.opacity(0.3), lineWidth: 2)
                             )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                dismiss()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                    onGotoPantry?()
+                                }
+                            }
                         }
-                        
+
                         ServingSizeSection
                         IngredientsSection
                         RecipeStepsSection
@@ -153,13 +161,13 @@ struct RecipeView: View {
                 }
             }
             .background(Color("primaryBackground"))
-            
+
             VStack {
                 Spacer()
                 BottomButtons
             }
             .ignoresSafeArea(edges: .bottom)
-            
+
             if showSuccessScreen {
                 SuccessOverlay
             }
@@ -167,27 +175,20 @@ struct RecipeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
     }
-    
-    // ✅ Original Serving Size Section
+
+    // Serving size controls
     private var ServingSizeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Serving Size")
                     .font(.headline)
                     .foregroundColor(Color("primaryText"))
-                
                 Spacer()
-                
                 Image(systemName: "person.2.fill")
                     .foregroundColor(Color("secondaryText"))
             }
-            
             HStack {
-                Button(action: {
-                    if servingSize > 1 {
-                        servingSize -= 1
-                    }
-                }) {
+                Button(action: { if servingSize > 1 { servingSize -= 1 } }) {
                     Image(systemName: "minus")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(Color("primaryText"))
@@ -195,19 +196,13 @@ struct RecipeView: View {
                         .background(Color("primaryAccent"))
                         .cornerRadius(16)
                 }
-                
                 Spacer()
-                
                 Text("\(servingSize)")
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(Color("primaryText"))
-                
                 Spacer()
-                
-                Button(action: {
-                    servingSize += 1
-                }) {
+                Button(action: { servingSize += 1 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(Color("primaryText"))
@@ -221,8 +216,8 @@ struct RecipeView: View {
         .background(Color("primaryCard"))
         .cornerRadius(16)
     }
-    
-    // ✅ Original Ingredients Section (collapsible with checkboxes)
+
+    // Collapsible ingredients section
     private var IngredientsSection: some View {
         VStack(spacing: 0) {
             Button(action: {
@@ -234,16 +229,14 @@ struct RecipeView: View {
                     Text("Ingredients")
                         .font(.headline)
                         .foregroundColor(Color("primaryText"))
-                    
                     Spacer()
-                    
                     Image(systemName: isIngredientsExpanded ? "chevron.up" : "chevron.down")
                         .foregroundColor(Color("secondaryText"))
                 }
                 .padding()
                 .background(Color("primaryCard"))
             }
-            
+
             if isIngredientsExpanded {
                 VStack(spacing: 0) {
                     ForEach(Array(meal.ingredients.enumerated()), id: \.offset) { index, ingredient in
@@ -258,7 +251,6 @@ struct RecipeView: View {
                                 Image(systemName: checkedIngredients.contains(index) ? "checkmark.circle.fill" : "circle")
                                     .font(.system(size: 24))
                                     .foregroundColor(checkedIngredients.contains(index) ? Color("primaryAccent") : Color("secondaryText"))
-                                
                                 Text(scaleIngredient(ingredient))
                                     .font(.body)
                                     .foregroundColor(Color("primaryText"))
@@ -268,7 +260,6 @@ struct RecipeView: View {
                             .padding()
                             .background(Color("primaryCard"))
                         }
-                        
                         if index < meal.ingredients.count - 1 {
                             Divider()
                                 .background(Color("secondaryButton").opacity(0.3))
@@ -284,8 +275,8 @@ struct RecipeView: View {
                 .stroke(Color("secondaryButton").opacity(0.3), lineWidth: 1)
         )
     }
-    
-    // ✅ Original Recipe Steps Section (collapsible with numbered circles)
+
+    // Collapsible recipe steps
     private var RecipeStepsSection: some View {
         VStack(spacing: 0) {
             Button(action: {
@@ -297,16 +288,14 @@ struct RecipeView: View {
                     Text("Recipe")
                         .font(.headline)
                         .foregroundColor(Color("primaryText"))
-                    
                     Spacer()
-                    
                     Image(systemName: isRecipeExpanded ? "chevron.up" : "chevron.down")
                         .foregroundColor(Color("secondaryText"))
                 }
                 .padding()
                 .background(Color("primaryCard"))
             }
-            
+
             if isRecipeExpanded {
                 VStack(spacing: 0) {
                     ForEach(Array(meal.steps.enumerated()), id: \.offset) { index, step in
@@ -323,7 +312,6 @@ struct RecipeView: View {
                                         Circle()
                                             .fill(checkedSteps.contains(index) ? Color("primaryAccent") : Color("secondaryButton"))
                                             .frame(width: 32, height: 32)
-                                        
                                         if checkedSteps.contains(index) {
                                             Image(systemName: "checkmark")
                                                 .font(.system(size: 16, weight: .bold))
@@ -334,7 +322,6 @@ struct RecipeView: View {
                                                 .foregroundColor(Color("primaryText"))
                                         }
                                     }
-                                    
                                     if index < meal.steps.count - 1 {
                                         Rectangle()
                                             .fill(Color("secondaryButton").opacity(0.3))
@@ -343,14 +330,12 @@ struct RecipeView: View {
                                     }
                                 }
                                 .frame(height: 80)
-                                
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Step \(index + 1)")
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
                                         .foregroundColor(checkedSteps.contains(index) ? Color("primaryAccent") : Color("primaryText"))
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    
                                     Text(step)
                                         .font(.body)
                                         .foregroundColor(Color("secondaryText"))
@@ -363,7 +348,6 @@ struct RecipeView: View {
                             .padding()
                             .background(checkedSteps.contains(index) ? Color("primaryAccent").opacity(0.1) : Color("primaryCard"))
                         }
-                        
                         if index < meal.steps.count - 1 {
                             Divider()
                                 .background(Color("secondaryButton").opacity(0.3))
@@ -379,8 +363,8 @@ struct RecipeView: View {
                 .stroke(Color("secondaryButton").opacity(0.3), lineWidth: 1)
         )
     }
-    
-    // ✅ Bottom Buttons with Cancel + Finish (pantry integrated)
+
+    // Bottom controls (cancel/finish)
     private var BottomButtons: some View {
         VStack(spacing: 12) {
             Button(action: {
@@ -394,10 +378,8 @@ struct RecipeView: View {
                     .background(Color("secondaryButton").opacity(0.3))
                     .cornerRadius(16)
             }
-            
             Button(action: {
                 if hasIngredients && allStepsCompleted {
-                    // ✅ Deduct from pantry
                     PantryManager.shared.deductIngredients(for: meal, servingSize: servingSize)
                     showSuccessScreen = true
                 }
@@ -416,76 +398,32 @@ struct RecipeView: View {
         .padding()
         .background(Color("primaryCard"))
     }
-    
+
+    // Success overlay after finishing cooking
     private var SuccessOverlay: some View {
         MealSuccessShareView(meal: meal, dismiss: dismiss)
     }
 
-    
+    // Helper for dynamic quantities
     private func scaleIngredient(_ ingredient: String) -> String {
         let pattern = #"(\d+\.?\d*)\s*(g|kg|ml|l|cup|cups|tbsp|tsp|oz)?"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
             return ingredient
         }
-        
         let range = NSRange(ingredient.startIndex..., in: ingredient)
         guard let match = regex.firstMatch(in: ingredient, range: range) else {
             return ingredient
         }
-        
         guard let numberRange = Range(match.range(at: 1), in: ingredient),
               let originalValue = Double(ingredient[numberRange]) else {
             return ingredient
         }
-        
         let scaledValue = originalValue * servingMultiplier
         let scaledString = scaledValue.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(scaledValue)) : String(format: "%.1f", scaledValue)
-        
         return regex.stringByReplacingMatches(
             in: ingredient,
             range: range,
             withTemplate: scaledString + (match.range(at: 2).location != NSNotFound ? " $2" : "")
         )
-    }
-}
-
-struct MealSuccessScreen: View {
-    let meal: Meal
-    let dismiss: DismissAction
-    
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            
-            Text("🎉")
-                .font(.system(size: 80))
-            
-            Text("Meal Completed!")
-                .font(.title.bold())
-                .foregroundColor(Color("primaryText"))
-            
-            Text("You've successfully cooked \(meal.name)")
-                .font(.body)
-                .foregroundColor(Color("secondaryText"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            Spacer()
-            
-            Button {
-                dismiss()
-            } label: {
-                Text("Done")
-                    .font(.headline)
-                    .foregroundColor(Color("primaryButtonText"))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color("primaryAccent"))
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 40)
-        }
-        .padding()
     }
 }

@@ -9,6 +9,9 @@ struct MealPlanner: View {
     @Namespace private var underlineNamespace
     @ObservedObject var viewModel: MealPlannerViewModel
 
+    // ADD THIS:
+    let onGotoPantry: () -> Void
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -25,14 +28,19 @@ struct MealPlanner: View {
                     }
                 )
 
-                MealListView(viewModel: viewModel, selectedTab: selectedTab)
-                    .padding(.top, 10)
-                    .padding(.bottom, 0)
-                    .onPreferenceChange(ScrollOffsetKey.self) { offset in
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            showCollapsedTitle = offset < -20
-                        }
+                // FORWARD THE CLOSURE DOWN TO MealListView:
+                MealListView(
+                    viewModel: viewModel,
+                    selectedTab: selectedTab,
+                    onGotoPantry: onGotoPantry
+                )
+                .padding(.top, 10)
+                .padding(.bottom, 0)
+                .onPreferenceChange(ScrollOffsetKey.self) { offset in
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        showCollapsedTitle = offset < -20
                     }
+                }
                 Spacer(minLength: 80)
             }
             .background(Color("primaryBackground"))
@@ -43,7 +51,6 @@ struct MealPlanner: View {
                 }
             }
             .onAppear {
-                // Sync selectedTab with viewModel's selectedTab
                 selectedTab = viewModel.selectedTab
             }
             .onChange(of: viewModel.selectedTab) { newTab in
@@ -51,7 +58,7 @@ struct MealPlanner: View {
             }
         }
     }
-    
+
     private func generateAIMealPlan() {
         Task {
             do {
@@ -62,6 +69,7 @@ struct MealPlanner: View {
         }
     }
 }
+
 
 struct DatePickerSheet: View {
     @Binding var selectedDate: Date
