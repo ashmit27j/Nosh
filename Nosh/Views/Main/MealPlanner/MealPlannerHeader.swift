@@ -1,5 +1,5 @@
 import SwiftUI
-
+//header component for mealplanner page
 struct MealPlannerHeader: View {
     @Binding var selectedTab: String
     @ObservedObject var viewModel: MealPlannerViewModel

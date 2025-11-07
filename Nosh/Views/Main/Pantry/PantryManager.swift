@@ -67,12 +67,11 @@ class PantryManager: ObservableObject {
                 print("  Found: '\(pantryItem.name)' in '\(category)'")
                 print("  Current: \(pantryItem.quantity) → New: \(newQuantity)")
                 
-                // ✅ THIS IS THE CRITICAL LINE - calls updateQuantity, NOT decrement
                 pantryVM.updateQuantity(for: pantryItem, in: category, to: newQuantity)
             }
         }
         
-        print("\n✅ DEDUCTION COMPLETE\n")
+        print("\n DEDUCTION COMPLETE\n")
     }
     
     // MARK: - Parsing

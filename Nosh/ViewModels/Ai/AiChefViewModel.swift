@@ -22,6 +22,7 @@ class AiChefViewModel: ObservableObject {
     private var model: GenerativeModel
     
     init() {
+        //model being used
         model = GenerativeModel(
             name: "gemini-2.0-flash-exp",
             apiKey: "AIzaSyC9yMTAkzzJzbr8cwMyIgZRrz7tVUM-s7g"
@@ -72,7 +73,7 @@ class AiChefViewModel: ObservableObject {
         
         isLoading = true
         
-        // First, check if meal exists in database
+        // First, check if meal exists in database -> if foudn then seedha meal card show karo
         checkDatabaseForMeal(query: text) { foundMeal in
             if let meal = foundMeal {
                 // Found in database - show meal card directly

@@ -110,10 +110,10 @@ struct CategorySelector: View {
             // Single-select mode: replace
             if selectedCategories.contains(categoryName) {
                 selectedCategories.removeAll()
-                print("   ➖ Deselected \(categoryName)")
+                print("  Deselected \(categoryName)")
             } else {
                 selectedCategories = [categoryName]
-                print("   ✅ Selected \(categoryName) only")
+                print("  Selected \(categoryName) only")
             }
         }
         

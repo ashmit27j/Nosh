@@ -1,5 +1,5 @@
 import SwiftUI
-
+//list of meals in mealplanner page
 struct MealListView: View {
     @ObservedObject var viewModel: MealPlannerViewModel
     let selectedTab: String

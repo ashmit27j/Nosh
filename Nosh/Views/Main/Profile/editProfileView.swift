@@ -3,7 +3,10 @@ import FirebaseAuth
 import FirebaseFirestore
 import SDWebImageSwiftUI
 import PhotosUI
-import Cloudinary // Add this import
+import Cloudinary
+
+// CLOUDINARY DOES NOT WORK RIGHT NOW:: WILL FIX
+#warning("cloudinary does not work right now, we are just extracting user image from google")
 
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
@@ -18,7 +21,7 @@ struct EditProfileView: View {
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @State private var isLoading: Bool = false
-    @State private var isUploadingPhoto: Bool = false // New state for photo upload
+    @State private var isUploadingPhoto: Bool = false
     
     @State private var showPasswordResetView: Bool = false
     @State private var showUpdateEmailView: Bool = false

@@ -27,7 +27,6 @@ struct MealPlanner: View {
                     }
                 )
 
-                // FORWARD THE CLOSURE DOWN TO MealListView:
                 MealListView(
                     viewModel: viewModel,
                     selectedTab: selectedTab,

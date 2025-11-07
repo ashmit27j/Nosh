@@ -1,11 +1,3 @@
-//
-//  NotificationManager.swift
-//  Nosh
-//
-//  Created by MacBook on 06/11/25.
-//
-
-
 import Foundation
 import UserNotifications
 

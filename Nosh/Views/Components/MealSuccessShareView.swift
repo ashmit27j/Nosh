@@ -1,10 +1,3 @@
-//
-//  MealSuccessShareView.swift
-//  Nosh
-//
-//  Created by MacBook on 05/11/25.
-//
-
 import SwiftUI
 
 struct MealSuccessShareView: View {
@@ -17,6 +10,7 @@ struct MealSuccessShareView: View {
     
     // Links
     let noshAppLink = "https://noshapp.com/download"
+    //right now broken will add something once deployed
     var recipeLink: String {
         "https://noshapp.com/recipe/\(meal.id ?? "unknown")"
     }
@@ -121,7 +115,7 @@ struct MealSuccessShareView: View {
     
     private func createShareMessage() -> String {
         """
-        Hey, I just made \(meal.name) using Nosh! 🍳
+        Hey, I just made \(meal.name) using Nosh! 
 
         📝 Ingredients:
         \(meal.ingredients.map { "• \($0)" }.joined(separator: "\n"))
@@ -129,10 +123,11 @@ struct MealSuccessShareView: View {
         ⏱️ Time: \(meal.timeToCook)
         📊 Difficulty: \(meal.difficulty.rawValue)
         🍽️ Servings: \(meal.servingSize)
-        \(meal.nutritionalContent.isEmpty ? "" : "💪 Nutrition: \(meal.nutritionalContent)")
+        \(meal.nutritionalContent.isEmpty ? "" : " Nutrition: \(meal.nutritionalContent)")
 
         Download now: \(noshAppLink)
         View the recipe: \(recipeLink)
         """
     }
+    //will add nutritionalContent later
 }

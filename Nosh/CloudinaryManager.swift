@@ -54,14 +54,14 @@ class CloudinaryManager {
         
         request.response { result, error in
             if let error = error {
-                print("❌ Cloudinary upload error: \(error.localizedDescription)")
+                print(" Cloudinary upload error: \(error.localizedDescription)")
                 completion(.failure(error))
                 return
             }
             
             guard let result = result,
                   let secureUrl = result.secureUrl else {
-                print("❌ No URL returned from Cloudinary")
+                print(" No URL returned from Cloudinary")
                 completion(.failure(NSError(
                     domain: "CloudinaryManager",
                     code: -2,
@@ -70,7 +70,7 @@ class CloudinaryManager {
                 return
             }
             
-            print("✅ Photo uploaded successfully to: \(secureUrl)")
+            print(" Photo uploaded successfully to: \(secureUrl)")
             completion(.success(secureUrl))
         }
     }
@@ -93,7 +93,7 @@ class CloudinaryManager {
         
         if let finalData = imageData {
             let finalSizeKB = finalData.count / 1024
-            print("📦 Image compressed to \(finalSizeKB)KB (quality: \(Int(compression * 100))%)")
+            print(" Image compressed to \(finalSizeKB)KB (quality: \(Int(compression * 100))%)")
         }
         
         return imageData

@@ -572,7 +572,7 @@ class MealPlannerViewModel: ObservableObject {
                         }
                     }
             } catch {
-                print("❌ Encoding error: \(error)")
+                print(" Encoding error: \(error)")
             }
         }
     }

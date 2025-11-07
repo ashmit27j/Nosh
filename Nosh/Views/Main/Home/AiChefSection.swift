@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AiChefSection: View {
-    @Binding var isAiChefActive: Bool  // ADD THIS
+    @Binding var isAiChefActive: Bool 
     
     var body: some View {
         NavigationLink(destination: AiChefView(isAiChefActive: $isAiChefActive)) {

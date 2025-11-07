@@ -1,5 +1,6 @@
 import SwiftUI
 
+//Our large meal card view
 struct MealCardView: View {
     let meal: Meal
     var onCookNowTapped: ((Meal) -> Void)? = nil

@@ -1,5 +1,5 @@
 import SwiftUI
-
+//food pref
 struct FoodPreferenceSelector: View {
     @Binding var selectedPreference: String?
     

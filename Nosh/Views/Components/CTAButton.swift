@@ -1,11 +1,3 @@
-//
-//  CTAButton.swift
-//  Nosh
-//
-//  Created by MacBook on 20/07/25.
-//
-
-
 import SwiftUI
 
 struct CTAButton: View {

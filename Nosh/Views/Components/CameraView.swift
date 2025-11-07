@@ -1,13 +1,7 @@
-//
-//  CameraView.swift
-//  Nosh
-//
-//  Created by MacBook on 02/11/25.
-//
-
 import SwiftUI
 import UIKit
 
+// this is for the camera working
 struct CameraView: UIViewControllerRepresentable {
     @Binding var capturedImage: UIImage?
     @Environment(\.dismiss) var dismiss

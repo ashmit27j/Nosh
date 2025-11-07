@@ -1,10 +1,3 @@
-//
-//  SocialIconBox.swift
-//  Nosh
-//
-//  Created by MacBook on 07/11/25.
-//
-
 import SwiftUI
 
 struct SocialIconBox: View {

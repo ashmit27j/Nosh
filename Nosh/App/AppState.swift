@@ -30,7 +30,7 @@ class AppState: ObservableObject {
 
     //handle signout
     func signOut() {
-        //try to signout: if dont then set isUserSigned in to false so that the view updates to the SignIn View and set user as nil to get rid of user 
+        //try to signout: if dont then set isUserSigned in to false so that the view updates to the SignIn View and set user as nil to get rid of user
         try? Auth.auth().signOut()
         isUserSignedIn = false
         user = nil

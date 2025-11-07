@@ -1,5 +1,6 @@
 import SwiftUI
 
+//this is for the compact meal card view that can be added and seen in a shorter form
 struct CompactMealCardView: View {
     let meal: Meal
     var showAddButton: Bool = false

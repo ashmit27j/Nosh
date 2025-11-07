@@ -4,7 +4,7 @@
 //
 //  Created by MacBook on 21/07/25.
 //
-
+// will implement later
 import SwiftUI
 
 struct allergensView: View {

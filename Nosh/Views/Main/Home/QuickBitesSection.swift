@@ -1,5 +1,5 @@
 import SwiftUI
-
+// this will be deleted later may not use
 struct QuickBitesSection: View {
     @Binding var selectedCategory: String?
     

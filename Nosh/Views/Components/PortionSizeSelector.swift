@@ -1,4 +1,5 @@
 import SwiftUI
+// view component for nosh and other parts of the app
 struct PortionSizeSelector: View {
     @Binding var portionSize: Int
 

@@ -10,7 +10,7 @@ class RecipesViewModel: ObservableObject {
         
         let categoryIds = categories.map { CategoryHelper.nameToId($0) }
         
-        print("🔍 Fetching meals for categories: \(categories) (IDs: \(categoryIds))")
+        print(" Fetching meals for categories: \(categories) (IDs: \(categoryIds))")
         
         let db = Firestore.firestore()
         
@@ -21,30 +21,30 @@ class RecipesViewModel: ObservableObject {
                     self?.isLoading = false
                     
                     if let error = error {
-                        print("❌ Error fetching meals: \(error.localizedDescription)")
+                        print(" XXX Error fetching meals: \(error.localizedDescription)")
                         return
                     }
                     
                     guard let documents = snapshot?.documents else {
-                        print("⚠️ No documents returned")
+                        print(" XXX No documents returned")
                         self?.meals = []
                         return
                     }
                     
-                    print("📦 Got \(documents.count) documents")
+                    print(" Now Got \(documents.count) documents")
                     
                     self?.meals = documents.compactMap { doc in
                         do {
                             let meal = try doc.data(as: Meal.self)
-                            print("   ✓ \(meal.name) (categoryId: \(meal.categoryId))")
+                            print("\(meal.name) (categoryId: \(meal.categoryId))")
                             return meal
                         } catch {
-                            print("   ✗ Failed to parse \(doc.documentID): \(error)")
+                            print(" XXX Failed to parse \(doc.documentID): \(error)")
                             return nil
                         }
                     }
-                    
-                    print("✅ Final count: \(self?.meals.count ?? 0) meals")
+                    print("YAY")
+                    print("Final count: \(self?.meals.count ?? 0) meals")
                 }
             }
     }

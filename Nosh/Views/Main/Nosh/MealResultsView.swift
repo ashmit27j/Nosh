@@ -7,13 +7,11 @@ struct MealResultsView: View {
     @State private var selectedMealForCooking: Meal? = nil
     
     var body: some View {
-        // REMOVED NavigationStack - already in Nosh
         ZStack {
             Color("primaryBackground")
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Custom Header (replaces navigationTitle)
                 HStack {
                     Text("Recipes (\(meals.count))")
                         .font(.title2.bold())
@@ -49,14 +47,14 @@ struct MealResultsView: View {
                     }
                     Spacer()
                 } else {
-                    // Results List
+                    // Results List: here
                     ScrollView {
                         VStack(spacing: 20) {
                             ForEach(meals) { meal in
                                 MealCardView(
                                     meal: meal,
                                     onCookNowTapped: { selectedMeal in
-                                        print("🔥 Card tapped for: \(selectedMeal.name)")
+                                        print(" Card tapped for: \(selectedMeal.name)")
                                         selectedMealForCooking = selectedMeal
                                     }
                                 )

@@ -1,5 +1,5 @@
 import SwiftUI
-
+//does not work currently just need to add 3 lines at the start of each swift view file to make it work 
 struct accessibilityView: View {
     @AppStorage("textSize") private var textSize: TextSizeOption = .medium
     @AppStorage("highContrast") private var highContrast = false

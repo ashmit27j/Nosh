@@ -17,7 +17,7 @@ final class PantryViewModel: ObservableObject {
     }
 
     // MARK: - Initialization
-    
+    // When initializing the pantry and there are no user defaults then just setup kuch dummy items
     func initializeDefaultPantry() {
         guard let userId = Auth.auth().currentUser?.uid else {
             if UserDefaults.standard.data(forKey: "pantryItems") != nil {
@@ -28,23 +28,27 @@ final class PantryViewModel: ObservableObject {
             return
         }
         
+        //from the user collection get the document for pantry and load it in
         db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
             guard let self = self else { return }
             
             if let data = snapshot?.data(), data["pantryInitialized"] as? Bool == true {
-                print("✅ Pantry already initialized")
+                print("Pantry already initialized")
                 self.loadPantry()
-                return
+                return //end function here since this is for a registered user
             }
             
-            print("🔄 Initializing default pantry for new user...")
+            //in case the user was new then we must get default pantry items
+            print("Initializing default pantry for new user...")
             
+            //function call to initialize an empty [pantry for a new user
             let defaultItems = self.getDefaultPantryItems()
             
             for (category, itemList) in defaultItems {
                 self.items[category] = itemList
             }
             
+            //update all the tabs and save the pantry
             self.updateAllTab()
             self.savePantry()
             
@@ -73,10 +77,10 @@ final class PantryViewModel: ObservableObject {
         
         // Baking
         items["Baking"] = [
-            PantryItem(id: UUID(), name: "Baking powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Baking soda", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Cocoa powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Vanilla extract", quantity: 0, incrementBy: 1)
+            PantryItem(id: UUID(), name: "Baking powder", quantity: 0, incrementBy: 5),
+            PantryItem(id: UUID(), name: "Baking soda", quantity: 0, incrementBy: 5),
+            PantryItem(id: UUID(), name: "Cocoa powder", quantity: 0, incrementBy: 5),
+            PantryItem(id: UUID(), name: "Vanilla extract", quantity: 0, incrementBy: 5)
         ]
         
         // Dairy
@@ -116,31 +120,31 @@ final class PantryViewModel: ObservableObject {
         
         // Spices
         items["Spices"] = [
-            PantryItem(id: UUID(), name: "Salt", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Black pepper", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Red chili powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Cumin powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Cumin seeds", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Garam masala", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Biryani masala", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Chaat masala", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Cardamom powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Paprika", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Garlic powder", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Kasuri methi", quantity: 0, incrementBy: 1)
+            PantryItem(id: UUID(), name: "Salt", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Black pepper", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Red chili powder", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Cumin powder", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Cumin seeds", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Garam masala", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Biryani masala", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Chaat masala", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Cardamom powder", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Paprika", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Garlic powder", quantity: 0, incrementBy: 100),
+            PantryItem(id: UUID(), name: "Kasuri methi", quantity: 0, incrementBy: 100)
         ]
         
         // Oils
         items["Oils"] = [
-            PantryItem(id: UUID(), name: "Oil", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Olive oil", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Ghee", quantity: 0, incrementBy: 50)
+            PantryItem(id: UUID(), name: "Oil", quantity: 0, incrementBy: 250),
+            PantryItem(id: UUID(), name: "Olive oil", quantity: 0, incrementBy: 250),
+            PantryItem(id: UUID(), name: "Ghee", quantity: 0, incrementBy: 250)
         ]
         
         // Aromatics
         items["Aromatics"] = [
-            PantryItem(id: UUID(), name: "Garlic cloves", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Ginger-garlic paste", quantity: 0, incrementBy: 1)
+            PantryItem(id: UUID(), name: "Garlic cloves", quantity: 0, incrementBy: 5),
+            PantryItem(id: UUID(), name: "Ginger-garlic paste", quantity: 0, incrementBy: 10)
         ]
         
         // Herbs
@@ -153,7 +157,7 @@ final class PantryViewModel: ObservableObject {
         // Sweeteners
         items["Sweeteners"] = [
             PantryItem(id: UUID(), name: "Sugar", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Honey", quantity: 0, incrementBy: 10)
+            PantryItem(id: UUID(), name: "Honey", quantity: 0, incrementBy: 50)
         ]
         
         // Condiments
@@ -181,7 +185,7 @@ final class PantryViewModel: ObservableObject {
         
         // Specialty
         items["Specialty"] = [
-            PantryItem(id: UUID(), name: "Saffron", quantity: 0, incrementBy: 0.1),
+            PantryItem(id: UUID(), name: "Saffron", quantity: 0, incrementBy: 1),
             PantryItem(id: UUID(), name: "Rose water", quantity: 0, incrementBy: 10),
             PantryItem(id: UUID(), name: "Dark chocolate", quantity: 0, incrementBy: 50)
         ]
@@ -202,7 +206,6 @@ final class PantryViewModel: ObservableObject {
     }
 
     // MARK: - CRUD Operations
-    
     func increment(_ item: PantryItem, in category: String) {
         guard var list = items[category], let index = list.firstIndex(where: { $0.id == item.id }) else { return }
         list[index].quantity += list[index].incrementBy
@@ -241,11 +244,13 @@ final class PantryViewModel: ObservableObject {
     }
     
     func refreshWithoutSorting() {
+        // as it says: update it without sorting the values
         updateAllTabWithoutSorting()
         savePantry()
     }
 
     private func updateAllTabWithoutSorting() {
+        // 
         let allItems = tabs
             .filter { $0 != "All" }
             .flatMap { items[$0] ?? [] }
@@ -253,7 +258,6 @@ final class PantryViewModel: ObservableObject {
     }
 
     // MARK: - Refresh & Sorting
-    
     func refresh() {
         for tab in tabs where tab != "All" {
             sortItems(for: tab)
@@ -291,7 +295,6 @@ final class PantryViewModel: ObservableObject {
         }
     }
 
-    // ✅ Keep ONLY this version - remove the duplicate
     func findCategory(for item: PantryItem) -> String {
         for (category, list) in items where category != "All" {
             if list.contains(where: { $0.id == item.id }) {
@@ -301,57 +304,51 @@ final class PantryViewModel: ObservableObject {
         return "Vegetables" // Default fallback
     }
 
-    // ✅ Update quantity for a specific item
-    // In your PantryViewModel, REPLACE the updateQuantity method with this:
-
     func updateQuantity(for item: PantryItem, in category: String, to newQuantity: Double) {
-        print("  🔧 updateQuantity START")
+        //debugging to ensure that the quantity is actually being updated
+        print(" updateQuantity START")
         print("     Item: '\(item.name)'")
         print("     Category: '\(category)'")
         print("     Current qty: \(item.quantity)")
         print("     Target qty: \(newQuantity)")
         
-        // ✅ Find the item in the category
+        // Find the item in the category
         guard var categoryItems = items[category] else {
-            print("     ❌ Category '\(category)' not found in items")
+            print("     Category '\(category)' not found in items")
             return
         }
         
         guard let index = categoryItems.firstIndex(where: { $0.id == item.id }) else {
-            print("     ❌ Item not found in category")
+            print("     Item not found in category")
             return
         }
         
         let oldQty = categoryItems[index].quantity
         
-        // ✅ CRITICAL: Set the quantity DIRECTLY - do NOT call decrement or increment
+        // CRITICAL: Set the quantity seedha without calling inc or dec
         categoryItems[index].quantity = newQuantity
         
-        // ✅ Update the dictionary
+        // Update the dictionary
         items[category] = categoryItems
         
-        print("     ✅ SUCCESS: \(oldQty) → \(newQuantity)")
+        print("     SUCCESS: \(oldQty) → \(newQuantity)")
         
         // Update "All" tab
         updateAllTab()
         
-        // Save to persistence
+        // Save to ensure data persistence
         savePantry()
     }
-
-
-
-
 
     // MARK: - Save & Load
     
     func savePantry() {
-        // Local Save
+        // Local Saving the pantry
         do {
             let data = try JSONEncoder().encode(items)
             UserDefaults.standard.set(data, forKey: "pantryItems")
         } catch {
-            print("❌ Failed to save pantry: \(error)")
+            print(" XXX Failed to save pantry: \(error)")
         }
         
         // Firestore Save
@@ -362,7 +359,7 @@ final class PantryViewModel: ObservableObject {
                 db.collection("users").document(userId).collection("pantry").document("items").setData(jsonObject)
             }
         } catch {
-            print("❌ Failed to sync to Firestore: \(error)")
+            print(" XXX Failed to sync to Firestore: \(error)")
         }
     }
 
@@ -380,14 +377,14 @@ final class PantryViewModel: ObservableObject {
             guard let self = self else { return }
             
             if let error = error {
-                print("❌ Failed to load from Firestore: \(error)")
+                print(" XXX Failed to load from Firestore: \(error)")
                 return
             }
             
             guard let data = snapshot?.data(),
                   !data.isEmpty,
                   let jsonData = try? JSONSerialization.data(withJSONObject: data) else {
-                print("⚠️ No pantry data in Firestore")
+                print(" XXX No pantry data in Firestore")
                 return
             }
             
@@ -396,7 +393,7 @@ final class PantryViewModel: ObservableObject {
                 self.updateAllTab()
                 self.savePantry()
             } catch {
-                print("❌ Failed to decode Firestore data: \(error)")
+                print(" XXX Failed to decode Firestore data: \(error)")
             }
         }
     }
@@ -407,18 +404,19 @@ final class PantryViewModel: ObservableObject {
             items = try JSONDecoder().decode([String: [PantryItem]].self, from: data)
             updateAllTab()
         } catch {
-            print("❌ Failed to load pantry: \(error)")
+            print(" XXX Failed to load pantry: \(error)")
         }
     }
     
+    //this is called agar we are restoring defaults -> usually not used
     func clearPantry() {
         items = [:]
         UserDefaults.standard.removeObject(forKey: "pantryItems")
-        print("🗑️ Pantry cleared")
+        print(" Pantry cleared")
     }
 
     // MARK: - Dummy Data (Fallback)
-    
+    // When no data found then fallback to this
     private func setupDummyItems() {
         for tab in tabs where tab != "All" {
             items[tab] = dummyItems(for: tab)
@@ -461,6 +459,7 @@ final class PantryViewModel: ObservableObject {
                 items[category] = arr
             }
         }
+        // this is slightly different in the approach taht it will not sort out the data like in pantry and will only refresh the values
         refreshWithoutSorting()
     }
 

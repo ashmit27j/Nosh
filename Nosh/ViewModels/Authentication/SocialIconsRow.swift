@@ -1,9 +1,3 @@
-//
-//  SocialIconsRow.swift
-//  Nosh
-//
-//  Created by MacBook on 07/11/25.
-//
 import SwiftUI
 
 struct SocialIconsRow: View {
@@ -19,19 +13,21 @@ struct SocialIconsRow: View {
                     handleGoogleSignIn()
                 }
                 SocialIconBox(systemImage: "apple.logo") {
-                    // TODO: Implement Apple Sign In
+                    // TODO: Implement Apple Sign In -> too expensive to buy an account
                 }
                 SocialIconBox(systemImage: "phone.fill") {
-                    // TODO: Implement Phone Sign In
+                    // TODO: Implement Phone Sign In -> didnt do yet
                 }
             }
             
+            //so that user knows that its loading still
             if isLoading {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: Color("primaryAccent")))
                     .padding(.top, 8)
             }
             
+            //if error encountered show error as text
             if showError {
                 Text(errorMessage)
                     .foregroundColor(.red)
@@ -42,6 +38,7 @@ struct SocialIconsRow: View {
         }
     }
     
+    //handles google sign in
     private func handleGoogleSignIn() {
         isLoading = true
         showError = false
@@ -50,7 +47,7 @@ struct SocialIconsRow: View {
         Task {
             do {
                 let result = try await AuthenticationManager.shared.signInWithGoogle()
-                print("✅ Google Sign In successful: \(result.user.email ?? "")")
+                print(" Google Sign In successful: \(result.user.email ?? "")")
                 
                 // Update your app state to reflect signed-in status
                 await MainActor.run {
@@ -63,7 +60,7 @@ struct SocialIconsRow: View {
                     errorMessage = error.localizedDescription
                     showError = true
                     isLoading = false
-                    print("❌ Google Sign In failed: \(error.localizedDescription)")
+                    print(" Google Sign In failed: \(error.localizedDescription)")
                 }
             }
         }

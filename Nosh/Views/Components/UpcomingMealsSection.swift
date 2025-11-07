@@ -9,7 +9,6 @@ struct UpcomingMealsSection: View {
     @State private var meals: [Meal] = []
     @State private var isLoading = true
 
-    // NEW: State variables for navigation
     @State private var selectedMeal: Meal? = nil
     @State private var showRecipe: Bool = false
 

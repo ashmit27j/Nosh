@@ -1,5 +1,6 @@
 import SwiftUI
 
+//emove thies code laetr
 struct SplashScreen: View {
     @State private var isActive = false
 

@@ -28,14 +28,14 @@ class NoshViewModel: ObservableObject {
                     self?.isLoading = false
                     
                     if let error = error {
-                        print("❌ Error: \(error.localizedDescription)")
+                        print(" XXX Error: \(error.localizedDescription)")
                         self?.meals = []
                         self?.showResults = true
                         return
                     }
                     
                     guard let documents = snapshot?.documents else {
-                        print("⚠️ No documents")
+                        print(" XXX No documents")
                         self?.meals = []
                         self?.showResults = true
                         return
@@ -68,7 +68,6 @@ class NoshViewModel: ObservableObject {
                         
                         return meetsTime && meetsDifficulty && meetsPreference && meetsPortion
                     }
-                    
                     self?.meals = filtered
                     self?.showResults = true
                 }

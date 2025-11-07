@@ -1,13 +1,5 @@
-//
-//  VerticalSpacerCoverNavbar.swift
-//  Nosh
-//
-//  Created by MacBook on 07/11/25.
-//
-
-
 import SwiftUI
-
+//random delete later
 struct VerticalSpacerCoverNavbar: View {
     var body: some View {
         Spacer()
