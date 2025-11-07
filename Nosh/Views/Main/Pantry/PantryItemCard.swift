@@ -77,7 +77,7 @@ struct PantryItemCard: View {
                 .cornerRadius(20)
             }
             .padding()
-            .frame(minHeight: 60)
+            .frame(minHeight: 64)
             .background(Color("primaryCard"))
         }
         .cornerRadius(12)

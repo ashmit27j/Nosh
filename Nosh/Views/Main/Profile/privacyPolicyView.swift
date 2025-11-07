@@ -1,10 +1,3 @@
-//
-//  privacyPolicyView.swift
-//  Nosh
-//
-//  Created by MacBook on 21/07/25.
-//
-
 import SwiftUI
 
 struct privacyPolicyView: View {
@@ -262,8 +255,4 @@ struct ContactInfoRow: View {
     private var primaryColor: Color {
         colorScheme == .dark ? Color(red: 50/255, green: 184/255, blue: 198/255) : Color(red: 33/255, green: 128/255, blue: 141/255)
     }
-}
-
-#Preview {
-    privacyPolicyView()
 }

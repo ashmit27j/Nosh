@@ -4,12 +4,11 @@ import FirebaseAuth
 import FirebaseFirestore
 
 final class PantryViewModel: ObservableObject {
+    var isShoppingListMode: Bool = false
     private let pantryFileURL: URL
     private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     private let db = Firestore.firestore()
-
     @Published var items: [String: [PantryItem]] = [:]
-
     let tabs: [String]
 
     init(tabs: [String]) {
@@ -205,16 +204,14 @@ final class PantryViewModel: ObservableObject {
     // MARK: - CRUD Operations
     
     func increment(_ item: PantryItem, in category: String) {
-        guard var list = items[category],
-              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
+        guard var list = items[category], let index = list.firstIndex(where: { $0.id == item.id }) else { return }
         list[index].quantity += list[index].incrementBy
-        items[category] = list
+        items[category] = list    // triggers UI update and ensures array assignment
         savePantry()
     }
 
     func decrement(_ item: PantryItem, in category: String) {
-        guard var list = items[category],
-              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
+        guard var list = items[category], let index = list.firstIndex(where: { $0.id == item.id }) else { return }
         list[index].quantity = max(0, list[index].quantity - list[index].incrementBy)
         items[category] = list
         savePantry()
@@ -241,6 +238,18 @@ final class PantryViewModel: ObservableObject {
         list[index].incrementBy = incrementBy
         items[category] = list
         refresh()
+    }
+    
+    func refreshWithoutSorting() {
+        updateAllTabWithoutSorting()
+        savePantry()
+    }
+
+    private func updateAllTabWithoutSorting() {
+        let allItems = tabs
+            .filter { $0 != "All" }
+            .flatMap { items[$0] ?? [] }
+        items["All"] = allItems
     }
 
     // MARK: - Refresh & Sorting
@@ -431,4 +440,28 @@ final class PantryViewModel: ObservableObject {
 
         return names.map { PantryItem(id: UUID(), name: $0, quantity: 0, incrementBy: 0.5) }
     }
+    func incrementPantryItem(id: UUID, by amount: Double) {
+            for category in tabs where category != "All" {
+                guard var arr = items[category] else { continue }
+                if let idx = arr.firstIndex(where: { $0.id == id }) {
+                    arr[idx].quantity += amount
+                    if arr[idx].quantity < 0 { arr[idx].quantity = 0 }
+                    items[category] = arr
+                }
+            }
+            refresh()
+        }
+    
+    func incrementPantryItemWithoutSorting(id: UUID, by amount: Double) {
+        for category in tabs where category != "All" {
+            guard var arr = items[category] else { continue }
+            if let idx = arr.firstIndex(where: { $0.id == id }) {
+                arr[idx].quantity += amount
+                if arr[idx].quantity < 0 { arr[idx].quantity = 0 }
+                items[category] = arr
+            }
+        }
+        refreshWithoutSorting()
+    }
+
 }

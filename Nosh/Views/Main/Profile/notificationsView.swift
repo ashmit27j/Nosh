@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct notificationsView: View {
     @State private var pushNotifications = true
@@ -7,71 +8,74 @@ struct notificationsView: View {
     enum EmailUpdateOption: String, CaseIterable, Identifiable {
         var id: String { self.rawValue }
         case all = "All updates"
-        case billing = "Billing information only"
+        case billing = "Billing only"
         case marketing = "Marketing only"
     }
-
     @State private var emailUpdatePreference: EmailUpdateOption = .all
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Notification Preferences Section
-            SectionHeader(icon: "bell.badge.fill", title: "Notification Preferences")
-            SectionContainer(spacing: 12) {
-                ColoredToggle(
-                    isOn: $pushNotifications,
-                    title: "Push Notifications"
-                )
-                .accessibilityIdentifier("pushToggle")
+        ZStack {
+            Color("primaryBackground").ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Notifications")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundColor(Color("primaryText"))
+                        Text("Choose how you want to be notified about recipes, reminders and offers. You control your alerts and emails in Nosh.")
+                            .font(.system(size: 15))
+                            .foregroundColor(Color("secondaryText"))
+                    }
+                    .padding(.top, 8)
+                    .padding(.horizontal)
 
-                ColoredToggle(
-                    isOn: $reminderAlerts,
-                    title: "Reminders & Alerts"
-                )
-                .accessibilityIdentifier("reminderToggle")
-            }
-
-            // Email Updates Section
-            SectionHeader(title: "Email Updates")
-            SectionContainer {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Receive email updates")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Picker("Email update type", selection: $emailUpdatePreference) {
-                        ForEach(EmailUpdateOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
+                    SectionContainer(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Push Notifications")
+                                .font(.system(size: 17, weight: .semibold))
+                            ColoredToggle(isOn: $pushNotifications, title: "App Activity")
+                            ColoredToggle(isOn: $reminderAlerts, title: "Reminders & Alerts")
                         }
                     }
-                    .pickerStyle(.menu)
-                    .accentColor(Color("primaryAccent"))
-                }
-                .padding(.vertical, 2)
-            }
 
-            // Send Test Notification
-            SectionHeader(title: "Test")
-            SectionContainer {
-                Button {
-                    sendTestNotification()
-                } label: {
-                    Text("Send Test Notification")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color("primaryAccent"))
-                        .cornerRadius(12)
+                    SectionContainer(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Email Updates")
+                                .font(.system(size: 17, weight: .semibold))
+                            Picker(selection: $emailUpdatePreference, label: Text("")) {
+                                ForEach(EmailUpdateOption.allCases) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .accentColor(Color("primaryAccent"))
+                            .frame(maxWidth: .infinity)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
+                        }
+                    }
+
+                    SectionContainer(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Send Test Notification")
+                                .font(.system(size: 17, weight: .semibold))
+                            Button(action: sendTestNotification) {
+                                Text("Send Test Notification")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 15)
+                                    .background(Color("primaryAccent"))
+                                    .cornerRadius(12)
+                            }
+                        }
+                    }
+
+                    Spacer(minLength: 24)
                 }
             }
-
-            Spacer()
         }
-        .padding(.horizontal)
-        .padding(.top)
-        .navigationTitle("Notifications")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color("primaryBackground").ignoresSafeArea())
     }
 
     private func sendTestNotification() {
@@ -89,20 +93,5 @@ struct notificationsView: View {
                 print("Test notification scheduled!")
             }
         }
-    }
-}
-
-// MARK: - ColoredToggle (uses primaryAccent for ON)
-struct ColoredToggle: View {
-    @Binding var isOn: Bool
-    let title: String
-
-    var body: some View {
-        Toggle(isOn: $isOn) {
-            Text(title)
-                .foregroundColor(.primary)
-        }
-        .tint(Color("primaryAccent"))
-        .padding(.vertical, 2)
     }
 }

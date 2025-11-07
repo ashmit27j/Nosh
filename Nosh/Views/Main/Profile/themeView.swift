@@ -1,248 +1,170 @@
-//
-//  themeView.swift
-//  Nosh
-//
-//  Created by MacBook on 21/07/25.
-//
-
 import SwiftUI
 
 struct themeView: View {
-    @AppStorage("selectedTheme") private var selectedTheme = "System"
-    @AppStorage("accentColor") private var accentColorName = "Teal"
-    @State private var previewMode = false
-    
-    let themes = ["System", "Light", "Dark"]
+    @AppStorage("primaryAccentHex") private var primaryAccentHex: String = "#16E51D"
     let accentColors: [ColorOption] = [
-        ColorOption(name: "Teal", color: .teal),
-        ColorOption(name: "Blue", color: .blue),
-        ColorOption(name: "Green", color: .green),
-        ColorOption(name: "Orange", color: .orange),
-        ColorOption(name: "Pink", color: .pink),
-        ColorOption(name: "Purple", color: .purple),
-        ColorOption(name: "Red", color: .red),
-        ColorOption(name: "Yellow", color: .yellow)
+        ColorOption(name: "Teal", hex: "#20CBCB"),
+        ColorOption(name: "Blue", hex: "#4682F4"),
+        ColorOption(name: "Green", hex: "#71CE56"),
+        ColorOption(name: "Orange", hex: "#FFA23E"),
+        ColorOption(name: "Pink", hex: "#F973C6"),
+        ColorOption(name: "Purple", hex: "#A978F5"),
+        ColorOption(name: "Red", hex: "#F75B54"),
+        ColorOption(name: "Yellow", hex: "#F5D451")
     ]
-    
+
     var body: some View {
-        NavigationStack {
-            Form {
-                // Theme Mode Section
-                Section {
-                    Picker("Appearance", selection: $selectedTheme) {
-                        ForEach(themes, id: \.self) { theme in
-                            HStack {
-                                Image(systemName: themeIcon(for: theme))
-                                Text(theme)
-                            }
-                            .tag(theme)
-                        }
+        ZStack {
+            Color("primaryBackground").ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Theme & Accent Color")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundColor(Color("primaryText"))
+                        Text("Personalize how Nosh looks and feels. Select your favorite accent color to be reflected throughout the app.")
+                            .font(.system(size: 15))
+                            .foregroundColor(Color("secondaryText"))
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .pickerStyle(.segmented)
-                    
-                    // Theme Preview Cards
-                    HStack(spacing: 16) {
-                        ThemePreviewCard(theme: "Light", isSelected: selectedTheme == "Light")
-                            .onTapGesture { selectedTheme = "Light" }
-                        
-                        ThemePreviewCard(theme: "Dark", isSelected: selectedTheme == "Dark")
-                            .onTapGesture { selectedTheme = "Dark" }
-                        
-                        ThemePreviewCard(theme: "System", isSelected: selectedTheme == "System")
-                            .onTapGesture { selectedTheme = "System" }
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                } header: {
-                    Label("Theme Mode", systemImage: "paintbrush.fill")
-                } footer: {
-                    Text("Choose how Nosh appears on your device")
-                }
-                
-                // Accent Color Section
-                Section {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 16) {
-                        ForEach(accentColors) { colorOption in
-                            AccentColorCircle(
-                                colorOption: colorOption,
-                                isSelected: accentColorName == colorOption.name
+                    .padding(.top, 8)
+                    .padding(.horizontal)
+
+                    SectionContainer(spacing: 18) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Choose Accent Color")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(Color("primaryText"))
+                            ColorPaletteGrid(
+                                colorOptions: accentColors,
+                                selectedHex: primaryAccentHex,
+                                onSelect: { newHex in
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        primaryAccentHex = newHex
+                                    }
+                                }
                             )
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.3)) {
-                                    accentColorName = colorOption.name
-                                }
-                            }
+                            Text("Preview Accent")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(Color("primaryText"))
+                                .padding(.top, 12)
+                            AccentPreviewCard(accent: selectedAccentColor)
                         }
                     }
-                    .padding(.vertical, 8)
-                } header: {
-                    Label("Accent Color", systemImage: "paintpalette.fill")
-                } footer: {
-                    Text("Personalize your app with your favorite color")
-                }
-                
-                // Preview Section
-                Section {
-                    Toggle(isOn: $previewMode) {
-                        Label("Preview Mode", systemImage: "eye.fill")
-                    }
-                    .toggleStyle(SwitchToggleStyle(tint: currentAccentColor))
-                    
-                    if previewMode {
-                        VStack(spacing: 16) {
-                            // Sample Button
-                            Button(action: {}) {
-                                Text("Sample Button")
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(currentAccentColor)
-                                    .cornerRadius(12)
-                            }
-                            
-                            // Sample Card
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "fork.knife.circle.fill")
-                                        .foregroundColor(currentAccentColor)
-                                        .font(.title2)
-                                    Text("Recipe Card")
-                                        .font(.headline)
-                                }
-                                
-                                Text("This is how your recipes will look with the selected theme and accent color.")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding()
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(12)
-                        }
-                        .padding(.vertical, 8)
-                    }
-                } header: {
-                    Label("Preview", systemImage: "sparkles")
-                }
-                
-                // Reset Section
-                Section {
-                    Button(role: .destructive, action: resetToDefaults) {
-                        Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
-                    }
+                    Spacer(minLength: 56)
                 }
             }
-            .navigationTitle("Theme & Appearance")
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
-    
-    private var currentAccentColor: Color {
-        accentColors.first { $0.name == accentColorName }?.color ?? .teal
-    }
-    
-    private func themeIcon(for theme: String) -> String {
-        switch theme {
-        case "Light": return "sun.max.fill"
-        case "Dark": return "moon.fill"
-        case "System": return "circle.lefthalf.filled"
-        default: return "circle"
-        }
-    }
-    
-    private func resetToDefaults() {
-        withAnimation {
-            selectedTheme = "System"
-            accentColorName = "Teal"
-        }
+
+    private var selectedAccentColor: ColorOption {
+        accentColors.first(where: { $0.hex == primaryAccentHex }) ?? accentColors[0]
     }
 }
 
-struct ThemePreviewCard: View {
-    let theme: String
-    let isSelected: Bool
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(backgroundColor)
-                    .frame(height: 100)
-                
-                VStack(spacing: 4) {
-                    Image(systemName: icon)
-                        .font(.title)
-                        .foregroundColor(textColor)
-                    Text("Aa")
-                        .font(.caption)
-                        .foregroundColor(textColor)
-                }
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 3)
-            )
-            
-            Text(theme)
-                .font(.caption)
-                .fontWeight(isSelected ? .semibold : .regular)
-        }
-    }
-    
-    private var backgroundColor: Color {
-        switch theme {
-        case "Light": return Color(.systemBackground)
-        case "Dark": return Color(.black)
-        default: return Color(.systemGray5)
-        }
-    }
-    
-    private var textColor: Color {
-        theme == "Dark" ? .white : .black
-    }
-    
-    private var icon: String {
-        switch theme {
-        case "Light": return "sun.max.fill"
-        case "Dark": return "moon.fill"
-        default: return "circle.lefthalf.filled"
-        }
-    }
-}
+// ---- Reuse SectionContainer, ColorOption, ColorPaletteGrid, AccentPreviewCard as above ----
 
-struct AccentColorCircle: View {
-    let colorOption: ColorOption
-    let isSelected: Bool
-    
-    var body: some View {
-        VStack(spacing: 6) {
-            Circle()
-                .fill(colorOption.color)
-                .frame(width: 50, height: 50)
-                .overlay(
-                    Circle()
-                        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
-                )
-                .overlay(
-                    Image(systemName: "checkmark")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .opacity(isSelected ? 1 : 0)
-                )
-                .shadow(color: isSelected ? colorOption.color.opacity(0.5) : .clear, radius: 8)
-            
-            Text(colorOption.name)
-                .font(.caption2)
-                .fontWeight(isSelected ? .semibold : .regular)
-        }
-    }
-}
 
 struct ColorOption: Identifiable {
     let id = UUID()
     let name: String
-    let color: Color
+    let hex: String
+    var color: Color { Color(hex: hex) }
 }
 
-#Preview {
-    themeView()
+// MARK: - Color Extensions
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scanner = Scanner(string: hex)
+        var rgb: UInt64 = 0
+        if hex.hasPrefix("#") {
+            scanner.currentIndex = hex.index(after: hex.startIndex)
+        }
+        scanner.scanHexInt64(&rgb)
+        let r = Double((rgb >> 16) & 0xff) / 255
+        let g = Double((rgb >> 8) & 0xff) / 255
+        let b = Double(rgb & 0xff) / 255
+        self.init(red: r, green: g, blue: b)
+    }
 }
+
+// MARK: - Palette Grid
+struct ColorPaletteGrid: View {
+    let colorOptions: [ColorOption]
+    let selectedHex: String
+    let onSelect: (String) -> Void
+
+    private let gridLayout = [GridItem(.adaptive(minimum: 54, maximum: 64), spacing: 20)]
+    var body: some View {
+        LazyVGrid(columns: gridLayout, spacing: 22) {
+            ForEach(colorOptions) { option in
+                Button(action: { onSelect(option.hex) }) {
+                    ZStack {
+                        Circle()
+                            .fill(option.color)
+                            .frame(width: 54, height: 54)
+                            .overlay(
+                                Circle()
+                                    .stroke(selectedHex == option.hex ? option.color.opacity(0.8) : Color.clear, lineWidth: 3)
+                            )
+                            .shadow(color: selectedHex == option.hex ? option.color.opacity(0.33) : .clear, radius: 8)
+                        if selectedHex == option.hex {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.white)
+                                .font(.title3.bold())
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .scaleEffect(selectedHex == option.hex ? 1.12 : 1.0)
+                .animation(.easeInOut(duration: 0.18), value: selectedHex)
+                Text(option.name)
+                    .font(.caption)
+                    .fontWeight(selectedHex == option.hex ? .semibold : .regular)
+                    .frame(width: 54)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+}
+
+// MARK: - Preview Card
+struct AccentPreviewCard: View {
+    let accent: ColorOption
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(accent.color)
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                Text("Sample with \(accent.name)")
+                    .font(.system(size: 15, weight: .semibold))
+            }
+            .padding(.bottom, 2)
+            Button(action: {}) {
+                Text("Accent Button")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(accent.color)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            Text("Nosh recipe cards, highlights, and key actions use your accent color for a personalized look.")
+                .font(.system(size: 13))
+                .foregroundColor(Color("secondaryText"))
+        }
+        .padding()
+        .background(Color("primaryCard"))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.06), radius: 7, y: 2)
+    }
+}
+

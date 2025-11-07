@@ -44,7 +44,7 @@ struct Profile: View {
 //                                    ProfileItem(icon: "leaf.fill", iconColor: .green, title: "Diet Type", enabled: true, destination: AnyView(dietTypeView())),
                                     ProfileItem(icon: "exclamationmark.triangle.fill", iconColor: .orange, title: "Allergens", enabled: true, destination: AnyView(allergensView())),
 //                                    ProfileItem(icon: "calendar", iconColor: .purple, title: "Meal Schedule", enabled: true, destination: AnyView(mealScheduleView())),
-                                    ProfileItem(icon: "cart.fill", iconColor: .green, title: "Grocery Preferences", enabled: true, destination: AnyView(groceryPreferencesView()))
+//                                    ProfileItem(icon: "cart.fill", iconColor: .green, title: "Grocery Preferences", enabled: true, destination: AnyView(groceryPreferencesView()))
                                 ]
                             )
 
