@@ -348,8 +348,8 @@ class MealPlannerViewModel: ObservableObject {
                 // Check if meal already exists by ID (primary) or name (fallback)
                 let mealExists = existingMeals.contains { existingMeal in
                     // If both have IDs, compare by ID
-                    if let existingId = existingMeal.id, let newId = meal.id, !existingId.isEmpty, !newId.isEmpty {
-                        return existingId == newId
+                    if !existingMeal.id.isEmpty && !meal.id.isEmpty {
+                        return existingMeal.id == meal.id
                     }
                     // Otherwise compare by name AND description for better accuracy
                     return existingMeal.name.lowercased() == meal.name.lowercased() &&

@@ -13,7 +13,7 @@ class AiChefViewModel: ObservableObject {
     let faqs = [
         "What can I make with chicken and rice?",
         "Show me quick dinner ideas",
-        "I need a vegetarian recix`pe",
+        "I need a vegetarian recipe",
         "What's good for meal prep?",
         "Suggest something under 30 minutes"
     ]

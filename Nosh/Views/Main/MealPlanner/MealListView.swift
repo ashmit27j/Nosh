@@ -74,6 +74,7 @@ struct MealListView: View {
                 }
             }
             .padding(.horizontal)
+            .padding(.bottom, 80)
         }
         .coordinateSpace(name: "scroll")
         .sheet(isPresented: $showMealSelector) {
