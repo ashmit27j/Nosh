@@ -180,22 +180,6 @@ enum TextSizeOption: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Section Header
-struct SectionHeader: View {
-    let icon: String
-    let title: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color("primaryAccent"))
-            
-            Text(title)
-                .font(.system(size: 20, weight: .bold))
-        }
-    }
-}
 
 // MARK: - Setting Toggle
 struct SettingToggle: View {

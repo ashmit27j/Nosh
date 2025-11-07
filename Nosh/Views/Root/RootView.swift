@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var accessibilityEnv: AccessibilityEnvironment
+    
 
     var body: some View {
         Group {

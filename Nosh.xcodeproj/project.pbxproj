@@ -34,6 +34,8 @@
 		1789B3242E1FD37C001BB0EF /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1789B3232E1FD37C001BB0EF /* FirebaseStorageCombine-Community */; };
 		1789B3262E1FD37C001BB0EF /* FirebaseVertexAI in Frameworks */ = {isa = PBXBuildFile; productRef = 1789B3252E1FD37C001BB0EF /* FirebaseVertexAI */; };
 		179EF90F2EBBA07E0021DFA5 /* Cloudinary in Frameworks */ = {isa = PBXBuildFile; productRef = 179EF90E2EBBA07E0021DFA5 /* Cloudinary */; };
+		17B1EB962EBE2CC000EF2AA7 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 17B1EB952EBE2CC000EF2AA7 /* GoogleSignIn */; };
+		17B1EB982EBE2CC000EF2AA7 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 17B1EB972EBE2CC000EF2AA7 /* GoogleSignInSwift */; };
 		17D439202E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 17D4391F2E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta */; };
 		17D439222E2CE80D000AC5E0 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 17D439212E2CE80D000AC5E0 /* FirebaseMessaging */; };
 		17D4392F2E2D2527000AC5E0 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 17D4392E2E2D2527000AC5E0 /* SDWebImageSwiftUI */; };
@@ -63,7 +65,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		17510D942E1EBFA600E564C2 /* Exceptions for "Nosh" folder in "Nosh" target */ = {
+		171320E72EBE3AD000B26F4D /* Exceptions for "Nosh" folder in "Nosh" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -90,7 +92,7 @@
 		1795F6E82E0C05710013DC7C /* Nosh */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				17510D942E1EBFA600E564C2 /* Exceptions for "Nosh" folder in "Nosh" target */,
+				171320E72EBE3AD000B26F4D /* Exceptions for "Nosh" folder in "Nosh" target */,
 				17AD5BB72E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshTests" target */,
 				17AD5BB82E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshUITests" target */,
 			);
@@ -116,10 +118,12 @@
 				17D4392F2E2D2527000AC5E0 /* SDWebImageSwiftUI in Frameworks */,
 				17D439222E2CE80D000AC5E0 /* FirebaseMessaging in Frameworks */,
 				179EF90F2EBBA07E0021DFA5 /* Cloudinary in Frameworks */,
+				17B1EB982EBE2CC000EF2AA7 /* GoogleSignInSwift in Frameworks */,
 				1789B3122E1FD37C001BB0EF /* FirebaseFunctions in Frameworks */,
 				1789B30A2E1FD37C001BB0EF /* FirebaseDatabase in Frameworks */,
 				1716572A2EBA884C00296A52 /* GoogleGenerativeAI in Frameworks */,
 				1740ADA22E1FAEFE00F37F0C /* FirebaseAnalyticsIdentitySupport in Frameworks */,
+				17B1EB962EBE2CC000EF2AA7 /* GoogleSignIn in Frameworks */,
 				1789B3222E1FD37C001BB0EF /* FirebaseStorage in Frameworks */,
 				1789B2FC2E1FD37C001BB0EF /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				1789B3062E1FD37C001BB0EF /* FirebaseCore in Frameworks */,
@@ -234,6 +238,8 @@
 				17D4392E2E2D2527000AC5E0 /* SDWebImageSwiftUI */,
 				171657292EBA884C00296A52 /* GoogleGenerativeAI */,
 				179EF90E2EBBA07E0021DFA5 /* Cloudinary */,
+				17B1EB952EBE2CC000EF2AA7 /* GoogleSignIn */,
+				17B1EB972EBE2CC000EF2AA7 /* GoogleSignInSwift */,
 			);
 			productName = Nosh;
 			productReference = 1795F6E62E0C05710013DC7C /* Nosh.app */;
@@ -318,6 +324,7 @@
 				17D4392D2E2D2527000AC5E0 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 				171657282EBA884C00296A52 /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
 				179EF90D2EBBA07E0021DFA5 /* XCRemoteSwiftPackageReference "cloudinary_ios" */,
+				17B1EB942EBE2C3100EF2AA7 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 1795F6E72E0C05710013DC7C /* Products */;
@@ -698,6 +705,14 @@
 				minimumVersion = 5.2.3;
 			};
 		};
+		17B1EB942EBE2C3100EF2AA7 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		17D4392D2E2D2527000AC5E0 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
@@ -823,6 +838,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 179EF90D2EBBA07E0021DFA5 /* XCRemoteSwiftPackageReference "cloudinary_ios" */;
 			productName = Cloudinary;
+		};
+		17B1EB952EBE2CC000EF2AA7 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17B1EB942EBE2C3100EF2AA7 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		17B1EB972EBE2CC000EF2AA7 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17B1EB942EBE2C3100EF2AA7 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 		17D4391F2E2CE80D000AC5E0 /* FirebaseInAppMessaging-Beta */ = {
 			isa = XCSwiftPackageProductDependency;

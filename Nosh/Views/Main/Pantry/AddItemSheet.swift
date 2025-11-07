@@ -40,17 +40,17 @@ struct AddItemSheet: View {
                         Text("Starting Amount")
                         Spacer()
                         Button {
-                            if quantity >= incrementBy {
+                            if quantity > 0 { // you may want to check for a min value
                                 quantity -= incrementBy
                             }
                         } label: {
                             Image(systemName: "minus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
-                        
+
                         Text(String(format: "%.1f", quantity))
                             .frame(width: 50)
-                        
+
                         Button {
                             quantity += incrementBy
                         } label: {
@@ -59,7 +59,7 @@ struct AddItemSheet: View {
                         }
                     }
                 }
-                
+
                 Section("Increment/Decrement By") {
                     HStack {
                         Text("Step Size")
@@ -72,10 +72,10 @@ struct AddItemSheet: View {
                             Image(systemName: "minus.circle.fill")
                                 .foregroundColor(Color("primaryAccent"))
                         }
-                        
+
                         Text(String(format: "%.1f", incrementBy))
                             .frame(width: 50)
-                        
+
                         Button {
                             incrementBy += 0.1
                         } label: {
@@ -84,6 +84,7 @@ struct AddItemSheet: View {
                         }
                     }
                 }
+
             }
             .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)

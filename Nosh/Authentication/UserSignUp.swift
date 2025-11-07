@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct UserSignUp: View {
+    @EnvironmentObject var appState: AppState  
     @StateObject var viewModel = UserSignUpViewModel()
     var switchToSignIn: () -> Void
     @State private var showFAQSheet = false
@@ -135,6 +136,7 @@ struct UserSignUp: View {
 
                     DividerWithText(text: "Or Sign Up with")
                     SocialIconsRow()
+                        .environmentObject(appState)
                 }
                 .padding()
                 .padding(.bottom, 20)

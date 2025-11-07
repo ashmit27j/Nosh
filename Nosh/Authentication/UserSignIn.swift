@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct UserSignIn: View {
+    @EnvironmentObject var appState: AppState
     @StateObject var viewModel = UserSignInViewModel()
     var switchToSignUp: () -> Void
     @State private var showReportSheet = false
@@ -119,6 +120,7 @@ struct UserSignIn: View {
 
                     DividerWithText(text: "Or Sign In with")
                     SocialIconsRow()
+                        .environmentObject(appState)
                 }
                 .padding()
                 .padding(.bottom, 20)
@@ -144,41 +146,43 @@ struct UserSignIn: View {
 
 
 
-struct SocialIconBox: View {
-    var systemImage: String? = nil
-    var assetImage: String? = nil
+//struct SocialIconBox: View {
+//    var systemImage: String? = nil
+//    var assetImage: String? = nil
+//
+//    var body: some View {
+//        Button(action: {
+//            print("\(systemImage ?? assetImage ?? "") tapped")
+//        }) {
+//            ZStack {
+//                RoundedRectangle(cornerRadius: 12)
+//                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+//                    .background(Color("secondaryButton"))
+//                    .cornerRadius(12)
+//
+//                Group {
+//                    if let systemImage = systemImage {
+//                        Image(systemName: systemImage)
+//                            .resizable()
+//                            .scaledToFit()
+//                            .foregroundColor(Color("primaryText"))
+//                            .frame(width: 24, height: 24)
+//                    } else if let assetImage = assetImage {
+//                        Image(assetImage)
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(width: 24, height: 24)
+//                    }
+//                }
+//                .foregroundColor(.black)
+//            }
+//            .frame(height: 75)
+//        }
+//        .frame(maxWidth: .infinity)
+//    }
+//}
 
-    var body: some View {
-        Button(action: {
-            print("\(systemImage ?? assetImage ?? "") tapped")
-        }) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    .background(Color("secondaryButton"))
-                    .cornerRadius(12)
 
-                Group {
-                    if let systemImage = systemImage {
-                        Image(systemName: systemImage)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(Color("primaryText"))
-                            .frame(width: 24, height: 24)
-                    } else if let assetImage = assetImage {
-                        Image(assetImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                    }
-                }
-                .foregroundColor(.black)
-            }
-            .frame(height: 75)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
 
 struct FieldContainer<Content: View>: View {
     let isError: Bool
@@ -200,16 +204,6 @@ struct FieldContainer<Content: View>: View {
                     .foregroundColor(.red)
                     .font(.caption)
             }
-        }
-    }
-}
-
-struct SocialIconsRow: View {
-    var body: some View {
-        HStack(spacing: 16) {
-            SocialIconBox(assetImage: "googleIcon")
-            SocialIconBox(systemImage: "apple.logo")
-            SocialIconBox(systemImage: "phone.fill")
         }
     }
 }
