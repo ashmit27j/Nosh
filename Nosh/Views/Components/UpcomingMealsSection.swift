@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
 
+//test
 struct UpcomingMealsSection: View {
     @State private var currentIndex = 0
     @State private var cardHeight: CGFloat = 380
