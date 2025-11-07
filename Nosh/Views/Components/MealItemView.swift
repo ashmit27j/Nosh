@@ -1,5 +1,5 @@
 import SwiftUI
-
+//this is the compact mealViewCard that is shown in Schedule right now
 struct MealItemView: View {
     let meal: Meal
     

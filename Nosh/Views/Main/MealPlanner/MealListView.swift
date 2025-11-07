@@ -9,7 +9,7 @@ struct MealListView: View {
     @State private var selectedMealType: String = ""
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: true) {
+        ScrollView(.vertical, showsIndicators: false) { //scrollbars nikala
 //            GeometryReader { geo in
 //                Color.clear
 //                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
