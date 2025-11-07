@@ -5,8 +5,8 @@ struct Nosh: View {
     @State private var selectedCategories: Set<String> = ["Full Meal"]
     @State private var selectedPreference: String? = "Both"
     @State private var portionSize: Int = 1
-    @State private var timeToCook: Double = 60
-    @State private var selectedDifficulty: String? = "Professional"  // Changed default
+    @State private var timeToCook: Double = 120
+    @State private var selectedDifficulty: String? = "Professional"
     @State private var showResults: Bool = false
 
     var body: some View {
@@ -53,7 +53,7 @@ struct Nosh: View {
                 NoshHeader
             }
             .sheet(isPresented: $showResults) {
-                print("📋 Sheet opening with \(viewModel.meals.count) meals")
+                print("Sheet opening with \(viewModel.meals.count) meals")
             } content: {
                 MealResultsView(meals: viewModel.meals)
             }
@@ -66,9 +66,9 @@ struct Nosh: View {
     }
     
     private func searchMeals() {
-        print("🎯 searchMeals() called")
+        print("searchMeals() called")
         
-        // Convert String difficulty to Meal.Difficulty enum
+        // Convert String difficulty to Meal.Difficulty enumurator
         let difficultyEnum: Meal.Difficulty
         switch selectedDifficulty {
         case "Easy":
@@ -91,37 +91,6 @@ struct Nosh: View {
             foodPreference: selectedPreference ?? "Both"
         )
     }
-    
-//    private var NoshHeader: some View {
-//        HStack(alignment: .center) {
-//            Text("Nosh")
-//                .font(.largeTitle.bold())
-//                .transition(.opacity)
-//
-//            Spacer()
-//
-//            Button {
-//                print("AI Schedule generator tapped")
-//            } label: {
-//                HStack(spacing: 8) {
-//                    Image("cookIcon")
-//                        .resizable()
-//                        .scaledToFit()
-//                        .frame(width: 18, height: 18)
-//                        .foregroundColor(Color("secondaryAccent"))
-//                }
-//                .padding(.horizontal, 12)
-//                .padding(.vertical, 12)
-//                .background(Color("primaryAccent"))
-//                .cornerRadius(16)
-//            }
-//        }
-//        .padding(.horizontal)
-//        .padding(.vertical, 20)
-//        .frame(maxWidth: .infinity, alignment: .top)
-//        .background(Color("primaryCard"))
-//    }
-//}
 
     private var NoshHeader: some View {
         HStack(alignment: .center) {
@@ -133,7 +102,7 @@ struct Nosh: View {
             
             Button {
                 print("+ Add tapped")
-                // In future, add your navigation or sheet presentation here
+                //Will add a link to sheetview idhar to add recipe view
             } label: {
                 Text("+ Add")
                     .font(.headline)

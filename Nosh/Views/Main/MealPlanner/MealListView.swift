@@ -10,12 +10,6 @@ struct MealListView: View {
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) { //scrollbars nikala
-//            GeometryReader { geo in
-//                Color.clear
-//                    .preference(key: ScrollOffsetKey.self, value: geo.frame(in: .named("scroll")).minY)
-//            }
-//            .frame(height: 0)
-
             VStack(spacing: 20) {
                 if let mealsByType = viewModel.items[selectedTab] {
                     // Section 1 - Breakfast

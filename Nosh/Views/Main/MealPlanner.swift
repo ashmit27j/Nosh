@@ -9,7 +9,6 @@ struct MealPlanner: View {
     @Namespace private var underlineNamespace
     @ObservedObject var viewModel: MealPlannerViewModel
 
-    // ADD THIS:
     let onGotoPantry: () -> Void
 
     var body: some View {

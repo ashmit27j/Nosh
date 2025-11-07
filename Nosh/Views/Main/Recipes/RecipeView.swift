@@ -3,7 +3,7 @@ import SwiftUI
 struct RecipeView: View {
     @Environment(\.dismiss) var dismiss
     let meal: Meal
-    var onGotoPantry: (() -> Void)?   // propagate pantry trigger
+    var onGotoPantry: (() -> Void)?
 
     @State private var servingSize: Int
     @State private var isFavorite: Bool = false
@@ -13,7 +13,6 @@ struct RecipeView: View {
     @State private var checkedSteps: Set<Int> = []
     @State private var showSuccessScreen: Bool = false
 
-    // Pantry integration (assumes PantryManager exists)
     private var hasIngredients: Bool {
         PantryManager.shared.hasAllIngredients(for: meal, servingSize: servingSize)
     }
@@ -130,10 +129,6 @@ struct RecipeView: View {
                                         }
                                     }
                                 }
-//                                Text("Hint: Add to Pantry")
-//                                    .font(.footnote)
-//                                    .foregroundColor(.red)
-//                                    .italic()
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)

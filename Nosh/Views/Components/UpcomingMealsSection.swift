@@ -116,7 +116,7 @@ struct UpcomingMealsSection: View {
         // NEW: Sheet for RecipeView
         .sheet(isPresented: $showRecipe) {
             if let meal = selectedMeal {
-                RecipeView(meal: meal) // <-- Replace with your RecipeView
+                RecipeView(meal: meal) 
             }
         }
     }
@@ -124,18 +124,18 @@ struct UpcomingMealsSection: View {
     // MARK: - Fetch Today's Meals from Meal Planner
     private func fetchTodaysMeals() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            print("❌ No user logged in")
+            print("No user logged in")
             isLoading = false
             return
         }
 
-        print("🔄 Fetching today's meals from meal planner...")
+        print("Fetching today's meals from meal planner...")
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let todayString = dateFormatter.string(from: Date())
 
-        print("📅 Today's date: \(todayString)")
+        print("Today's date: \(todayString)")
 
         db.collection("users")
             .document(userId)
@@ -146,7 +146,7 @@ struct UpcomingMealsSection: View {
                     self.isLoading = false
 
                     if let error = error {
-                        print("❌ Error fetching today's meals: \(error.localizedDescription)")
+                        print("Error fetching today's meals: \(error.localizedDescription)")
                         return
                     }
 
@@ -165,13 +165,13 @@ struct UpcomingMealsSection: View {
 
                         self.meals = allMeals
 
-                        print("✅ Loaded \(allMeals.count) meals for today")
+                        print("Loaded \(allMeals.count) meals for today")
                         print("   - Breakfast: \(dayPlan.breakfast.count)")
                         print("   - Lunch: \(dayPlan.lunch.count)")
                         print("   - Dinner: \(dayPlan.dinner.count)")
 
                     } catch {
-                        print("❌ Failed to decode meal plan: \(error)")
+                        print("Failed to decode meal plan: \(error)")
                     }
                 }
             }

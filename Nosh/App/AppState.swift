@@ -10,7 +10,7 @@ class AppState: ObservableObject {
     @Published var user: UserProfile? = nil
 
     init() {
-        // Splash lasts for 0.5s
+        // Splash lasts for 0.5s here -> not neessary to do this, i added so firebase loads
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.showSplash = false
         }
@@ -28,7 +28,9 @@ class AppState: ObservableObject {
         }
     }
 
+    //handle signout
     func signOut() {
+        //try to signout: if dont then set isUserSigned in to false so that the view updates to the SignIn View and set user as nil to get rid of user 
         try? Auth.auth().signOut()
         isUserSignedIn = false
         user = nil
