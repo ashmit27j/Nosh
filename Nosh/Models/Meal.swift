@@ -401,6 +401,7 @@ struct MealTimes: Codable {
     var lunchTime: Date
     var dinnerTime: Date
 
+    // these will be the default meal times that are called in appstate when user first signs up
     static var `default`: MealTimes {
         let calendar = Calendar.current
         let now = Date()

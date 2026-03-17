@@ -48,13 +48,15 @@
 
   <!-- Google Sign-In redirect handler -->
   <key>CFBundleURLTypes</key>
-  <array>
-    <dict>
-      <key>CFBundleURLSchemes</key>
-      <array>
-        <string>com.googleusercontent.apps.258472117421-8oaucd9bhd459elu7aahqivmmjqnamoa</string>
-      </array>
-    </dict>
-  </array>
+    <array>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.85767991436-fikhqgi0elruhjlsmj14v2rllalv2qbd</string>
+        </array>
+      </dict>
+    </array>
 </dict>
 </plist>

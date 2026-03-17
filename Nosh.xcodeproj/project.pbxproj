@@ -65,7 +65,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		171320E72EBE3AD000B26F4D /* Exceptions for "Nosh" folder in "Nosh" target */ = {
+		17700BD22F66EEC800873B97 /* Exceptions for "Nosh" folder in "Nosh" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -92,7 +92,7 @@
 		1795F6E82E0C05710013DC7C /* Nosh */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				171320E72EBE3AD000B26F4D /* Exceptions for "Nosh" folder in "Nosh" target */,
+				17700BD22F66EEC800873B97 /* Exceptions for "Nosh" folder in "Nosh" target */,
 				17AD5BB72E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshTests" target */,
 				17AD5BB82E0D4B200080F4F2 /* Exceptions for "Nosh" folder in "NoshUITests" target */,
 			);
