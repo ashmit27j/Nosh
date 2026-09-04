@@ -2,7 +2,7 @@ import SwiftUI
 import Foundation
 
 struct MealPlanner: View {
-    @State private var selectedTab = "Mon"
+    @State private var selectedTab = ""
     @State private var showCollapsedTitle = false
     @State private var showingDatePicker = false
 
@@ -23,7 +23,7 @@ struct MealPlanner: View {
                         viewModel.changeDate(to: newDate)
                     },
                     onGenerateAIMealPlan: {
-                        generateAIMealPlan()
+                        Task { await viewModel.fillDayWithSuggestions() }
                     }
                 )
 
@@ -49,20 +49,10 @@ struct MealPlanner: View {
                 }
             }
             .onAppear {
-                selectedTab = viewModel.selectedTab
+                selectedTab = viewModel.selectedTabKey
             }
-            .onChange(of: viewModel.selectedTab) { newTab in
+            .onChange(of: viewModel.selectedTabKey) { _, newTab in
                 selectedTab = newTab
-            }
-        }
-    }
-
-    private func generateAIMealPlan() {
-        Task {
-            do {
-                try await viewModel.generateAIMealPlan()
-            } catch {
-                print("❌ Error generating meal plan: \(error)")
             }
         }
     }

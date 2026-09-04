@@ -1,14 +1,17 @@
 import SwiftUI
-//does not work currently just need to add 3 lines at the start of each swift view file to make it work 
 struct accessibilityView: View {
-    @AppStorage("textSize") private var textSize: TextSizeOption = .medium
-    @AppStorage("highContrast") private var highContrast = false
-    @AppStorage("reduceMotion") private var reduceMotion = false
-    @AppStorage("boldText") private var boldText = false
-    @AppStorage("hapticFeedback") private var hapticFeedback = true
-    @AppStorage("voiceOverEnabled") private var voiceOverEnabled = false
+    // Bound to the shared object rather than @AppStorage, so a change here is
+    // published to every screen instead of only this one.
+    @EnvironmentObject private var accessibility: AccessibilityEnvironment
 
     @Environment(\.dismiss) var dismiss
+
+    private var textSize: Binding<TextSizeOption> { $accessibility.textSize }
+    private var highContrast: Binding<Bool> { $accessibility.highContrast }
+    private var reduceMotion: Binding<Bool> { $accessibility.reduceMotion }
+    private var boldText: Binding<Bool> { $accessibility.boldText }
+    private var hapticFeedback: Binding<Bool> { $accessibility.hapticFeedback }
+    private var voiceOverEnabled: Binding<Bool> { $accessibility.voiceOverEnabled }
 
     var body: some View {
         ZStack {
@@ -37,7 +40,7 @@ struct accessibilityView: View {
                                 Text("Text Size")
                                     .font(.system(size: 17, weight: .semibold))
 
-                                Picker("Text Size", selection: $textSize) {
+                                Picker("Text Size", selection: textSize) {
                                     ForEach(TextSizeOption.allCases, id: \.self) { size in
                                         Text(size.rawValue).tag(size)
                                     }
@@ -47,9 +50,9 @@ struct accessibilityView: View {
                                 // Preview
                                 VStack(spacing: 8) {
                                     Text("Preview: Recipe Title")
-                                        .font(.system(size: textSize.fontSize, weight: .semibold))
+                                        .font(.system(size: textSize.wrappedValue.fontSize, weight: .semibold))
                                     Text("This is how regular text will appear in the app.")
-                                        .font(.system(size: textSize.fontSize * 0.88))
+                                        .font(.system(size: textSize.wrappedValue.fontSize * 0.88))
                                         .foregroundColor(Color("secondaryText"))
                                 }
                                 .padding()
@@ -60,13 +63,13 @@ struct accessibilityView: View {
                                 icon: "circle.lefthalf.filled",
                                 title: "High Contrast",
                                 description: "Increase color contrast for better visibility.",
-                                isOn: $highContrast
+                                isOn: highContrast
                             )
                             SettingToggle(
                                 icon: "bold",
                                 title: "Bold Text",
                                 description: "Make all text bolder and easier to read.",
-                                isOn: $boldText
+                                isOn: boldText
                             )
                         }
                     }
@@ -78,7 +81,7 @@ struct accessibilityView: View {
                             icon: "speedometer",
                             title: "Reduce Motion",
                             description: "Minimize animations and movement.",
-                            isOn: $reduceMotion
+                            isOn: reduceMotion
                         )
                     }
                     // Interaction Section
@@ -90,13 +93,13 @@ struct accessibilityView: View {
                                 icon: "iphone.radiowaves.left.and.right",
                                 title: "Haptic Feedback",
                                 description: "Feel vibrations when interacting with the app.",
-                                isOn: $hapticFeedback
+                                isOn: hapticFeedback
                             )
                             SettingToggle(
                                 icon: "speaker.wave.3.fill",
                                 title: "VoiceOver Support",
                                 description: "Enhance screen reader compatibility.",
-                                isOn: $voiceOverEnabled
+                                isOn: voiceOverEnabled
                             )
                         }
                     }
@@ -133,14 +136,13 @@ struct accessibilityView: View {
     }
 
     private func resetToDefaults() {
-        textSize = .medium
-        highContrast = false
-        reduceMotion = false
-        boldText = false
-        hapticFeedback = true
-        voiceOverEnabled = false
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        accessibility.textSize = .medium
+        accessibility.highContrast = false
+        accessibility.reduceMotion = false
+        accessibility.boldText = false
+        accessibility.hapticFeedback = true
+        accessibility.voiceOverEnabled = false
+        accessibility.success()
     }
 }
 

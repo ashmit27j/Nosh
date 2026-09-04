@@ -25,7 +25,6 @@ struct Nosh: View {
                         TimeToCookSlider(timeToCook: $timeToCook)
                         
                         Button(action: {
-                            print("🔍 Find Recipes button tapped")
                             searchMeals()
                         }) {
                             if viewModel.isLoading {
@@ -53,7 +52,6 @@ struct Nosh: View {
                 NoshHeader
             }
             .sheet(isPresented: $showResults) {
-                print("Sheet opening with \(viewModel.meals.count) meals")
             } content: {
                 MealResultsView(meals: viewModel.meals)
             }
@@ -66,7 +64,6 @@ struct Nosh: View {
     }
     
     private func searchMeals() {
-        print("searchMeals() called")
         
         // Convert String difficulty to Meal.Difficulty enumurator
         let difficultyEnum: Meal.Difficulty
@@ -101,7 +98,6 @@ struct Nosh: View {
             Spacer()
             
             Button {
-                print("+ Add tapped")
                 //Will add a link to sheetview idhar to add recipe view
             } label: {
                 Text("+ Add")

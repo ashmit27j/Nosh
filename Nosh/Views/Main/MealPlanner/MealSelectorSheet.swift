@@ -3,7 +3,7 @@ import FirebaseFirestore
 
 struct MealSelectorSheet: View {
     let selectedTab: String
-    let mealType: String
+    let mealType: MealType
     @ObservedObject var viewModel: MealPlannerViewModel
     
     @Environment(\.dismiss) var dismiss
@@ -33,7 +33,7 @@ struct MealSelectorSheet: View {
                             TextField("Search recipes...", text: $searchText)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .autocorrectionDisabled()
-                                .onChange(of: searchText) { newValue in
+                                .onChange(of: searchText) { _, newValue in
                                     performSearch(query: newValue)
                                 }
                             
@@ -103,7 +103,7 @@ struct MealSelectorSheet: View {
                         .tint(.white)
                 }
             }
-            .navigationTitle("Add \(mealType.capitalized)")
+            .navigationTitle("Add \(mealType.rawValue)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -132,7 +132,7 @@ struct MealSelectorSheet: View {
                     .getDocuments()
                 
                 let recipes = snapshot.documents.compactMap { doc -> Meal? in
-                    try? doc.data(as: Meal.self)
+                    Meal(document: doc)
                 }
                 
                 await MainActor.run {
@@ -140,7 +140,7 @@ struct MealSelectorSheet: View {
                     isLoading = false
                 }
             } catch {
-                print("Error loading recipes: \(error)")
+                Log.mealPlanner.error("Error loading recipes: \(error)")
                 await MainActor.run {
                     isLoading = false
                 }
@@ -162,7 +162,7 @@ struct MealSelectorSheet: View {
                     searchResults = results
                 }
             } catch {
-                print("Search error: \(error)")
+                Log.mealPlanner.error("Search error: \(error)")
             }
         }
     }
@@ -171,23 +171,19 @@ struct MealSelectorSheet: View {
     private func addMealToSchedule(_ meal: Meal) {
         // Prevent multiple taps
         guard !isAddingMeal else {
-            print("⚠️ Already adding a meal, ignoring tap")
             return
         }
         
         isAddingMeal = true
-        
-        print("🍽️ Starting to add meal: \(meal.name) to \(selectedTab) - \(mealType)")
-        
-        // Add the meal
-        viewModel.addMeal(to: selectedTab, type: mealType, meal: meal)
-        
-        // Haptic feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-        
-        // Wait a bit longer for Firestore to complete, then dismiss
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+
+        Task {
+            await viewModel.addMeal(to: selectedTab, type: mealType, meal: meal)
+
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+
+            // Dismiss once the write has actually landed, rather than after a
+            // fixed 0.8s guess.
             isAddingMeal = false
             dismiss()
         }

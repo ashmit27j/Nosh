@@ -277,7 +277,6 @@ struct RecipesView: View {
                                 MealCardView(
                                     meal: meal,
                                     onCookNowTapped: { selectedMeal in
-                                        print("🔥 Meal tapped: \(selectedMeal.name)")
                                         selectedMealForCooking = selectedMeal
                                     }
                                 )
@@ -294,12 +293,10 @@ struct RecipesView: View {
             // ✅ Initialize with all categories selected
             if selectedCategories.isEmpty {
                 selectedCategories = Set(allCategories)
-                print("📁 Initialized with all categories: \(selectedCategories)")
                 viewModel.fetchMeals(categories: allCategories)
             }
         }
-        .onChange(of: selectedCategories) { newCategories in
-            print("📁 Categories changed: \(newCategories)")
+        .onChange(of: selectedCategories) { _, newCategories in
             if !newCategories.isEmpty {
                 viewModel.fetchMeals(categories: Array(newCategories))
             } else {

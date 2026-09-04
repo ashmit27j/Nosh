@@ -36,21 +36,23 @@ struct UpdatePasswordView: View {
                         PasswordFieldWithToggle(
                             placeholder: "Current Password",
                             text: $currentPassword,
-                            isSecure: $showCurrentPassword
+                            isRevealed: $showCurrentPassword
                         )
                         
                         // New Password Field
                         PasswordFieldWithToggle(
                             placeholder: "New Password",
                             text: $newPassword,
-                            isSecure: $showNewPassword
+                            isRevealed: $showNewPassword,
+                            contentType: .newPassword
                         )
                         
                         // Confirm Password Field
                         PasswordFieldWithToggle(
                             placeholder: "Confirm New Password",
                             text: $confirmPassword,
-                            isSecure: $showConfirmPassword
+                            isRevealed: $showConfirmPassword,
+                            contentType: .newPassword
                         )
                         
                         // Password Requirements
@@ -125,28 +127,18 @@ struct UpdatePasswordView: View {
         // Re-authenticate user first
         let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
         
-        user.reauthenticate(with: credential) { _, error in
-            if let error = error {
+        Task {
+            defer { isLoading = false }
+            do {
+                try await user.reauthenticate(with: credential)
+                try await user.updatePassword(to: newPassword)
+                alertTitle = "Success"
+                alertMessage = "Your password has been updated successfully."
+            } catch {
                 alertTitle = "Error"
-                alertMessage = "Current password is incorrect: \(error.localizedDescription)"
-                showAlert = true
-                isLoading = false
-                return
+                alertMessage = error.localizedDescription
             }
-            
-            // Update password
-            user.updatePassword(to: newPassword) { error in
-                isLoading = false
-                
-                if let error = error {
-                    alertTitle = "Error"
-                    alertMessage = error.localizedDescription
-                } else {
-                    alertTitle = "Success"
-                    alertMessage = "Your password has been updated successfully."
-                }
-                showAlert = true
-            }
+            showAlert = true
         }
     }
 }
@@ -155,27 +147,34 @@ struct UpdatePasswordView: View {
 struct PasswordFieldWithToggle: View {
     let placeholder: String
     @Binding var text: String
-    @Binding var isSecure: Bool
-    
+    /// True when the password is shown in the clear. The binding was previously
+    /// named `isSecure` while being passed `show…` flags, which inverted the
+    /// eye icon relative to the sign-up screen.
+    @Binding var isRevealed: Bool
+    /// `.newPassword` lets iOS offer to generate and save a strong password.
+    var contentType: UITextContentType = .password
+
     var body: some View {
         HStack {
-            if isSecure {
-                TextField(placeholder, text: $text)
-                    .autocapitalization(.none)
-                    .textContentType(.password)
-            } else {
-                SecureField(placeholder, text: $text)
-                    .autocapitalization(.none)
-                    .textContentType(.password)
+            Group {
+                if isRevealed {
+                    TextField(placeholder, text: $text)
+                } else {
+                    SecureField(placeholder, text: $text)
+                }
             }
-            
-            Button(action: {
-                isSecure.toggle()
-            }) {
-                Image(systemName: isSecure ? "eye.fill" : "eye.slash.fill")
+            .autocapitalization(.none)
+            .autocorrectionDisabled()
+            .textContentType(contentType)
+
+            Button {
+                isRevealed.toggle()
+            } label: {
+                Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
                     .foregroundColor(.gray)
                     .font(.system(size: 16))
             }
+            .accessibilityLabel(isRevealed ? "Hide password" : "Show password")
         }
         .padding()
         .background(Color("primaryCard"))

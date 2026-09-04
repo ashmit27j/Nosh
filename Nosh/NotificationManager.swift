@@ -5,17 +5,12 @@ struct NotificationManager {
     static let shared = NotificationManager()
     
     func requestPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            if granted {
-                print("Notification permission granted.")
-            } else if let error = error {
-                print("Notification permission error: \(error.localizedDescription)")
-            }
-        }
+        UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
     
-    // Schedule dummy motivational notifications at a specified time
-    func scheduleMotivationalNotifications(date: Date, mealType: String) {
+    /// Schedules one reminder for a meal slot.
+    private func scheduleReminder(at date: Date, mealType: String) {
         let messages = [
             "Hey, it's been a while! Ready to cook something tasty?",
             "Nosh Reminder: Don't forget to fuel up with a great meal.",
@@ -33,15 +28,16 @@ struct NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
         
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Failed to add notification: \(error.localizedDescription)")
-            }
-        }
+        UNUserNotificationCenter.current().add(request)
     }
     
-    // Schedule reminders for breakfast, lunch, dinner 30 mins before
+    /// Schedules reminders 30 minutes before each meal time.
+    ///
+    /// Clears previously scheduled reminders first, otherwise every appearance
+    /// of MainTabView queues another three.
     func scheduleMealNotifications(mealTimes: MealTimes) {
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+
         let calendar = Calendar.current
         let types: [(MealType, Date)] = [
             (.breakfast, mealTimes.breakfastTime),
@@ -51,7 +47,7 @@ struct NotificationManager {
         
         for (mealType, mealDate) in types {
             if let notifyDate = calendar.date(byAdding: .minute, value: -30, to: mealDate) {
-                scheduleMotivationalNotifications(date: notifyDate, mealType: mealType.rawValue)
+                scheduleReminder(at: notifyDate, mealType: mealType.rawValue)
             }
         }
     }

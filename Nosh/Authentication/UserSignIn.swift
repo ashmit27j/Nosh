@@ -133,11 +133,11 @@ struct UserSignIn: View {
             ReportProblemSheetView()
         }
         .navigationBarHidden(true)
-        .onChange(of: viewModel.email) { _ in
+        .onChange(of: viewModel.email) { _, _ in
             viewModel.errorMessage = nil
             viewModel.showInvalidCredentialsError = false
         }
-        .onChange(of: viewModel.password) { _ in
+        .onChange(of: viewModel.password) { _, _ in
             viewModel.errorMessage = nil
             viewModel.showInvalidCredentialsError = false
         }

@@ -2,100 +2,96 @@ import Foundation
 import Cloudinary
 import UIKit
 
-class CloudinaryManager {
+/// The single Cloudinary entry point. `EditProfileView` used to build its own
+/// client with a `"YOUR_CLOUD_NAME"` placeholder, which is why photo upload
+/// silently failed while this correctly-configured type went unused.
+final class CloudinaryManager {
     static let shared = CloudinaryManager()
-    
-    private let cloudinary: CLDCloudinary
-    private let uploadPreset = Config.cloudinaryUploadPreset
-    
-    private init() {
-        let config = CLDConfiguration(
-            cloudName: Config.cloudinaryCloudName,
-            secure: true
-        )
-        self.cloudinary = CLDCloudinary(configuration: config)
-    }
-    
-    // Upload profile photo to Cloudinary
-    // Uses timestamp-based naming to ensure unique filenames
-    func uploadProfilePhoto(
-        image: UIImage,
-        userId: String,
-        completion: @escaping (Result<String, Error>) -> Void
-    ) {
-        // Compress image before upload to reduce file size
-        guard let imageData = compressImage(image, maxSizeKB: 500) else {
-            completion(.failure(NSError(
-                domain: "CloudinaryManager",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Failed to compress image"]
-            )))
-            return
+
+    enum UploadError: LocalizedError {
+        case notConfigured
+        case compressionFailed
+        case noURLReturned
+
+        var errorDescription: String? {
+            switch self {
+            case .notConfigured:
+                return "Photo upload isn't configured. Add your Cloudinary details to Secrets.plist."
+            case .compressionFailed:
+                return "That image couldn't be processed. Try a different photo."
+            case .noURLReturned:
+                return "The upload finished but no image URL came back. Try again."
+            }
         }
-        
-        // Setup upload parameters
+    }
+
+    private let cloudinary: CLDCloudinary?
+    private let uploadPreset: String?
+
+    private init() {
+        // Degrades to "upload unavailable" rather than trapping when the config
+        // is missing, so a bad Secrets.plist can't crash the app on launch.
+        if let cloudName = Config.cloudinaryCloudName,
+           let preset = Config.cloudinaryUploadPreset {
+            cloudinary = CLDCloudinary(
+                configuration: CLDConfiguration(cloudName: cloudName, secure: true)
+            )
+            uploadPreset = preset
+        } else {
+            cloudinary = nil
+            uploadPreset = nil
+        }
+    }
+
+    var isConfigured: Bool { cloudinary != nil && uploadPreset != nil }
+
+    /// Uploads a profile photo and returns its secure URL.
+    ///
+    /// The public ID is derived from the user ID alone with `overwrite`, so a
+    /// user has exactly one profile image rather than accumulating one per
+    /// upload as the previous timestamped naming did.
+    func uploadProfilePhoto(image: UIImage, userId: String) async throws -> String {
+        guard let cloudinary, let uploadPreset else {
+            throw UploadError.notConfigured
+        }
+
+        guard let imageData = Self.compressImage(image, maxSizeKB: 500) else {
+            throw UploadError.compressionFailed
+        }
+
         let params = CLDUploadRequestParams()
         params.setUploadPreset(uploadPreset)
         params.setFolder("profile_photos")
-        
-        // Create unique filename with timestamp
-        // Format: user_[userId]_[timestamp].jpg
-        // Example: user_abc123_1699200000.jpg
-        let timestamp = Int(Date().timeIntervalSince1970)
-        params.setPublicId("user_\(userId)_\(timestamp)")
+        params.setPublicId("user_\(userId)")
+        params.setOverwrite(true)
         params.setResourceType(.image)
-        
-        // Perform upload to Cloudinary
-        let request = cloudinary.createUploader().upload(
-            data: imageData,
-            uploadPreset: uploadPreset,
-            params: params
-        )
-        
-        request.response { result, error in
-            if let error = error {
-                print(" Cloudinary upload error: \(error.localizedDescription)")
-                completion(.failure(error))
-                return
-            }
-            
-            guard let result = result,
-                  let secureUrl = result.secureUrl else {
-                print(" No URL returned from Cloudinary")
-                completion(.failure(NSError(
-                    domain: "CloudinaryManager",
-                    code: -2,
-                    userInfo: [NSLocalizedDescriptionKey: "No URL returned from Cloudinary"]
-                )))
-                return
-            }
-            
-            print(" Photo uploaded successfully to: \(secureUrl)")
-            completion(.success(secureUrl))
+
+        return try await withCheckedThrowingContinuation { continuation in
+            cloudinary.createUploader()
+                .upload(data: imageData, uploadPreset: uploadPreset, params: params)
+                .response { result, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else if let secureUrl = result?.secureUrl {
+                        continuation.resume(returning: secureUrl)
+                    } else {
+                        continuation.resume(throwing: UploadError.noURLReturned)
+                    }
+                }
         }
     }
-    
-    /// Compress image to target file size
-    /// - Parameters:
-    ///   - image: The UIImage to compress
-    ///   - maxSizeKB: Maximum size in kilobytes (default 500KB)
-    /// - Returns: Compressed image data, or nil if compression failed
-    private func compressImage(_ image: UIImage, maxSizeKB: Int = 500) -> Data? {
+
+    /// Compresses to roughly `maxSizeKB`, giving up at quality 0.1.
+    static func compressImage(_ image: UIImage, maxSizeKB: Int = 500) -> Data? {
         let maxBytes = maxSizeKB * 1024
         var compression: CGFloat = 1.0
         var imageData = image.jpegData(compressionQuality: compression)
-        
-        // Progressively reduce quality until file size is acceptable
-        while let data = imageData, data.count > maxBytes && compression > 0.1 {
+
+        while let data = imageData, data.count > maxBytes, compression > 0.1 {
             compression -= 0.1
             imageData = image.jpegData(compressionQuality: compression)
         }
-        
-        if let finalData = imageData {
-            let finalSizeKB = finalData.count / 1024
-            print(" Image compressed to \(finalSizeKB)KB (quality: \(Int(compression * 100))%)")
-        }
-        
+
         return imageData
     }
 }

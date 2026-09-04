@@ -12,7 +12,7 @@ struct MealSuccessShareView: View {
     let noshAppLink = "https://noshapp.com/download"
     //right now broken will add something once deployed
     var recipeLink: String {
-        "https://noshapp.com/recipe/\(meal.id ?? "unknown")"
+        "https://noshapp.com/recipe/\(meal.id)"
     }
     
     var body: some View {

@@ -2,65 +2,31 @@ import SwiftUI
 //list of meals in mealplanner page
 struct MealListView: View {
     @ObservedObject var viewModel: MealPlannerViewModel
+    /// Firestore day key (yyyy-MM-dd) for the day being shown.
     let selectedTab: String
     let onGotoPantry: () -> Void
     @State private var isEditing = false
     @State private var showMealSelector = false
-    @State private var selectedMealType: String = ""
+    @State private var selectedMealType: MealType = .breakfast
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) { //scrollbars nikala
             VStack(spacing: 20) {
-                if let mealsByType = viewModel.items[selectedTab] {
-                    // Section 1 - Breakfast
+                ForEach(MealType.allCases, id: \.self) { mealType in
                     MealSectionView(
-                        title: "Breakfast",
-                        meals: mealsByType["breakfast"] ?? [],
+                        title: mealType.rawValue,
+                        meals: viewModel.meals(for: selectedTab, type: mealType),
+                        mealTimes: viewModel.mealTimes,
                         onEditTapped: { isEditing.toggle() },
                         onAdd: {
-                            selectedMealType = "breakfast"
+                            selectedMealType = mealType
                             showMealSelector = true
                         },
                         onDelete: { meal in
-                            viewModel.removeMeal(from: selectedTab, type: "breakfast", meal: meal)
+                            Task { await viewModel.removeMeal(from: selectedTab, type: mealType, meal: meal) }
                         },
-                        isEditing: isEditing,
-                        onGotoPantry: onGotoPantry
-                    )
-                    .padding(16)
-                    .background(Color("primaryCard"))
-                    .cornerRadius(12)
-
-                    // Section 2 - Lunch
-                    MealSectionView(
-                        title: "Lunch",
-                        meals: mealsByType["lunch"] ?? [],
-                        onEditTapped: { isEditing.toggle() },
-                        onAdd: {
-                            selectedMealType = "lunch"
-                            showMealSelector = true
-                        },
-                        onDelete: { meal in
-                            viewModel.removeMeal(from: selectedTab, type: "lunch", meal: meal)
-                        },
-                        isEditing: isEditing,
-                        onGotoPantry: onGotoPantry
-                    )
-                    .padding(16)
-                    .background(Color("primaryCard"))
-                    .cornerRadius(12)
-
-                    // Section 3 - Dinner
-                    MealSectionView(
-                        title: "Dinner",
-                        meals: mealsByType["dinner"] ?? [],
-                        onEditTapped: { isEditing.toggle() },
-                        onAdd: {
-                            selectedMealType = "dinner"
-                            showMealSelector = true
-                        },
-                        onDelete: { meal in
-                            viewModel.removeMeal(from: selectedTab, type: "dinner", meal: meal)
+                        onUpdateMealTime: { newTime in
+                            viewModel.updateMealTime(newTime, for: mealType)
                         },
                         isEditing: isEditing,
                         onGotoPantry: onGotoPantry

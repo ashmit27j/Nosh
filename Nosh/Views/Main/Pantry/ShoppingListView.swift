@@ -5,11 +5,16 @@ struct ShoppingListView: View {
     @ObservedObject var viewModel: PantryViewModel
 
     private var itemsToShop: [ShoppingItem] {
-        viewModel.items
-            .filter { $0.key != "All" }
-            .flatMap { (category, items) in
-                items.filter { $0.quantity < 5 }
-                    .map { ShoppingItem(id: $0.id, name: $0.name, category: category, required: max(5 - $0.quantity, 0), incrementBy: $0.incrementBy) }
+        viewModel.allItems
+            .filter { $0.quantity < 5 }
+            .map {
+                ShoppingItem(
+                    id: $0.id,
+                    name: $0.name,
+                    category: viewModel.findCategory(for: $0) ?? "Others",
+                    required: max(5 - $0.quantity, 0),
+                    incrementBy: $0.incrementBy
+                )
             }
     }
 
@@ -63,8 +68,7 @@ struct ShoppingListView: View {
                                     HStack(spacing: 4) {
                                         Button {
                                             let current = userQuantities[item.id, default: item.required]
-                                            let next = current + item.incrementBy // removed the upper cap idhar se so i can add as many as i want
-                                            userQuantities[item.id] = next
+                                            userQuantities[item.id] = max(0, current - item.incrementBy)
                                         } label: {
                                             Image(systemName: "minus")
                                                 .font(.system(size: 14, weight: .bold))
@@ -128,7 +132,7 @@ struct ShoppingListView: View {
     private func logItems() {
         for item in itemsToShop where checkedItems.contains(item.id) {
             let amount = userQuantities[item.id, default: item.required]
-            viewModel.incrementPantryItemWithoutSorting(id: item.id, by: amount)
+            viewModel.incrementPantryItem(id: item.id, by: amount)
         }
         checkedItems.removeAll()
         userQuantities.removeAll()

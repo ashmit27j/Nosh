@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 class PantryManager: ObservableObject {
     static let shared = PantryManager()
     
@@ -49,29 +50,16 @@ class PantryManager: ObservableObject {
     func deductIngredients(for meal: Meal, servingSize: Int) {
         guard let pantryVM = pantryViewModel else { return }
         
-        print("\n🔄 DEDUCTING INGREDIENTS")
-        print("Meal: \(meal.name), Serving size: \(servingSize)")
-        
         for ingredientString in meal.ingredients {
             let parsed = parseIngredient(ingredientString)
             let amountToDeduct = parsed.quantity * Double(servingSize) / Double(meal.servingSize)
             
-            print("\nIngredient: '\(ingredientString)'")
-            print("  Parsed: name='\(parsed.name)', qty=\(parsed.quantity)")
-            print("  Amount to deduct: \(amountToDeduct)")
-            
-            if let pantryItem = findPantryItem(named: parsed.name, in: pantryVM) {
-                let category = pantryVM.findCategory(for: pantryItem)
+            if let pantryItem = findPantryItem(named: parsed.name, in: pantryVM),
+               let category = pantryVM.findCategory(for: pantryItem) {
                 let newQuantity = max(0, pantryItem.quantity - amountToDeduct)
-                
-                print("  Found: '\(pantryItem.name)' in '\(category)'")
-                print("  Current: \(pantryItem.quantity) → New: \(newQuantity)")
-                
                 pantryVM.updateQuantity(for: pantryItem, in: category, to: newQuantity)
             }
         }
-        
-        print("\n DEDUCTION COMPLETE\n")
     }
     
     // MARK: - Parsing
@@ -110,22 +98,16 @@ class PantryManager: ObservableObject {
     private func findPantryItem(named name: String, in pantryVM: PantryViewModel) -> PantryItem? {
         let cleanName = name.trimmingCharacters(in: .whitespaces).lowercased()
         
-        for (category, items) in pantryVM.items where category != "All" {
-            if let item = items.first(where: { $0.name.lowercased() == cleanName }) {
-                return item
-            }
+        let all = pantryVM.allItems
+
+        if let exact = all.first(where: { $0.name.lowercased() == cleanName }) {
+            return exact
         }
-        
-        for (category, items) in pantryVM.items where category != "All" {
-            if let item = items.first(where: {
-                let itemName = $0.name.lowercased()
-                return itemName.contains(cleanName) || cleanName.contains(itemName)
-            }) {
-                return item
-            }
+
+        return all.first {
+            let itemName = $0.name.lowercased()
+            return itemName.contains(cleanName) || cleanName.contains(itemName)
         }
-        
-        return nil
     }
     
     private func formatQuantity(_ value: Double) -> String {

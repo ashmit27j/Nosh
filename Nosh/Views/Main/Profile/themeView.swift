@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct themeView: View {
-    @AppStorage("primaryAccentHex") private var primaryAccentHex: String = "#16E51D"
+    @EnvironmentObject private var accessibility: AccessibilityEnvironment
+
+    private var primaryAccentHex: String { accessibility.accentHex }
     let accentColors: [ColorOption] = [
         ColorOption(name: "Teal", hex: "#20CBCB"),
         ColorOption(name: "Blue", hex: "#4682F4"),
@@ -39,8 +41,8 @@ struct themeView: View {
                                 colorOptions: accentColors,
                                 selectedHex: primaryAccentHex,
                                 onSelect: { newHex in
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        primaryAccentHex = newHex
+                                    withAnimation(accessibility.animation) {
+                                        accessibility.accentHex = newHex
                                     }
                                 }
                             )
@@ -70,23 +72,25 @@ struct ColorOption: Identifiable {
     let id = UUID()
     let name: String
     let hex: String
-    var color: Color { Color(hex: hex) }
+    var color: Color { Color(hex: hex) ?? Color("primaryAccent") }
 }
 
 // MARK: - Color Extensions
 extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        let scanner = Scanner(string: hex)
-        var rgb: UInt64 = 0
-        if hex.hasPrefix("#") {
-            scanner.currentIndex = hex.index(after: hex.startIndex)
-        }
-        scanner.scanHexInt64(&rgb)
-        let r = Double((rgb >> 16) & 0xff) / 255
-        let g = Double((rgb >> 8) & 0xff) / 255
-        let b = Double(rgb & 0xff) / 255
-        self.init(red: r, green: g, blue: b)
+    /// Parses `#RRGGBB` / `RRGGBB`. Failable so malformed input surfaces as a
+    /// fallback rather than silently rendering black.
+    init?(hex: String) {
+        var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("#") { cleaned.removeFirst() }
+        guard cleaned.count == 6, let value = UInt32(cleaned, radix: 16) else { return nil }
+
+        self.init(
+            .sRGB,
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255,
+            opacity: 1
+        )
     }
 }
 

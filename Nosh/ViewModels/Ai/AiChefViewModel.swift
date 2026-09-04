@@ -19,14 +19,17 @@ class AiChefViewModel: ObservableObject {
     ]
     
     private let db = Firestore.firestore()
-    private var model: GenerativeModel
-    
+
+    /// Nil when GEMINI_API_KEY is absent from Secrets.plist, in which case the
+    /// chat degrades to database lookups only instead of crashing.
+    private let model: GenerativeModel?
+
     init() {
-        //model being used
-        model = GenerativeModel(
-            name: "gemini-2.0-flash-exp",
-            apiKey: "AIzaSyC9yMTAkzzJzbr8cwMyIgZRrz7tVUM-s7g"
-        )
+        if let apiKey = Config.geminiAPIKey {
+            model = GenerativeModel(name: "gemini-2.0-flash-exp", apiKey: apiKey)
+        } else {
+            model = nil
+        }
     }
     
     func loadUserName() {
@@ -57,64 +60,82 @@ class AiChefViewModel: ObservableObject {
                 userName = name
             }
         } catch {
-            print("Error fetching username: \(error)")
+            Log.recipes.error("Error fetching username: \(error)")
             userName = "Chef"
         }
     }
     
     func sendMessage(_ text: String) {
-        // Add user message
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !isLoading else { return }
+
+        // Cap the input so one paste can't run up a large model bill.
+        let prompt = String(trimmed.prefix(2000))
+
         messages.append(ChatMessage(
-            content: text,
+            content: prompt,
             isUser: true,
-            recipes: nil,
             mealFromDatabase: nil
         ))
-        
+
         isLoading = true
-        
-        // First, check if meal exists in database -> if foudn then seedha meal card show karo
-        checkDatabaseForMeal(query: text) { foundMeal in
-            if let meal = foundMeal {
-                // Found in database - show meal card directly
-                self.messages.append(ChatMessage(
+
+        Task {
+            if let meal = await findMatchingMeal(for: prompt) {
+                messages.append(ChatMessage(
                     content: "I found this recipe in your collection!",
                     isUser: false,
-                    recipes: nil,
                     mealFromDatabase: meal
                 ))
-                self.isLoading = false
+                isLoading = false
             } else {
-                // Not in database - get AI response
-                Task {
-                    await self.getAIResponse(for: text)
-                }
+                await getAIResponse(for: prompt)
             }
         }
     }
 
-    private func checkDatabaseForMeal(query: String, completion: @escaping (Meal?) -> Void) {
-        let lowercaseQuery = query.lowercased()
-        
-        db.collection("recipes")
-            .getDocuments { snapshot, error in
-                guard let documents = snapshot?.documents else {
-                    completion(nil)
-                    return
+    /// Looks for a recipe the user named explicitly.
+    ///
+    /// Only matches on a whole-word basis and requires a reasonably specific
+    /// name, so "how do I stop my rice going mushy?" reaches the model instead
+    /// of being short-circuited by the Rice recipe. Also queries by name rather
+    /// than downloading the whole collection on every message.
+    private func findMatchingMeal(for query: String) async -> Meal? {
+        let normalized = query.lowercased()
+        let tokens = Set(
+            normalized
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { $0.count > 2 }
+        )
+        guard !tokens.isEmpty else { return nil }
+
+        do {
+            let snapshot = try await db.collection("recipes").limit(to: 200).getDocuments()
+
+            var best: (meal: Meal, score: Int)?
+            for document in snapshot.documents {
+                guard let meal = Meal(document: document) else { continue }
+
+                let nameTokens = Set(
+                    meal.name.lowercased()
+                        .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                        .filter { !$0.isEmpty }
+                )
+                guard !nameTokens.isEmpty else { continue }
+
+                // Every significant word of the recipe name must appear in the
+                // query, so a match means the user actually named the dish.
+                guard nameTokens.isSubset(of: tokens) else { continue }
+
+                let score = nameTokens.count
+                if score > (best?.score ?? 0) {
+                    best = (meal, score)
                 }
-                
-                // Search for matching meal name
-                for doc in documents {
-                    if let meal = try? doc.data(as: Meal.self),
-                       meal.name.lowercased().contains(lowercaseQuery) ||
-                       lowercaseQuery.contains(meal.name.lowercased()) {
-                        completion(meal)
-                        return
-                    }
-                }
-                
-                completion(nil)
             }
+            return best?.meal
+        } catch {
+            return nil
+        }
     }
 
     private func getAIResponse(for text: String) async {
@@ -126,6 +147,16 @@ class AiChefViewModel: ObservableObject {
         Provide a clear, conversational response with proper paragraphs and line breaks for readability. Do not use ** or * for formatting. Just write naturally.
         """
         
+        guard let model else {
+            messages.append(ChatMessage(
+                content: "Chef Nosh isn't available right now. Try searching your recipes instead.",
+                isUser: false,
+                mealFromDatabase: nil
+            ))
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await model.generateContent(prompt)
             
@@ -133,7 +164,6 @@ class AiChefViewModel: ObservableObject {
                 self.messages.append(ChatMessage(
                     content: "Sorry, I couldn't generate a response. Please try again.",
                     isUser: false,
-                    recipes: nil,
                     mealFromDatabase: nil
                 ))
                 self.isLoading = false
@@ -146,7 +176,6 @@ class AiChefViewModel: ObservableObject {
             self.messages.append(ChatMessage(
                 content: cleanedText,
                 isUser: false,
-                recipes: nil,
                 mealFromDatabase: nil
             ))
             
@@ -154,7 +183,6 @@ class AiChefViewModel: ObservableObject {
             self.messages.append(ChatMessage(
                 content: "Sorry, I encountered an error. Please try again.",
                 isUser: false,
-                recipes: nil,
                 mealFromDatabase: nil
             ))
         }
@@ -178,130 +206,4 @@ class AiChefViewModel: ObservableObject {
         return cleaned
     }
     
-    private func searchDatabaseRecipes(query: String) async throws -> [Recipe] {
-        let lowercaseQuery = query.lowercased()
-        let keywords = extractKeywords(from: lowercaseQuery)
-        
-        var recipes: [Recipe] = []
-        
-        let snapshot = try await db.collection("recipes")
-            .limit(to: 5)
-            .getDocuments()
-        
-        for document in snapshot.documents {
-            let data = document.data()
-            
-            if let recipe = parseRecipe(from: data, id: document.documentID) {
-                if recipeMatchesQuery(recipe: recipe, keywords: keywords) {
-                    var matchedRecipe = recipe
-                    matchedRecipe.isFromDatabase = true
-                    recipes.append(matchedRecipe)
-                }
-            }
-        }
-        
-        return recipes
-    }
-    
-    private func extractKeywords(from query: String) -> [String] {
-        let stopWords = ["i", "want", "need", "show", "me", "can", "make", "with", "for", "a", "an", "the"]
-        return query.components(separatedBy: .whitespacesAndNewlines)
-            .filter { !stopWords.contains($0) && $0.count > 2 }
-    }
-    
-    private func recipeMatchesQuery(recipe: Recipe, keywords: [String]) -> Bool {
-        let searchableText = "\(recipe.name) \(recipe.description) \(recipe.category.rawValue) \(recipe.ingredients.joined(separator: " "))"
-            .lowercased()
-        
-        return keywords.contains { keyword in
-            searchableText.contains(keyword)
-        }
-    }
-    
-    private func generateDatabaseResponse(recipes: [Recipe], query: String) -> String {
-        let recipeNames = recipes.map { $0.name }.joined(separator: ", ")
-        
-        let responses = [
-            "Great! I found \(recipes.count) delicious recipe\(recipes.count > 1 ? "s" : "") from your collection: \(recipeNames). Tap any recipe to view details!",
-            "Perfect! Here are \(recipes.count) recipe\(recipes.count > 1 ? "s" : "") that match what you're looking for. Check them out below!",
-            "I've got \(recipes.count) fantastic option\(recipes.count > 1 ? "s" : "") for you! These are all from your saved recipes.",
-            "Excellent choice! Found \(recipes.count) recipe\(recipes.count > 1 ? "s" : "") that should work perfectly."
-        ]
-        
-        return responses.randomElement() ?? responses[0]
-    }
-    
-    private func parseRecipe(from data: [String: Any], id: String) -> Recipe? {
-        guard let name = data["name"] as? String,
-              let categoryStr = data["category"] as? String,
-              let category = RecipeCategory(rawValue: categoryStr),
-              let prepTime = data["prepTime"] as? Int,
-              let cookTime = data["cookTime"] as? Int,
-              let servings = data["servings"] as? Int,
-              let difficultyStr = data["difficulty"] as? String,
-              let difficulty = RecipeDifficulty(rawValue: difficultyStr),
-              let ingredients = data["ingredients"] as? [String],
-              let instructions = data["instructions"] as? [String]
-        else {
-            return nil
-        }
-        
-        let description = data["description"] as? String ?? ""
-        let preferenceStr = data["foodPreference"] as? String ?? "Both"
-        let preference = FoodPreference(rawValue: preferenceStr) ?? .both
-        
-        return Recipe(
-            id: id,
-            name: name,
-            description: description,
-            category: category,
-            prepTime: prepTime,
-            cookTime: cookTime,
-            servings: servings,
-            difficulty: difficulty,
-            ingredients: ingredients,
-            instructions: instructions,
-            foodPreference: preference,
-            imageURL: data["imageURL"] as? String,
-            isFromDatabase: false
-        )
-    }
-}
-
-struct Recipe: Identifiable {
-    let id: String
-    let name: String
-    let description: String
-    let category: RecipeCategory
-    let prepTime: Int
-    let cookTime: Int
-    let servings: Int
-    let difficulty: RecipeDifficulty
-    let ingredients: [String]
-    let instructions: [String]
-    let foodPreference: FoodPreference
-    let imageURL: String?
-    var isFromDatabase: Bool
-}
-
-enum RecipeCategory: String, CaseIterable {
-    case fullMeal = "Full Meal"
-    case breakfast = "Breakfast"
-    case lunch = "Lunch"
-    case dinner = "Dinner"
-    case dessert = "Dessert"
-    case snack = "Snack"
-}
-
-enum RecipeDifficulty: String, CaseIterable {
-    case beginner = "Beginner"
-    case intermediate = "Intermediate"
-    case advanced = "Advanced"
-}
-
-enum FoodPreference: String, CaseIterable {
-    case vegetarian = "Vegetarian"
-    case nonVegetarian = "Non-Vegetarian"
-    case vegan = "Vegan"
-    case both = "Both"
 }

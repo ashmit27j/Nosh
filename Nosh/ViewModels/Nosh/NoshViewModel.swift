@@ -15,12 +15,20 @@ class NoshViewModel: ObservableObject {
         difficulty: Meal.Difficulty,
         foodPreference: String
     ) {
-        print("🎯 searchMeals() called")
+        // Firestore raises FIRInvalidArgumentException for an empty `in` array,
+        // which is an ObjC exception and terminates the app rather than surfacing
+        // as a Swift error. Deselecting the only category chip gets us here.
+        let categoryIds = Array(Set(categories.map { CategoryHelper.nameToId($0) }))
+        guard !categoryIds.isEmpty else {
+            meals = []
+            isLoading = false
+            showResults = true
+            return
+        }
+
         isLoading = true
         showResults = false
-        
-        let categoryIds = categories.map { CategoryHelper.nameToId($0) }
-        
+
         db.collection("recipes")
             .whereField("category_id", in: categoryIds)
             .getDocuments { [weak self] snapshot, error in
@@ -28,22 +36,20 @@ class NoshViewModel: ObservableObject {
                     self?.isLoading = false
                     
                     if let error = error {
-                        print(" XXX Error: \(error.localizedDescription)")
+                        Log.recipes.error("Recipe search failed: \(error.localizedDescription)")
                         self?.meals = []
                         self?.showResults = true
                         return
                     }
                     
                     guard let documents = snapshot?.documents else {
-                        print(" XXX No documents")
+                        Log.recipes.error("Recipe search returned no documents")
                         self?.meals = []
                         self?.showResults = true
                         return
                     }
                     
-                    let allMeals = documents.compactMap { doc -> Meal? in
-                        try? doc.data(as: Meal.self)
-                    }
+                    let allMeals = documents.compactMap { Meal(document: $0) }
                     
                     let filtered = allMeals.filter { meal in
                         let meetsTime = meal.timeInMinutes <= maxTime

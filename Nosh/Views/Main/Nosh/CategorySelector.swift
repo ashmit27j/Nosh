@@ -95,28 +95,22 @@ struct CategorySelector: View {
     
     // Centralized tap handling
     private func handleCategoryTap(_ categoryName: String) {
-        print("🎯 Category tapped: \(categoryName), multi-select: \(allowMultipleSelection)")
         
         if allowMultipleSelection {
             // Multi-select mode: toggle
             if selectedCategories.contains(categoryName) {
                 selectedCategories.remove(categoryName)
-                print("   ➖ Removed \(categoryName)")
             } else {
                 selectedCategories.insert(categoryName)
-                print("   ➕ Added \(categoryName)")
             }
         } else {
             // Single-select mode: replace
             if selectedCategories.contains(categoryName) {
                 selectedCategories.removeAll()
-                print("  Deselected \(categoryName)")
             } else {
                 selectedCategories = [categoryName]
-                print("  Selected \(categoryName) only")
             }
         }
         
-        print("   Current selection: \(selectedCategories)")
     }
 }

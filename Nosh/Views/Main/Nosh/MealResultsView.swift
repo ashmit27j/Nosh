@@ -54,7 +54,6 @@ struct MealResultsView: View {
                                 MealCardView(
                                     meal: meal,
                                     onCookNowTapped: { selectedMeal in
-                                        print(" Card tapped for: \(selectedMeal.name)")
                                         selectedMealForCooking = selectedMeal
                                     }
                                 )

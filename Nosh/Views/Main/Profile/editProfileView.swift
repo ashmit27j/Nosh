@@ -3,10 +3,6 @@ import FirebaseAuth
 import FirebaseFirestore
 import SDWebImageSwiftUI
 import PhotosUI
-import Cloudinary
-
-// CLOUDINARY DOES NOT WORK RIGHT NOW:: WILL FIX
-#warning("cloudinary does not work right now, we are just extracting user image from google")
 
 struct EditProfileView: View {
     @Environment(\.dismiss) var dismiss
@@ -25,13 +21,6 @@ struct EditProfileView: View {
     
     @State private var showPasswordResetView: Bool = false
     @State private var showUpdateEmailView: Bool = false
-    
-    // Cloudinary configuration
-    private let cloudinary = CLDCloudinary(configuration: CLDConfiguration(
-        cloudName: "YOUR_CLOUD_NAME", // Replace with your Cloudinary cloud name
-        secure: true
-    ))
-    private let uploadPreset = "nosh_profile_photos" // Replace with your upload preset name
     
     var body: some View {
         NavigationStack {
@@ -59,7 +48,7 @@ struct EditProfileView: View {
                 }
             }
             .photosPicker(isPresented: $showImagePicker, selection: $selectedPhoto, matching: .images)
-            .onChange(of: selectedPhoto) { newValue in
+            .onChange(of: selectedPhoto) { _, newValue in
                 Task {
                     if let data = try? await newValue?.loadTransferable(type: Data.self),
                        let uiImage = UIImage(data: data) {
@@ -273,45 +262,45 @@ struct EditProfileView: View {
     
     private func updateProfile() {
         guard let user = Auth.auth().currentUser else { return }
-        isLoading = true
-        
-        let db = Firestore.firestore()
-        var updates: [String: Any] = [:]
-        
-        if !newUsername.isEmpty && newUsername != viewModel.username {
-            updates["username"] = newUsername
-        }
-        
-        if !updates.isEmpty {
-            db.collection("users").document(user.uid).updateData(updates) { error in
-                isLoading = false
-                if let error = error {
-                    alertTitle = "Error"
-                    alertMessage = error.localizedDescription
-                } else {
-                    alertTitle = "Success"
-                    alertMessage = "Profile updated successfully"
-                    viewModel.fetchUserProfile()
-                }
-                showAlert = true
-            }
-        } else {
-            isLoading = false
+
+        let trimmed = newUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != viewModel.username else {
             alertTitle = "No Changes"
             alertMessage = "No changes were made"
+            showAlert = true
+            return
+        }
+
+        isLoading = true
+
+        Task {
+            defer { isLoading = false }
+            do {
+                // merge: true creates the document if sign-up predates the fix
+                // that provisions it.
+                try await Firestore.firestore().collection("users").document(user.uid)
+                    .setData(["username": trimmed], merge: true)
+                alertTitle = "Success"
+                alertMessage = "Profile updated successfully"
+                viewModel.fetchUserProfile()
+            } catch {
+                alertTitle = "Error"
+                alertMessage = error.localizedDescription
+            }
             showAlert = true
         }
     }
     
     private func sendPasswordReset() {
         guard let email = Auth.auth().currentUser?.email else { return }
-        Auth.auth().sendPasswordReset(withEmail: email) { error in
-            if let error = error {
-                alertTitle = "Error"
-                alertMessage = error.localizedDescription
-            } else {
+        Task {
+            do {
+                try await Auth.auth().sendPasswordReset(withEmail: email)
                 alertTitle = "Email Sent"
                 alertMessage = "Password reset link sent to \(email)"
+            } catch {
+                alertTitle = "Error"
+                alertMessage = error.localizedDescription
             }
             showAlert = true
         }
@@ -321,94 +310,40 @@ struct EditProfileView: View {
     
     private func uploadProfilePhoto(_ image: UIImage) async {
         guard let user = Auth.auth().currentUser else { return }
-        
-        // Start loading state
-        await MainActor.run {
-            isUploadingPhoto = true
-        }
-        
-        // Compress image before upload (optional but recommended)
-        guard let imageData = compressImage(image, maxSizeKB: 1000) else {
-            await MainActor.run {
-                isUploadingPhoto = false
-                alertTitle = "Error"
-                alertMessage = "Failed to process image"
-                showAlert = true
-            }
-            return
-        }
-        
-        // Create upload parameters
-        let params = CLDUploadRequestParams()
-        params.setUploadPreset(uploadPreset)
-        params.setFolder("profile_photos") // Optional: organize photos in folder
-        params.setPublicId("user_\(user.uid)") // Use user ID as public ID for easy retrieval
-        params.setOverwrite(true) // Allow replacing existing photo
-        params.setResourceType(.image)
-        
-        // Perform upload
-        let request = cloudinary.createUploader().upload(
-            data: imageData,
-            uploadPreset: uploadPreset,
-            params: params
-        )
-        
-        request.response { result, error in
-            Task { @MainActor in
-                isUploadingPhoto = false
-                
-                if let error = error {
-                    alertTitle = "Upload Failed"
-                    alertMessage = error.localizedDescription
-                    showAlert = true
-                    return
-                }
-                
-                guard let result = result,
-                      let secureUrl = result.secureUrl else {
-                    alertTitle = "Upload Failed"
-                    alertMessage = "Could not get image URL"
-                    showAlert = true
-                    return
-                }
-                
-                // Save the Cloudinary URL to Firestore
-                savePhotoURLToFirestore(secureUrl)
-            }
-        }
-    }
-    
-    private func savePhotoURLToFirestore(_ urlString: String) {
-        guard let user = Auth.auth().currentUser else { return }
-        
-        let db = Firestore.firestore()
-        db.collection("users").document(user.uid).updateData([
-            "photoURL": urlString
-        ]) { error in
-            if let error = error {
-                alertTitle = "Error"
-                alertMessage = "Photo uploaded but failed to save: \(error.localizedDescription)"
-            } else {
-                alertTitle = "Success"
-                alertMessage = "Profile photo updated successfully!"
-                // Refresh the user profile to show new photo
-                viewModel.fetchUserProfile()
-            }
+
+        isUploadingPhoto = true
+        defer { isUploadingPhoto = false }
+
+        do {
+            let secureUrl = try await CloudinaryManager.shared.uploadProfilePhoto(
+                image: image,
+                userId: user.uid
+            )
+            await savePhotoURLToFirestore(secureUrl)
+        } catch {
+            alertTitle = "Upload Failed"
+            alertMessage = error.localizedDescription
             showAlert = true
         }
     }
-    
-    // Helper function to compress image
-    private func compressImage(_ image: UIImage, maxSizeKB: Int) -> Data? {
-        let maxBytes = maxSizeKB * 1024
-        var compression: CGFloat = 1.0
-        var imageData = image.jpegData(compressionQuality: compression)
-        
-        while let data = imageData, data.count > maxBytes && compression > 0.1 {
-            compression -= 0.1
-            imageData = image.jpegData(compressionQuality: compression)
+
+    private func savePhotoURLToFirestore(_ urlString: String) async {
+        guard let user = Auth.auth().currentUser else { return }
+
+        do {
+            // setData(merge:) rather than updateData: the profile document may
+            // not exist yet, and updateData fails outright when it doesn't.
+            try await Firestore.firestore().collection("users").document(user.uid)
+                .setData(["photoURL": urlString], merge: true)
+
+            alertTitle = "Success"
+            alertMessage = "Profile photo updated successfully!"
+            viewModel.fetchUserProfile()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "Photo uploaded but failed to save: \(error.localizedDescription)"
         }
-        
-        return imageData
+        showAlert = true
     }
+
 }

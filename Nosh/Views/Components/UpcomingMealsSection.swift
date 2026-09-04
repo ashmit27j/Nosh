@@ -123,18 +123,16 @@ struct UpcomingMealsSection: View {
     // MARK: - Fetch Today's Meals from Meal Planner
     private func fetchTodaysMeals() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            print("No user logged in")
+            Log.mealPlanner.error("No user logged in")
             isLoading = false
             return
         }
 
-        print("Fetching today's meals from meal planner...")
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let todayString = dateFormatter.string(from: Date())
 
-        print("Today's date: \(todayString)")
 
         db.collection("users")
             .document(userId)
@@ -145,12 +143,11 @@ struct UpcomingMealsSection: View {
                     self.isLoading = false
 
                     if let error = error {
-                        print("Error fetching today's meals: \(error.localizedDescription)")
+                        Log.mealPlanner.error("Error fetching today's meals: \(error.localizedDescription)")
                         return
                     }
 
                     guard let snapshot = snapshot, snapshot.exists else {
-                        print("📭 No meal plan for today")
                         return
                     }
 
@@ -164,13 +161,9 @@ struct UpcomingMealsSection: View {
 
                         self.meals = allMeals
 
-                        print("Loaded \(allMeals.count) meals for today")
-                        print("   - Breakfast: \(dayPlan.breakfast.count)")
-                        print("   - Lunch: \(dayPlan.lunch.count)")
-                        print("   - Dinner: \(dayPlan.dinner.count)")
 
                     } catch {
-                        print("Failed to decode meal plan: \(error)")
+                        Log.mealPlanner.error("Failed to decode meal plan: \(error)")
                     }
                 }
             }

@@ -17,7 +17,7 @@ struct Home: View {
     @State private var isEditing = false
     @State private var selectedCategory: String? = ""
 
-    let viewModel: MealPlannerViewModel
+    @ObservedObject var viewModel: MealPlannerViewModel
     let onSwitchToMealPlanner: () -> Void
     @Binding var isAiChefActive: Bool  // ADD THIS
 
@@ -47,8 +47,8 @@ struct Home: View {
                                 if newValue {
                                     isLoadingMeal = true
                                     showRandomDish = true
-                                    viewModel.fetchRandomMeal { meal in
-                                        randomMeal = meal
+                                    Task {
+                                        randomMeal = await viewModel.fetchRandomMeal()
                                         isLoadingMeal = false
                                     }
                                 } else {
@@ -92,8 +92,8 @@ struct Home: View {
                     isLoading: isLoadingMeal,
                     onRollAgain: {
                         isLoadingMeal = true
-                        viewModel.fetchRandomMeal { meal in
-                            randomMeal = meal
+                        Task {
+                            randomMeal = await viewModel.fetchRandomMeal()
                             isLoadingMeal = false
                         }
                     },
@@ -122,7 +122,7 @@ struct Home: View {
                 Spacer()
 
                 Button {
-                    print("Add tapped")
+                    // Reserved for the "add recipe" flow.
                 } label: {
                     Image(systemName: "sparkles")
                         .resizable()

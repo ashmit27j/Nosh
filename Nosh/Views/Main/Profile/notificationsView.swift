@@ -88,9 +88,8 @@ struct notificationsView: View {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Failed to schedule test notification: \(error.localizedDescription)")
+                Log.notifications.error("Failed to schedule test notification: \(error.localizedDescription)")
             } else {
-                print("Test notification scheduled!")
             }
         }
     }

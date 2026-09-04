@@ -159,7 +159,7 @@ struct AiChefView: View {
                             .padding(.horizontal, 20)
                             .padding(.vertical, 12)
                         }
-                        .onChange(of: viewModel.messages.count) { _ in
+                        .onChange(of: viewModel.messages.count) { _, _ in
                             if let lastMessage = viewModel.messages.last {
                                 withAnimation {
                                     proxy.scrollTo(lastMessage.id, anchor: .bottom)
@@ -277,18 +277,6 @@ struct ChatMessageRow: View {
                             onMealTap?(tappedMeal)
                         }
                     }
-                } else if let recipes = message.recipes, !recipes.isEmpty {
-                    // Show AI-generated recipes if no database match
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Chef's Recommendation")
-                            .font(.headline)
-                            .foregroundColor(Color("primaryAccent"))
-                            .padding(.top, 4)
-                        
-                        ForEach(recipes) { recipe in
-                            RecipeCardCompact(recipe: recipe)
-                        }
-                    }
                 }
             }
             .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: message.isUser ? .trailing : .leading)
@@ -312,61 +300,18 @@ struct ChatMessageRow: View {
     }
 }
 
-struct RecipeCardCompact: View {
-    let recipe: Recipe
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(recipe.name)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(Color("primaryText"))
-            
-            Text(recipe.description)
-                .font(.caption)
-                .foregroundColor(Color("secondaryText"))
-                .lineLimit(2)
-            
-            HStack(spacing: 12) {
-                Label("\(recipe.prepTime + recipe.cookTime) min", systemImage: "clock")
-                Label(recipe.difficulty.rawValue, systemImage: "chart.bar")
-                Label("\(recipe.servings)", systemImage: "person.2")
-            }
-            .font(.caption)
-            .foregroundColor(Color("secondaryText"))
-            
-            if recipe.isFromDatabase {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(Color("primaryAccent"))
-                        .font(.caption)
-                    Text("From your collection")
-                        .font(.caption2)
-                        .foregroundColor(Color("primaryAccent"))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color("primaryAccent").opacity(0.15))
-                .cornerRadius(8)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("primaryCard"))
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color("primaryAccent").opacity(0.4), lineWidth: 1.5)
-        )
-        .shadow(color: Color("primaryAccent").opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
-
 struct ChatMessage: Identifiable {
     let id = UUID()
     let content: String
     let isUser: Bool
-    let recipes: [Recipe]?
-    let mealFromDatabase: Meal? // NEW: Add meal from database
+    /// Set when the query matched a recipe in the user's collection, so the
+    /// bubble renders a meal card instead of text.
+    let mealFromDatabase: Meal?
     let timestamp: Date = Date()
+
+    init(content: String, isUser: Bool, mealFromDatabase: Meal? = nil) {
+        self.content = content
+        self.isUser = isUser
+        self.mealFromDatabase = mealFromDatabase
+    }
 }

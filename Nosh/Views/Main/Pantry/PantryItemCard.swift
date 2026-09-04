@@ -7,7 +7,8 @@ struct PantryItemCard: View {
     let onEdit: (PantryItem, String) -> Void
 
     var category: String {
-        selectedTab == "All" ? viewModel.findCategory(for: item) : selectedTab
+        guard selectedTab == PantryViewModel.allTab else { return selectedTab }
+        return viewModel.findCategory(for: item) ?? selectedTab
     }
 
     private var formattedQuantity: String {

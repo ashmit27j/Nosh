@@ -1,0 +1,73 @@
+rules_version = '2';
+
+// Nosh — Firestore security rules.
+//
+// Deploy with:  firebase deploy --only firestore:rules
+//
+// Model: every document under users/{uid} belongs to exactly one signed-in user.
+// `recipes` is a shared catalogue that clients may read but never write — seed it
+// from the console or a trusted admin process.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ---- User profile -----------------------------------------------------
+    // Created at sign-up by UserSignUpViewModel / AuthenticationManager.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      // The uid is the document ID, so there is no uid field to spoof. Guard the
+      // fields the client is allowed to set so a compromised client cannot add
+      // privileged flags (e.g. a future `isPremium`).
+      allow create: if isOwner(uid)
+                    && request.resource.data.keys().hasOnly([
+                         'username', 'email', 'photoURL', 'createdAt',
+                         'breakfastTime', 'lunchTime', 'dinnerTime',
+                         'pantryInitialized'
+                       ]);
+
+      allow update: if isOwner(uid)
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly([
+                           'username', 'email', 'photoURL',
+                           'breakfastTime', 'lunchTime', 'dinnerTime',
+                           'pantryInitialized'
+                         ]);
+
+      allow delete: if isOwner(uid);
+
+      // ---- Pantry ---------------------------------------------------------
+      // Single document: users/{uid}/pantry/items
+      match /pantry/{document} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // ---- Meal planner ---------------------------------------------------
+      // One document per day, keyed yyyy-MM-dd.
+      match /mealPlanner/{dateString} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ---- Shared recipe catalogue -----------------------------------------
+    // Read-only to clients. Writes must come from the console, the Admin SDK,
+    // or a Cloud Function running with elevated privileges.
+    match /recipes/{recipeId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

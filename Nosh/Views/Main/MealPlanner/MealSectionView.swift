@@ -3,16 +3,20 @@ import SwiftUI
 struct MealSectionView: View {
     let title: String
     let meals: [Meal]
+    /// Passed in rather than read from a private view model: this view is
+    /// rendered three times per day, and each instance used to construct its own
+    /// MealPlannerViewModel and re-run its entire Firestore load.
+    let mealTimes: MealTimes
     let onEditTapped: () -> Void
     let onAdd: () -> Void
     let onDelete: (Meal) -> Void
+    let onUpdateMealTime: (Date) -> Void
     let isEditing: Bool
-    let onGotoPantry: () -> Void      
+    let onGotoPantry: () -> Void
 
     @State private var showingTimeEdit = false
     @State private var mealTime: Date = Date()
     @State private var selectedMealForViewing: Meal? = nil
-    @StateObject private var viewModel = MealPlannerViewModel()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -117,32 +121,17 @@ struct MealSectionView: View {
 
     // Get the meal time from the global viewModel
     private func getMealTime() -> Date {
-        switch title.lowercased() {
-        case "breakfast":
-            return viewModel.mealTimes.breakfastTime
-        case "lunch":
-            return viewModel.mealTimes.lunchTime
-        case "dinner":
-            return viewModel.mealTimes.dinnerTime
-        default:
-            return Date()
+        switch MealType(rawValue: title) {
+        case .breakfast: return mealTimes.breakfastTime
+        case .lunch:     return mealTimes.lunchTime
+        case .dinner:    return mealTimes.dinnerTime
+        case .none:      return Date()
         }
     }
 
     // Update meal time globally for all days
     private func updateGlobalMealTime(_ newTime: Date) {
-        let mealType: MealType
-        switch title.lowercased() {
-        case "breakfast":
-            mealType = .breakfast
-        case "lunch":
-            mealType = .lunch
-        case "dinner":
-            mealType = .dinner
-        default:
-            return
-        }
-        viewModel.updateMealTime(newTime, for: mealType)
+        onUpdateMealTime(newTime)
     }
 
     private func timeString(from date: Date) -> String {

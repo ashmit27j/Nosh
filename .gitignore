@@ -29,3 +29,6 @@ fastlane/test_output
 *.swp
 *.orig
 
+
+# Secrets — copy Secrets.example.plist to Nosh/Secrets.plist and fill in
+Nosh/Secrets.plist

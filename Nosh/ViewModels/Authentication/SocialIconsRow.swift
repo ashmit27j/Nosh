@@ -46,8 +46,7 @@ struct SocialIconsRow: View {
         
         Task {
             do {
-                let result = try await AuthenticationManager.shared.signInWithGoogle()
-                print(" Google Sign In successful: \(result.user.email ?? "")")
+                _ = try await AuthenticationManager.shared.signInWithGoogle()
                 
                 // Update your app state to reflect signed-in status
                 await MainActor.run {
@@ -60,7 +59,7 @@ struct SocialIconsRow: View {
                     errorMessage = error.localizedDescription
                     showError = true
                     isLoading = false
-                    print(" Google Sign In failed: \(error.localizedDescription)")
+                    Log.auth.error("Google sign-in failed: \(error.localizedDescription)")
                 }
             }
         }

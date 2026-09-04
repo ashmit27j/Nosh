@@ -5,12 +5,16 @@ import SDWebImageSwiftUI
 
 struct Profile: View {
     @ObservedObject var pantryViewModel: PantryViewModel
+    @EnvironmentObject private var accessibility: AccessibilityEnvironment
     @StateObject private var viewModel = UserProfileViewModel()
     @State private var showEditProfile = false
     @State private var showPopup = false
     @State private var popupTitle = ""
     @State private var popupMessage = ""
     @State private var popupAction: (() -> Void)? = nil
+    @State private var showReauthSheet = false
+    @State private var reauthPassword = ""
+    @State private var isWorking = false
 
     var body: some View {
         NavigationStack {
@@ -31,22 +35,16 @@ struct Profile: View {
                             SettingsSection(
                                 title: "Your Account",
                                 items: [
-                                    ProfileItem(icon: "creditcard.fill", iconColor: .blue, title: "Subscription & Billing", enabled: true, destination: AnyView(subscriptionView())),
+                                    // Re-enable once StoreKit purchasing is implemented — the
+                                    // screen advertises a price and a trial but takes no payment.
+                                    // ProfileItem(icon: "creditcard.fill", iconColor: .blue, title: "Subscription & Billing", enabled: true, destination: AnyView(subscriptionView())),
                                     ProfileItem(icon: "bell.fill", iconColor: .blue, title: "Notifications", enabled: true, destination: AnyView(notificationsView())),
                                     ProfileItem(icon: "lock.shield.fill", iconColor: .blue, title: "Privacy & Security", enabled: true, destination: AnyView(privacyView()))
                                 ]
                             )
 
-                            // Meal Preferences Section
-                            SettingsSection(
-                                title: "Meal Preferences",
-                                items: [
-//                                    ProfileItem(icon: "leaf.fill", iconColor: .green, title: "Diet Type", enabled: true, destination: AnyView(dietTypeView())),
-                                    ProfileItem(icon: "exclamationmark.triangle.fill", iconColor: .orange, title: "Allergens", enabled: true, destination: AnyView(allergensView())),
-//                                    ProfileItem(icon: "calendar", iconColor: .purple, title: "Meal Schedule", enabled: true, destination: AnyView(mealScheduleView())),
-//                                    ProfileItem(icon: "cart.fill", iconColor: .green, title: "Grocery Preferences", enabled: true, destination: AnyView(groceryPreferencesView()))
-                                ]
-                            )
+                            // Meal Preferences section is hidden until Diet Type,
+                            // Allergens, Meal Schedule and Grocery Preferences exist.
 
                             // App Settings Section
                             SettingsSection(
@@ -57,7 +55,7 @@ struct Profile: View {
                                     ProfileItem(icon: "arrow.counterclockwise", iconColor: .purple, title: "Reset to Defaults", enabled: true, action: {
                                         popupTitle = "Reset to Defaults"
                                         popupMessage = "Are you sure you want to reset all app settings?"
-                                        popupAction = { print("Reset action") }
+                                        popupAction = { resetToDefaults() }
                                         showPopup = true
                                     })
                                 ]
@@ -80,51 +78,13 @@ struct Profile: View {
                                     ProfileItem(icon: "rectangle.portrait.and.arrow.right", iconColor: .red, title: "Log Out", enabled: true, action: {
                                         popupTitle = "Log Out"
                                         popupMessage = "Are you sure you want to log out?"
-                                        popupAction = {
-                                            do {
-                                                pantryViewModel.clearPantry()
-                                                try Auth.auth().signOut()
-                                                print("✅ Logged out and pantry cleared")
-                                            } catch {
-                                                print("Error signing out: \(error.localizedDescription)")
-                                            }
-                                        }
+                                        popupAction = { signOut() }
                                         showPopup = true
                                     }),
                                     ProfileItem(icon: "trash.fill", iconColor: .red, title: "Delete Account", enabled: true, action: {
                                         popupTitle = "Delete Account"
-                                        popupMessage = "This action is permanent and cannot be undone. All your data will be deleted."
-                                        popupAction = {
-                                            guard let user = Auth.auth().currentUser else {
-                                                popupTitle = "Error"
-                                                popupMessage = "No user is currently signed in."
-                                                showPopup = true
-                                                return
-                                            }
-
-                                            let db = Firestore.firestore()
-                                            
-                                            db.collection("users").document(user.uid).delete { firestoreError in
-                                                if let firestoreError = firestoreError {
-                                                    popupTitle = "Error"
-                                                    popupMessage = "Failed to delete user data: \(firestoreError.localizedDescription)"
-                                                    showPopup = true
-                                                    return
-                                                }
-
-                                                user.delete { authError in
-                                                    if let authError = authError {
-                                                        popupTitle = "Error"
-                                                        popupMessage = "Failed to delete account: \(authError.localizedDescription)"
-                                                        showPopup = true
-                                                    } else {
-                                                        popupTitle = "Account Deleted"
-                                                        popupMessage = "Your account has been deleted successfully."
-                                                        showPopup = true
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        popupMessage = "This permanently deletes your profile, pantry and meal plans. This cannot be undone."
+                                        popupAction = { beginAccountDeletion() }
                                         showPopup = true
                                     })
                                 ],
@@ -146,8 +106,13 @@ struct Profile: View {
                                 title: popupTitle,
                                 message: popupMessage,
                                 confirmAction: {
-                                    popupAction?()
+                                    // Dismiss first, then run: the action may
+                                    // raise its own alert, and clearing the flag
+                                    // afterwards used to swallow it immediately.
+                                    let action = popupAction
                                     showPopup = false
+                                    popupAction = nil
+                                    action?()
                                 },
                                 cancelAction: {
                                     showPopup = false
@@ -162,7 +127,75 @@ struct Profile: View {
             .sheet(isPresented: $showEditProfile) {
                 EditProfileView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showReauthSheet) {
+                ReauthenticationSheet(password: $reauthPassword) {
+                    showReauthSheet = false
+                    performDeletion(password: reauthPassword)
+                }
+            }
         }
+    }
+
+    // MARK: - Account actions
+
+    private func signOut() {
+        do {
+            // Single sign-out path: clears the Google session too, so the next
+            // sign-in shows an account chooser instead of silently reusing one.
+            try AuthenticationManager.shared.signOut()
+            pantryViewModel.clearPantry()
+        } catch {
+            present(title: "Error", message: error.localizedDescription)
+        }
+    }
+
+    private func beginAccountDeletion() {
+        guard let user = Auth.auth().currentUser else {
+            present(title: "Error", message: "No user is currently signed in.")
+            return
+        }
+
+        // Firebase requires a recent login before deleting an account.
+        switch AccountService.shared.reauthMethod(for: user) {
+        case .password:
+            reauthPassword = ""
+            showReauthSheet = true
+        case .google, .unknown:
+            performDeletion(password: nil)
+        }
+    }
+
+    private func performDeletion(password: String?) {
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            do {
+                try await AccountService.shared.reauthenticate(password: password)
+                try await AccountService.shared.deleteAccount()
+                pantryViewModel.clearPantry()
+                // AppState's auth listener drives the return to the sign-in screen.
+            } catch {
+                present(title: "Couldn't Delete Account", message: error.localizedDescription)
+            }
+            reauthPassword = ""
+        }
+    }
+
+    private func resetToDefaults() {
+        accessibility.textSize = .medium
+        accessibility.highContrast = false
+        accessibility.reduceMotion = false
+        accessibility.boldText = false
+        accessibility.hapticFeedback = true
+        accessibility.voiceOverEnabled = false
+        accessibility.accentHex = "#16E51D"
+    }
+
+    private func present(title: String, message: String) {
+        popupTitle = title
+        popupMessage = message
+        popupAction = nil
+        showPopup = true
     }
 
     private var ProfileHeader: some View {
@@ -263,25 +296,13 @@ struct ProfileItem: Identifiable {
     }
 }
 
+/// Pure presentation. Navigation and tap handling belong to `SettingsSection`;
+/// having both build a NavigationLink nested one inside the other, which breaks
+/// tap targets and makes each row announce as two buttons to VoiceOver.
 struct SettingsRow: View {
     let item: ProfileItem
 
     var body: some View {
-        Group {
-            if let destination = item.destination {
-                NavigationLink(destination: destination) {
-                    RowContent
-                }
-            } else {
-                RowContent
-                    .onTapGesture {
-                        item.action?()
-                    }
-            }
-        }
-    }
-
-    private var RowContent: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
@@ -324,18 +345,74 @@ struct SettingsSection: View {
                     .padding(.bottom, 4)
 
                 ForEach(items) { item in
-                    Group {
-                        if let destination = item.destination {
-                            NavigationLink(destination: destination) {
-                                SettingsRow(item: item)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        } else {
+                    if let destination = item.destination {
+                        NavigationLink(destination: destination) {
                             SettingsRow(item: item)
-                                .onTapGesture {
-                                    item.action?()
-                                }
                         }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button {
+                            item.action?()
+                        } label: {
+                            SettingsRow(item: item)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Asks for the current password before a destructive account action.
+/// Firebase rejects `user.delete()` with `requiresRecentLogin` otherwise.
+struct ReauthenticationSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var password: String
+    let onConfirm: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color("primaryBackground").ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Confirm your password")
+                        .font(.title3.bold())
+                        .foregroundColor(Color("primaryText"))
+
+                    Text("For your security, enter your password to delete your account.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    SecureField("Password", text: $password)
+                        .textContentType(.password)
+                        .autocapitalization(.none)
+                        .padding()
+                        .background(Color("primaryCard"))
+                        .cornerRadius(12)
+
+                    Button(action: onConfirm) {
+                        Text("Delete Account")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(password.isEmpty ? Color.gray : Color.red)
+                            .cornerRadius(12)
+                    }
+                    .disabled(password.isEmpty)
+
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        password = ""
+                        dismiss()
                     }
                 }
             }

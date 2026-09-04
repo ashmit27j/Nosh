@@ -3,464 +3,318 @@ import Combine
 import FirebaseAuth
 import FirebaseFirestore
 
+@MainActor
 final class PantryViewModel: ObservableObject {
-    var isShoppingListMode: Bool = false
-    private let pantryFileURL: URL
-    private let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-    private let db = Firestore.firestore()
-    @Published var items: [String: [PantryItem]] = [:]
+
+    /// Name of the synthetic tab that shows every category at once.
+    static let allTab = "All"
+
+    /// Real categories only. "All" is never stored here — it is derived by
+    /// `items(for:)`. Storing it meant quantity changes made from the All tab
+    /// didn't show up until a full refresh, and that every item was persisted
+    /// twice.
+    @Published private(set) var items: [String: [PantryItem]] = [:]
+
     let tabs: [String]
+
+    private let db = Firestore.firestore()
+    private var saveTask: Task<Void, Never>?
+
+    /// Categories excluding the synthetic "All" tab.
+    private var categories: [String] { tabs.filter { $0 != Self.allTab } }
 
     init(tabs: [String]) {
         self.tabs = tabs
-        self.pantryFileURL = docs.appendingPathComponent("pantry.json")
+    }
+
+    deinit {
+        saveTask?.cancel()
+    }
+
+    // MARK: - Reading
+
+    /// Items for a tab. "All" is flattened on demand from the real categories.
+    func items(for tab: String) -> [PantryItem] {
+        guard tab != Self.allTab else {
+            return sortedList(categories.flatMap { items[$0] ?? [] })
+        }
+        return items[tab] ?? []
+    }
+
+    var allItems: [PantryItem] { items(for: Self.allTab) }
+
+    func findCategory(for item: PantryItem) -> String? {
+        categories.first { items[$0]?.contains(where: { $0.id == item.id }) == true }
     }
 
     // MARK: - Initialization
-    // When initializing the pantry and there are no user defaults then just setup kuch dummy items
-    func initializeDefaultPantry() {
+
+    /// Loads the pantry, seeding defaults the first time a user signs in.
+    func initializeDefaultPantry() async {
         guard let userId = Auth.auth().currentUser?.uid else {
-            if UserDefaults.standard.data(forKey: "pantryItems") != nil {
-                loadFromUserDefaults()
-            } else {
-                setupDummyItems()
-            }
+            loadFromUserDefaults()
             return
         }
-        
-        //from the user collection get the document for pantry and load it in
-        db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
-            guard let self = self else { return }
-            
-            if let data = snapshot?.data(), data["pantryInitialized"] as? Bool == true {
-                print("Pantry already initialized")
-                self.loadPantry()
-                return //end function here since this is for a registered user
+
+        do {
+            let document = try await db.collection("users").document(userId).getDocument()
+
+            if document.data()?["pantryInitialized"] as? Bool == true {
+                await loadPantry()
+                return
             }
-            
-            //in case the user was new then we must get default pantry items
-            print("Initializing default pantry for new user...")
-            
-            //function call to initialize an empty [pantry for a new user
-            let defaultItems = self.getDefaultPantryItems()
-            
-            for (category, itemList) in defaultItems {
-                self.items[category] = itemList
-            }
-            
-            //update all the tabs and save the pantry
-            self.updateAllTab()
-            self.savePantry()
-            
-            self.db.collection("users").document(userId).setData([
-                "pantryInitialized": true
-            ], merge: true) { error in
-                if let error = error {
-                    print("❌ Error marking pantry initialized: \(error)")
-                } else {
-                    print("✅ Pantry initialized with default items")
-                }
-            }
+
+            items = Self.defaultPantryItems()
+            savePantry()
+
+            try await db.collection("users").document(userId)
+                .setData(["pantryInitialized": true], merge: true)
+        } catch {
+            // Offline or rules failure — fall back to whatever is cached locally.
+            loadFromUserDefaults()
         }
     }
-    
-    private func getDefaultPantryItems() -> [String: [PantryItem]] {
-        var items: [String: [PantryItem]] = [:]
-        
-        // Grains & Flours
-        items["Grains & Flours"] = [
-            PantryItem(id: UUID(), name: "All-purpose flour", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Wheat flour", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Rice", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Popcorn kernels", quantity: 0, incrementBy: 50)
-        ]
-        
-        // Baking
-        items["Baking"] = [
-            PantryItem(id: UUID(), name: "Baking powder", quantity: 0, incrementBy: 5),
-            PantryItem(id: UUID(), name: "Baking soda", quantity: 0, incrementBy: 5),
-            PantryItem(id: UUID(), name: "Cocoa powder", quantity: 0, incrementBy: 5),
-            PantryItem(id: UUID(), name: "Vanilla extract", quantity: 0, incrementBy: 5)
-        ]
-        
-        // Dairy
-        items["Dairy"] = [
-            PantryItem(id: UUID(), name: "Butter", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Milk", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Full cream milk", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Cream", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Whipped cream", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Yogurt", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Paneer", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Shredded cheese", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Sour cream", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Milk powder", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Eggs", quantity: 0, incrementBy: 1)
-        ]
-        
-        // Vegetables
-        items["Vegetables"] = [
-            PantryItem(id: UUID(), name: "Onions", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Tomatoes", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Potatoes", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Bell peppers", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Cherry tomatoes", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Green peas", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Spinach", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Zucchini", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Jalapeños", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Mixed vegetables", quantity: 0, incrementBy: 100)
-        ]
-        
-        // Proteins
-        items["Proteins"] = [
-            PantryItem(id: UUID(), name: "Chicken", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Chicken breast", quantity: 0, incrementBy: 100)
-        ]
-        
-        // Spices
-        items["Spices"] = [
-            PantryItem(id: UUID(), name: "Salt", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Black pepper", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Red chili powder", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Cumin powder", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Cumin seeds", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Garam masala", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Biryani masala", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Chaat masala", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Cardamom powder", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Paprika", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Garlic powder", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Kasuri methi", quantity: 0, incrementBy: 100)
-        ]
-        
-        // Oils
-        items["Oils"] = [
-            PantryItem(id: UUID(), name: "Oil", quantity: 0, incrementBy: 250),
-            PantryItem(id: UUID(), name: "Olive oil", quantity: 0, incrementBy: 250),
-            PantryItem(id: UUID(), name: "Ghee", quantity: 0, incrementBy: 250)
-        ]
-        
-        // Aromatics
-        items["Aromatics"] = [
-            PantryItem(id: UUID(), name: "Garlic cloves", quantity: 0, incrementBy: 5),
-            PantryItem(id: UUID(), name: "Ginger-garlic paste", quantity: 0, incrementBy: 10)
-        ]
-        
-        // Herbs
-        items["Herbs"] = [
-            PantryItem(id: UUID(), name: "Fresh mint leaves", quantity: 0, incrementBy: 10),
-            PantryItem(id: UUID(), name: "Mint leaves", quantity: 0, incrementBy: 10),
-            PantryItem(id: UUID(), name: "Parsley", quantity: 0, incrementBy: 10)
-        ]
-        
-        // Sweeteners
-        items["Sweeteners"] = [
-            PantryItem(id: UUID(), name: "Sugar", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Honey", quantity: 0, incrementBy: 50)
-        ]
-        
-        // Condiments
-        items["Condiments"] = [
-            PantryItem(id: UUID(), name: "Tomato puree", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Salsa", quantity: 0, incrementBy: 50)
-        ]
-        
-        // Beverages
-        items["Beverages"] = [
-            PantryItem(id: UUID(), name: "Coffee", quantity: 0, incrementBy: 10),
-            PantryItem(id: UUID(), name: "Water", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Hot water", quantity: 0, incrementBy: 100),
-            PantryItem(id: UUID(), name: "Soda water", quantity: 0, incrementBy: 100)
-        ]
-        
-        // Fruits
-        items["Fruits"] = [
-            PantryItem(id: UUID(), name: "Lime", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Lime slices", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Lemon juice", quantity: 0, incrementBy: 10),
-            PantryItem(id: UUID(), name: "Fresh mangoes", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Watermelon", quantity: 0, incrementBy: 100)
-        ]
-        
-        // Specialty
-        items["Specialty"] = [
-            PantryItem(id: UUID(), name: "Saffron", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Rose water", quantity: 0, incrementBy: 10),
-            PantryItem(id: UUID(), name: "Dark chocolate", quantity: 0, incrementBy: 50)
-        ]
-        
-        // Snacks
-        items["Snacks"] = [
-            PantryItem(id: UUID(), name: "Bread loaf", quantity: 0, incrementBy: 1),
-            PantryItem(id: UUID(), name: "Tortilla chips", quantity: 0, incrementBy: 50),
-            PantryItem(id: UUID(), name: "Black olives", quantity: 0, incrementBy: 10)
-        ]
-        
-        // Others
-        items["Others"] = [
-            PantryItem(id: UUID(), name: "Ice cubes", quantity: 0, incrementBy: 10)
-        ]
-        
-        return items
-    }
 
-    // MARK: - CRUD Operations
+    // MARK: - CRUD
+
     func increment(_ item: PantryItem, in category: String) {
-        guard var list = items[category], let index = list.firstIndex(where: { $0.id == item.id }) else { return }
-        list[index].quantity += list[index].incrementBy
-        items[category] = list    // triggers UI update and ensures array assignment
-        savePantry()
+        adjust(item, in: category) { $0.quantity += $0.incrementBy }
     }
 
     func decrement(_ item: PantryItem, in category: String) {
-        guard var list = items[category], let index = list.firstIndex(where: { $0.id == item.id }) else { return }
-        list[index].quantity = max(0, list[index].quantity - list[index].incrementBy)
-        items[category] = list
-        savePantry()
+        adjust(item, in: category) { $0.quantity = max(0, $0.quantity - $0.incrementBy) }
+    }
+
+    func updateQuantity(for item: PantryItem, in category: String, to newQuantity: Double) {
+        adjust(item, in: category) { $0.quantity = max(0, newQuantity) }
     }
 
     func addItem(name: String, category: String, quantity: Double, incrementBy: Double) {
-        let newItem = PantryItem(id: UUID(), name: name, quantity: quantity, incrementBy: incrementBy)
-        items[category, default: []].append(newItem)
-        refresh()
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        items[category, default: []].append(
+            PantryItem(id: UUID(), name: trimmed, quantity: quantity, incrementBy: incrementBy)
+        )
+        savePantry()
     }
 
     func deleteItem(_ item: PantryItem, from category: String) {
-        guard var list = items[category] else { return }
-        list.removeAll { $0.id == item.id }
-        items[category] = list
-        refresh()
-    }
-
-    func updateItem(_ item: PantryItem, in category: String, name: String, quantity: Double, incrementBy: Double) {
-        guard var list = items[category],
-              let index = list.firstIndex(where: { $0.id == item.id }) else { return }
-        list[index].name = name
-        list[index].quantity = quantity
-        list[index].incrementBy = incrementBy
-        items[category] = list
-        refresh()
-    }
-    
-    func refreshWithoutSorting() {
-        // as it says: update it without sorting the values
-        updateAllTabWithoutSorting()
+        items[category]?.removeAll { $0.id == item.id }
         savePantry()
     }
 
-    private func updateAllTabWithoutSorting() {
-        // 
-        let allItems = tabs
-            .filter { $0 != "All" }
-            .flatMap { items[$0] ?? [] }
-        items["All"] = allItems
-    }
-
-    // MARK: - Refresh & Sorting
-    func refresh() {
-        for tab in tabs where tab != "All" {
-            sortItems(for: tab)
+    func updateItem(
+        _ item: PantryItem,
+        in category: String,
+        name: String,
+        quantity: Double,
+        incrementBy: Double
+    ) {
+        adjust(item, in: category) {
+            $0.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            $0.quantity = max(0, quantity)
+            $0.incrementBy = incrementBy
         }
-        updateAllTab()
+    }
+
+    /// Adds `amount` to an item found by ID, wherever it lives.
+    func incrementPantryItem(id: UUID, by amount: Double) {
+        for category in categories {
+            guard let index = items[category]?.firstIndex(where: { $0.id == id }) else { continue }
+            items[category]?[index].quantity = max(0, items[category]![index].quantity + amount)
+            savePantry()
+            return
+        }
+    }
+
+    /// Applies a mutation in whichever category actually holds the item.
+    ///
+    /// The passed-in category is a hint: when the user is on the All tab the
+    /// caller can't know it, so fall back to a lookup rather than dropping the edit.
+    private func adjust(
+        _ item: PantryItem,
+        in category: String,
+        _ mutate: (inout PantryItem) -> Void
+    ) {
+        let resolved = (category != Self.allTab && items[category] != nil)
+            ? category
+            : findCategory(for: item)
+
+        guard let resolved,
+              let index = items[resolved]?.firstIndex(where: { $0.id == item.id })
+        else { return }
+
+        mutate(&items[resolved]![index])
         savePantry()
     }
 
-    private func sortItems(for category: String) {
-        guard var list = items[category] else { return }
-        list = sortedList(list)
-        items[category] = list
-    }
+    // MARK: - Sorting
 
-    private func updateAllTab() {
-        let allItems = tabs
-            .filter { $0 != "All" }
-            .flatMap { items[$0] ?? [] }
-        items["All"] = sortedList(allItems)
+    /// Re-sorts every category. Only invoked from the refresh button — sorting on
+    /// every edit reorders the list under the user's finger mid-tap.
+    func refresh() {
+        for category in categories {
+            items[category] = sortedList(items[category] ?? [])
+        }
+        savePantry()
     }
 
     private func sortedList(_ list: [PantryItem]) -> [PantryItem] {
-        return list.sorted {
-            let r1 = colorRank(for: $0.quantity)
-            let r2 = colorRank(for: $1.quantity)
+        list.sorted {
+            let r1 = stockRank(for: $0.quantity)
+            let r2 = stockRank(for: $1.quantity)
             return r1 != r2 ? r1 < r2 : $0.quantity > $1.quantity
         }
     }
 
-    private func colorRank(for quantity: Double) -> Int {
+    private func stockRank(for quantity: Double) -> Int {
         switch quantity {
-        case 5...: return 0
-        case 1..<5: return 1
-        default: return 2
+        case 5...:   return 0
+        case 1..<5:  return 1
+        default:     return 2
         }
     }
 
-    func findCategory(for item: PantryItem) -> String {
-        for (category, list) in items where category != "All" {
-            if list.contains(where: { $0.id == item.id }) {
-                return category
-            }
-        }
-        return "Vegetables" // Default fallback
-    }
+    // MARK: - Persistence
 
-    func updateQuantity(for item: PantryItem, in category: String, to newQuantity: Double) {
-        //debugging to ensure that the quantity is actually being updated
-        print(" updateQuantity START")
-        print("     Item: '\(item.name)'")
-        print("     Category: '\(category)'")
-        print("     Current qty: \(item.quantity)")
-        print("     Target qty: \(newQuantity)")
-        
-        // Find the item in the category
-        guard var categoryItems = items[category] else {
-            print("     Category '\(category)' not found in items")
-            return
-        }
-        
-        guard let index = categoryItems.firstIndex(where: { $0.id == item.id }) else {
-            print("     Item not found in category")
-            return
-        }
-        
-        let oldQty = categoryItems[index].quantity
-        
-        // CRITICAL: Set the quantity seedha without calling inc or dec
-        categoryItems[index].quantity = newQuantity
-        
-        // Update the dictionary
-        items[category] = categoryItems
-        
-        print("     SUCCESS: \(oldQty) → \(newQuantity)")
-        
-        // Update "All" tab
-        updateAllTab()
-        
-        // Save to ensure data persistence
-        savePantry()
-    }
-
-    // MARK: - Save & Load
-    
+    /// Writes locally at once and coalesces the Firestore sync.
+    ///
+    /// Every +/- tap used to push the entire pantry to Firestore immediately;
+    /// holding the button issued one full-document write per tap.
     func savePantry() {
-        // Local Saving the pantry
+        persistLocally()
+
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !Task.isCancelled else { return }
+            await self?.syncToFirestore()
+        }
+    }
+
+    private func persistLocally() {
         do {
             let data = try JSONEncoder().encode(items)
             UserDefaults.standard.set(data, forKey: "pantryItems")
         } catch {
-            print(" XXX Failed to save pantry: \(error)")
+            assertionFailure("Failed to encode pantry: \(error)")
         }
-        
-        // Firestore Save
+    }
+
+    private func syncToFirestore() async {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         do {
-            let jsonData = try JSONEncoder().encode(items)
-            if let jsonObject = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                db.collection("users").document(userId).collection("pantry").document("items").setData(jsonObject)
+            let data = try JSONEncoder().encode(items)
+            guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return
             }
+            try await db.collection("users").document(userId)
+                .collection("pantry").document("items").setData(object)
         } catch {
-            print(" XXX Failed to sync to Firestore: \(error)")
+            // Local copy is already saved; the next edit retries the sync.
         }
     }
 
-    func loadPantry() {
+    func loadPantry() async {
         guard let userId = Auth.auth().currentUser?.uid else {
-            if UserDefaults.standard.data(forKey: "pantryItems") != nil {
-                loadFromUserDefaults()
-            } else {
-                setupDummyItems()
-            }
+            loadFromUserDefaults()
             return
         }
-        
-        db.collection("users").document(userId).collection("pantry").document("items").getDocument { [weak self] snapshot, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print(" XXX Failed to load from Firestore: \(error)")
-                return
-            }
-            
-            guard let data = snapshot?.data(),
-                  !data.isEmpty,
-                  let jsonData = try? JSONSerialization.data(withJSONObject: data) else {
-                print(" XXX No pantry data in Firestore")
-                return
-            }
-            
-            do {
-                self.items = try JSONDecoder().decode([String: [PantryItem]].self, from: jsonData)
-                self.updateAllTab()
-                self.savePantry()
-            } catch {
-                print(" XXX Failed to decode Firestore data: \(error)")
-            }
-        }
-    }
-    
-    private func loadFromUserDefaults() {
-        guard let data = UserDefaults.standard.data(forKey: "pantryItems") else { return }
+
         do {
-            items = try JSONDecoder().decode([String: [PantryItem]].self, from: data)
-            updateAllTab()
+            let document = try await db.collection("users").document(userId)
+                .collection("pantry").document("items").getDocument()
+
+            guard let data = document.data(), !data.isEmpty else {
+                loadFromUserDefaults()
+                return
+            }
+
+            let jsonData = try JSONSerialization.data(withJSONObject: data)
+            var decoded = try JSONDecoder().decode([String: [PantryItem]].self, from: jsonData)
+
+            // Drop the stale "All" bucket written by older builds.
+            decoded.removeValue(forKey: Self.allTab)
+            items = decoded
+
+            // Local cache only — no need to echo straight back to Firestore.
+            persistLocally()
         } catch {
-            print(" XXX Failed to load pantry: \(error)")
+            loadFromUserDefaults()
         }
     }
-    
-    //this is called agar we are restoring defaults -> usually not used
+
+    private func loadFromUserDefaults() {
+        guard let data = UserDefaults.standard.data(forKey: "pantryItems") else {
+            if items.isEmpty { items = Self.defaultPantryItems() }
+            return
+        }
+        do {
+            var decoded = try JSONDecoder().decode([String: [PantryItem]].self, from: data)
+            decoded.removeValue(forKey: Self.allTab)
+            items = decoded
+        } catch {
+            items = Self.defaultPantryItems()
+        }
+    }
+
+    /// Clears in-memory and cached state. Called on sign-out so the next user
+    /// doesn't inherit the previous one's pantry.
     func clearPantry() {
+        saveTask?.cancel()
         items = [:]
         UserDefaults.standard.removeObject(forKey: "pantryItems")
-        print(" Pantry cleared")
     }
 
-    // MARK: - Dummy Data (Fallback)
-    // When no data found then fallback to this
-    private func setupDummyItems() {
-        for tab in tabs where tab != "All" {
-            items[tab] = dummyItems(for: tab)
-        }
-        refresh()
-    }
+    // MARK: - Defaults
 
-    func dummyItems(for tab: String) -> [PantryItem] {
-        let names: [String]
-        switch tab {
-        case "Vegetables": names = ["Tomato", "Onion", "Potato"]
-        case "Fruits": names = ["Apple", "Banana", "Mango"]
-        case "Dairy": names = ["Milk", "Cheese", "Curd"]
-        case "Spices": names = ["Turmeric", "Chili Powder", "Cumin"]
-        case "Condiments": names = ["Ketchup", "Mayonnaise", "Soy Sauce"]
-        case "Oils": names = ["Sunflower Oil", "Olive Oil"]
-        default: names = []
+    private static func defaultPantryItems() -> [String: [PantryItem]] {
+        func make(_ entries: [(String, Double)]) -> [PantryItem] {
+            entries.map { PantryItem(id: UUID(), name: $0.0, quantity: 0, incrementBy: $0.1) }
         }
 
-        return names.map { PantryItem(id: UUID(), name: $0, quantity: 0, incrementBy: 0.5) }
+        return [
+            "Grains & Flours": make([
+                ("All-purpose flour", 100), ("Wheat flour", 100),
+                ("Rice", 100), ("Popcorn kernels", 50)
+            ]),
+            "Baking": make([
+                ("Baking powder", 5), ("Baking soda", 5),
+                ("Cocoa powder", 5), ("Vanilla extract", 5)
+            ]),
+            "Dairy": make([
+                ("Butter", 50), ("Milk", 100), ("Full cream milk", 100), ("Cream", 50),
+                ("Whipped cream", 50), ("Yogurt", 100), ("Paneer", 100),
+                ("Shredded cheese", 50), ("Sour cream", 50), ("Milk powder", 50), ("Eggs", 1)
+            ]),
+            "Vegetables": make([
+                ("Onions", 1), ("Tomatoes", 1), ("Potatoes", 1), ("Bell peppers", 1),
+                ("Cherry tomatoes", 50), ("Green peas", 50), ("Spinach", 100),
+                ("Zucchini", 1), ("Jalapeños", 1), ("Mixed vegetables", 100)
+            ]),
+            "Proteins": make([("Chicken", 100), ("Chicken breast", 100)]),
+            "Spices": make([
+                ("Salt", 100), ("Black pepper", 100), ("Red chili powder", 100),
+                ("Cumin powder", 100), ("Cumin seeds", 100), ("Garam masala", 100),
+                ("Biryani masala", 100), ("Chaat masala", 100), ("Cardamom powder", 100),
+                ("Paprika", 100), ("Garlic powder", 100), ("Kasuri methi", 100)
+            ]),
+            "Oils": make([("Oil", 250), ("Olive oil", 250), ("Ghee", 250)]),
+            "Aromatics": make([("Garlic cloves", 5), ("Ginger-garlic paste", 10)]),
+            "Herbs": make([("Fresh mint leaves", 10), ("Mint leaves", 10), ("Parsley", 10)]),
+            "Sweeteners": make([("Sugar", 50), ("Honey", 50)]),
+            "Condiments": make([("Tomato puree", 50), ("Salsa", 50)]),
+            "Beverages": make([
+                ("Coffee", 10), ("Water", 100), ("Hot water", 100), ("Soda water", 100)
+            ]),
+            "Fruits": make([
+                ("Lime", 1), ("Lime slices", 1), ("Lemon juice", 10),
+                ("Fresh mangoes", 1), ("Watermelon", 100)
+            ]),
+            "Specialty": make([("Saffron", 1), ("Rose water", 10), ("Dark chocolate", 50)]),
+            "Snacks": make([("Bread loaf", 1), ("Tortilla chips", 50), ("Black olives", 10)]),
+            "Others": make([("Ice cubes", 10)])
+        ]
     }
-    func incrementPantryItem(id: UUID, by amount: Double) {
-            for category in tabs where category != "All" {
-                guard var arr = items[category] else { continue }
-                if let idx = arr.firstIndex(where: { $0.id == id }) {
-                    arr[idx].quantity += amount
-                    if arr[idx].quantity < 0 { arr[idx].quantity = 0 }
-                    items[category] = arr
-                }
-            }
-            refresh()
-        }
-    
-    func incrementPantryItemWithoutSorting(id: UUID, by amount: Double) {
-        for category in tabs where category != "All" {
-            guard var arr = items[category] else { continue }
-            if let idx = arr.firstIndex(where: { $0.id == id }) {
-                arr[idx].quantity += amount
-                if arr[idx].quantity < 0 { arr[idx].quantity = 0 }
-                items[category] = arr
-            }
-        }
-        // this is slightly different in the approach taht it will not sort out the data like in pantry and will only refresh the values
-        refreshWithoutSorting()
-    }
-
 }

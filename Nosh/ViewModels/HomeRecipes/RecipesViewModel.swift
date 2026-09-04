@@ -6,12 +6,15 @@ class RecipesViewModel: ObservableObject {
     @Published var isLoading = false
     
     func fetchMeals(categories: [String]) {
+        let categoryIds = Array(Set(categories.map { CategoryHelper.nameToId($0) }))
+        guard !categoryIds.isEmpty else {
+            meals = []
+            isLoading = false
+            return
+        }
+
         isLoading = true
-        
-        let categoryIds = categories.map { CategoryHelper.nameToId($0) }
-        
-        print(" Fetching meals for categories: \(categories) (IDs: \(categoryIds))")
-        
+
         let db = Firestore.firestore()
         
         db.collection("recipes")
@@ -21,30 +24,20 @@ class RecipesViewModel: ObservableObject {
                     self?.isLoading = false
                     
                     if let error = error {
-                        print(" XXX Error fetching meals: \(error.localizedDescription)")
+                        Log.recipes.error("Failed to fetch meals: \(error.localizedDescription)")
                         return
                     }
                     
                     guard let documents = snapshot?.documents else {
-                        print(" XXX No documents returned")
+                        Log.recipes.error("Recipe query returned no documents")
                         self?.meals = []
                         return
                     }
                     
-                    print(" Now Got \(documents.count) documents")
                     
-                    self?.meals = documents.compactMap { doc in
-                        do {
-                            let meal = try doc.data(as: Meal.self)
-                            print("\(meal.name) (categoryId: \(meal.categoryId))")
-                            return meal
-                        } catch {
-                            print(" XXX Failed to parse \(doc.documentID): \(error)")
-                            return nil
-                        }
-                    }
-                    print("YAY")
-                    print("Final count: \(self?.meals.count ?? 0) meals")
+                    // Meal(document:) stamps the document ID as the recipe's
+                    // identity; data(as:) alone leaves it empty.
+                    self?.meals = documents.compactMap { Meal(document: $0) }
                 }
             }
     }

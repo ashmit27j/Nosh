@@ -1,581 +1,416 @@
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
-import Combine
 
+/// One day in the week strip.
+///
+/// `key` is the Firestore document ID (`yyyy-MM-dd`) and the dictionary key used
+/// everywhere in this view model. `label` is display only. Keying state by the
+/// weekday label instead — as this previously did — gives all time only seven
+/// slots, so last Monday and next Monday collide.
+struct DayTab: Identifiable, Hashable {
+    let key: String
+    let label: String
+    let date: Date
+
+    var id: String { key }
+}
 
 @MainActor
-class MealPlannerViewModel: ObservableObject {
-    // MARK: - Firestore Properties
-    @Published var selectedDate: Date = Date() {
-        didSet {
-            // When date changes, update the week tabs
-            updateWeekForSelectedDate()
-            loadMealPlan(for: selectedDate)
-        }
-    }
-    @Published var currentDayPlan: DayMealPlan?
+final class MealPlannerViewModel: ObservableObject {
+
+    @Published var selectedDate: Date = Date()
+    @Published private(set) var tabs: [DayTab] = []
+    @Published var selectedTabKey: String = ""
+    @Published private(set) var plans: [String: DayMealPlan] = [:]
     @Published var mealTimes: MealTimes = .default
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    
-    // MARK: - Legacy Properties (PRESERVED)
-    @Published var items: [String: [String: [Meal]]] = [:]
-    @Published var tabs: [String] = []
-    @Published var selectedTab: String = ""
-    
+
     private let db = Firestore.firestore()
-    private var listener: ListenerRegistration?
-    
-    init() {
-        setupWeekTabs()
-        initializeWeekMeals()
-        loadMealTimes()
-        loadMealPlan(for: selectedDate)
-        loadWeekMealPlans()
-    }
-    
-    deinit {
-        listener?.remove()
-    }
-    
-    // MARK: - Setup Week Tabs (Based on Selected Date)
-    private func setupWeekTabs() {
-        updateWeekForSelectedDate()
-    }
-    
-    // Update week tabs based on selected date
-    // MARK: - Setup Week Tabs (Based on Selected Date) - FIXED
-    private func updateWeekForSelectedDate() {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
-        
-        let calendar = Calendar.current
-        
-        // Get the start of the week (Monday) for the selected date
-        let startOfWeek = getStartOfWeek(for: selectedDate, calendar: calendar)
-        
-        // Generate tabs for the week (Monday to Sunday)
-        tabs = (0..<7).map { offset in
-            let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek)!
-            return dateFormatter.string(from: date)
-        }
-        
-        // Update selected tab to match selected date
-        selectedTab = dateFormatter.string(from: selectedDate)
-        
-        // Initialize meals for this week
-        initializeWeekMeals()
-        
-        // Load week meal plans from Firestore
-        loadWeekMealPlans()
-    }
+    private var weekListener: ListenerRegistration?
 
-    func initializeWeekMeals() {
-        let calendar = Calendar.current
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
-        
-        // Get the start of the week (Monday) for the selected date
-        let startOfWeek = getStartOfWeek(for: selectedDate, calendar: calendar)
-        
-        // Initialize empty meals for all 7 days of the week
-        for offset in 0..<7 {
-            if let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek) {
-                let dayString = dateFormatter.string(from: date)
-                
-                // Create empty structure for each day if not exists
-                if items[dayString] == nil {
-                    items[dayString] = [
-                        "breakfast": [],
-                        "lunch": [],
-                        "dinner": []
-                    ]
-                }
-            }
-        }
-    }
-
-    // MARK: - Load Week Meal Plans from Firestore - FIXED
-    func loadWeekMealPlans() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let calendar = Calendar.current
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
-        
-        // Get the start of the week (Monday) for the selected date
-        let startOfWeek = getStartOfWeek(for: selectedDate, calendar: calendar)
-        
-        // Load meal plans for all 7 days of the week
-        for offset in 0..<7 {
-            if let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek) {
-                let dateString = dateToString(date)
-                let dayString = dateFormatter.string(from: date)
-                
-                db.collection("users")
-                    .document(userId)
-                    .collection("mealPlanner")
-                    .document(dateString)
-                    .getDocument { [weak self] snapshot, error in
-                        guard let self = self else { return }
-                        
-                        if let snapshot = snapshot, snapshot.exists {
-                            do {
-                                let dayPlan = try snapshot.data(as: DayMealPlan.self)
-                                
-                                Task { @MainActor in
-                                    self.items[dayString] = [
-                                        "breakfast": dayPlan.breakfast,
-                                        "lunch": dayPlan.lunch,
-                                        "dinner": dayPlan.dinner
-                                    ]
-                                }
-                            } catch {
-                                print("Error decoding day plan: \(error)")
-                            }
-                        } else {
-                            // Initialize empty for this day
-                            Task { @MainActor in
-                                if self.items[dayString] == nil {
-                                    self.items[dayString] = [
-                                        "breakfast": [],
-                                        "lunch": [],
-                                        "dinner": []
-                                    ]
-                                }
-                            }
-                        }
-                    }
-            }
-        }
-    }
-
-    // MARK: - Helper Functions - FIXED
-
-    private func dateToString(_ date: Date) -> String {
+    /// `yyyy-MM-dd` in a fixed locale/calendar so document IDs are stable
+    /// regardless of the device's regional settings.
+    private static let keyFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        return formatter
+    }()
+
+    private static let labelFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+
+    private var calendar: Calendar {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2 // Monday
+        return calendar
     }
 
-    // NEW: Get start of week (Monday) for any date
-    private func getStartOfWeek(for date: Date, calendar: Calendar) -> Date {
-        // Get the weekday (1 = Sunday, 2 = Monday, ..., 7 = Saturday)
-        let weekday = calendar.component(.weekday, from: date)
-        
-        // Calculate days to subtract to get to Monday
-        // If Sunday (1), subtract 6 days
-        // If Monday (2), subtract 0 days
-        // If Tuesday (3), subtract 1 day, etc.
-        let daysToSubtract = weekday == 1 ? 6 : weekday - 2
-        
-        // Get Monday of this week
-        let monday = calendar.date(byAdding: .day, value: -daysToSubtract, to: date)!
-        
-        // Set time to midnight
-        return calendar.startOfDay(for: monday)
+    init() {
+        rebuildWeek(around: selectedDate)
+        loadMealTimes()
     }
 
-    // Made public so MealPlannerHeader can access it - FIXED
-    func dateFromDayString(_ dayString: String) -> Date? {
-        let calendar = Calendar.current
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
-        
-        // Get the start of the week (Monday) for the selected date
-        let startOfWeek = getStartOfWeek(for: selectedDate, calendar: calendar)
-        
-        // Find the date in the current week that matches the day string
-        for offset in 0..<7 {
-            let date = calendar.date(byAdding: .day, value: offset, to: startOfWeek)!
-            if dateFormatter.string(from: date) == dayString {
-                return date
+    deinit {
+        weekListener?.remove()
+    }
+
+    // MARK: - Keys
+
+    func dateKey(for date: Date) -> String {
+        Self.keyFormatter.string(from: date)
+    }
+
+    // MARK: - Week construction
+
+    /// Rebuilds the tab strip and, when the week actually changed, re-subscribes.
+    /// This is the single entry point — `init` used to call the setup chain twice,
+    /// costing 14 document reads before the first frame.
+    private func rebuildWeek(around date: Date) {
+        let startOfWeek = self.startOfWeek(for: date)
+
+        let newTabs: [DayTab] = (0..<7).compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: startOfWeek) else {
+                return nil
             }
+            return DayTab(
+                key: dateKey(for: day),
+                label: Self.labelFormatter.string(from: day),
+                date: day
+            )
         }
-        
-        return nil
+
+        let weekChanged = newTabs.first?.key != tabs.first?.key
+        tabs = newTabs
+        selectedTabKey = dateKey(for: date)
+
+        if weekChanged {
+            subscribeToWeek()
+        }
     }
 
-    
-    
-    // MARK: - Firebase Operations
-    
-    func loadMealTimes() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("Error loading meal times: \(error.localizedDescription)")
-                return
-            }
-            
-            if let data = snapshot?.data(),
-               let breakfastTimestamp = data["breakfastTime"] as? Timestamp,
-               let lunchTimestamp = data["lunchTime"] as? Timestamp,
-               let dinnerTimestamp = data["dinnerTime"] as? Timestamp {
-                
-                Task { @MainActor in
-                    self.mealTimes = MealTimes(
-                        breakfastTime: breakfastTimestamp.dateValue(),
-                        lunchTime: lunchTimestamp.dateValue(),
-                        dinnerTime: dinnerTimestamp.dateValue()
-                    )
+    private func startOfWeek(for date: Date) -> Date {
+        let components = calendar.dateComponents(
+            [.yearForWeekOfYear, .weekOfYear], from: date
+        )
+        let start = calendar.date(from: components) ?? date
+        return calendar.startOfDay(for: start)
+    }
+
+    // MARK: - Loading
+
+    /// One range listener over the week instead of seven individual `getDocument`
+    /// calls, and it keeps the UI live as the plan changes.
+    private func subscribeToWeek() {
+        weekListener?.remove()
+        weekListener = nil
+
+        guard let userId = Auth.auth().currentUser?.uid,
+              let first = tabs.first?.key,
+              let last = tabs.last?.key
+        else {
+            plans = [:]
+            return
+        }
+
+        isLoading = true
+
+        weekListener = db.collection("users")
+            .document(userId)
+            .collection("mealPlanner")
+            .whereField(FieldPath.documentID(), isGreaterThanOrEqualTo: first)
+            .whereField(FieldPath.documentID(), isLessThanOrEqualTo: last)
+            .addSnapshotListener { [weak self] snapshot, error in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.isLoading = false
+
+                    if let error {
+                        self.errorMessage = error.localizedDescription
+                        return
+                    }
+
+                    var loaded: [String: DayMealPlan] = [:]
+                    for document in snapshot?.documents ?? [] {
+                        if let plan = DayMealPlan(document: document) {
+                            loaded[plan.id] = plan
+                        }
+                    }
+                    self.plans = loaded
                 }
             }
+    }
+
+    func loadMealTimes() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let document = try await db.collection("users").document(userId).getDocument()
+                guard let data = document.data(),
+                      let breakfast = data["breakfastTime"] as? Timestamp,
+                      let lunch = data["lunchTime"] as? Timestamp,
+                      let dinner = data["dinnerTime"] as? Timestamp
+                else { return }
+
+                self.mealTimes = MealTimes(
+                    breakfastTime: breakfast.dateValue(),
+                    lunchTime: lunch.dateValue(),
+                    dinnerTime: dinner.dateValue()
+                )
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
-    
-    func saveMealTimes() {
+
+    // MARK: - Reading
+
+    func plan(for dayKey: String) -> DayMealPlan? {
+        plans[dayKey]
+    }
+
+    func meals(for dayKey: String, type: MealType) -> [Meal] {
+        plans[dayKey]?[type] ?? []
+    }
+
+    func tab(forKey key: String) -> DayTab? {
+        tabs.first { $0.key == key }
+    }
+
+    // MARK: - Navigation
+
+    func changeDate(to newDate: Date) {
+        selectedDate = newDate
+        rebuildWeek(around: newDate)
+    }
+
+    func selectTab(_ tab: DayTab) {
+        changeDate(to: tab.date)
+    }
+
+    // MARK: - Meal times
+
+    func updateMealTime(_ newTime: Date, for mealType: MealType) {
+        switch mealType {
+        case .breakfast: mealTimes.breakfastTime = newTime
+        case .lunch:     mealTimes.lunchTime = newTime
+        case .dinner:    mealTimes.dinnerTime = newTime
+        }
+        saveMealTimes()
+    }
+
+    private func saveMealTimes() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
         let data: [String: Any] = [
             "breakfastTime": Timestamp(date: mealTimes.breakfastTime),
             "lunchTime": Timestamp(date: mealTimes.lunchTime),
             "dinnerTime": Timestamp(date: mealTimes.dinnerTime)
         ]
-        
-        db.collection("users").document(userId).setData(data, merge: true) { error in
-            if let error = error {
-                print("Error saving meal times: \(error.localizedDescription)")
+
+        Task { [weak self] in
+            do {
+                try await self?.db.collection("users").document(userId)
+                    .setData(data, merge: true)
+            } catch {
+                self?.errorMessage = error.localizedDescription
             }
         }
     }
-    
-    func loadMealPlan(for date: Date) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        isLoading = true
-        let dateString = dateToString(date)
-        
-        listener?.remove()
-        
-        listener = db.collection("users")
-            .document(userId)
-            .collection("mealPlanner")
-            .document(dateString)
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                Task { @MainActor in
-                    self.isLoading = false
-                    
-                    if let error = error {
-                        self.errorMessage = error.localizedDescription
-                        return
-                    }
-                    
-                    if let snapshot = snapshot, snapshot.exists {
-                        do {
-                            self.currentDayPlan = try snapshot.data(as: DayMealPlan.self)
-                            self.updateLegacyItems()
-                        } catch {
-                            print("Error decoding meal plan: \(error.localizedDescription)")
-                            self.createEmptyMealPlan(for: date)
-                        }
-                    } else {
-                        self.createEmptyMealPlan(for: date)
-                    }
-                }
-            }
-    }
-    
-    private func createEmptyMealPlan(for date: Date) {
-        currentDayPlan = DayMealPlan(
-            date: date,
-            breakfast: [],
-            lunch: [],
-            dinner: []
-        )
-        updateLegacyItems()
-    }
-    
-    // Update legacy items structure for existing UI
-    private func updateLegacyItems() {
-        guard let plan = currentDayPlan else { return }
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
-        let dayString = dateFormatter.string(from: plan.date)
-        
-        items[dayString] = [
-            "breakfast": plan.breakfast,
-            "lunch": plan.lunch,
-            "dinner": plan.dinner
-        ]
-    }
-    
-    func addMeal(to day: String, type mealType: String, meal: Meal) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let date = dateFromDayString(day) ?? selectedDate
-        let dateString = dateToString(date)
-        
-        print("📅 Adding meal: \(meal.name) to date: \(dateString), day: \(day), type: \(mealType)")
-        
-        let mealField: String
-        switch mealType.lowercased() {
-        case "breakfast":
-            mealField = "breakfast"
-        case "lunch":
-            mealField = "lunch"
-        case "dinner":
-            mealField = "dinner"
-        default:
-            return
-        }
-        
-        // Get existing meals first
-        db.collection("users")
-            .document(userId)
-            .collection("mealPlanner")
-            .document(dateString)
-            .getDocument { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                var existingMeals: [Meal] = []
-                
-                if let snapshot = snapshot, snapshot.exists,
-                   let data = snapshot.data(),
-                   let mealsData = data[mealField] as? [[String: Any]] {
-                    existingMeals = mealsData.compactMap { dict in
-                        try? Firestore.Decoder().decode(Meal.self, from: dict)
-                    }
-                }
-                
-                // Check if meal already exists by ID (primary) or name (fallback)
-                let mealExists = existingMeals.contains { existingMeal in
-                    // If both have IDs, compare by ID
-                    if !existingMeal.id.isEmpty && !meal.id.isEmpty {
-                        return existingMeal.id == meal.id
-                    }
-                    // Otherwise compare by name AND description for better accuracy
-                    return existingMeal.name.lowercased() == meal.name.lowercased() &&
-                           existingMeal.description == meal.description
-                }
-                
-                if mealExists {
-                    print("⚠️ Meal '\(meal.name)' already exists in \(mealType), skipping duplicate")
-                    return
-                }
-                
-                // Add new meal to existing meals
-                existingMeals.append(meal)
-                
-                print("➕ Adding meal '\(meal.name)' (Total: \(existingMeals.count) meals in \(mealType))")
-                
+
+    // MARK: - Mutating the plan
+
+    /// Adds a meal, skipping it if the same recipe is already in that slot.
+    ///
+    /// Runs in a transaction: the previous read-modify-write let two quick taps
+    /// interleave and lose one of the writes.
+    func addMeal(to dayKey: String, type mealType: MealType, meal: Meal) async {
+        guard let userId = Auth.auth().currentUser?.uid,
+              let day = tab(forKey: dayKey) ?? tab(forKey: selectedTabKey)
+        else { return }
+
+        let reference = db.collection("users").document(userId)
+            .collection("mealPlanner").document(day.key)
+
+        do {
+            _ = try await db.runTransaction { transaction, errorPointer -> Any? in
+                let snapshot: DocumentSnapshot
                 do {
-                    let mealsData = try existingMeals.map { try Firestore.Encoder().encode($0) }
-                    
-                    self.db.collection("users")
-                        .document(userId)
-                        .collection("mealPlanner")
-                        .document(dateString)
-                        .setData([
-                            "date": Timestamp(date: date),
-                            mealField: mealsData
-                        ], merge: true) { error in
-                            if let error = error {
-                                print("❌ Error adding meal: \(error.localizedDescription)")
-                            } else {
-                                print("✅ Meal '\(meal.name)' added successfully to \(mealType)!")
-                                // Reload the week to reflect changes
-                                Task { @MainActor in
-                                    self.loadWeekMealPlans()
-                                }
-                            }
-                        }
-                } catch {
-                    print("❌ Encoding error: \(error)")
+                    snapshot = try transaction.getDocument(reference)
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                    return nil
                 }
+
+                var existing = Self.decodeMeals(from: snapshot, field: mealType.field)
+
+                // Identity is stable across fetches now, so this actually works.
+                guard !existing.contains(where: { $0.id == meal.id }) else { return nil }
+                existing.append(meal)
+
+                do {
+                    let encoded = try existing.map { try Firestore.Encoder().encode($0) }
+                    transaction.setData([
+                        "date": Timestamp(date: day.date),
+                        mealType.field: encoded
+                    ], forDocument: reference, merge: true)
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                }
+                return nil
             }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
-
-    
-    func removeMeal(from day: String, type mealType: String, meal: Meal) {
+    func removeMeal(from dayKey: String, type mealType: MealType, meal: Meal) async {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let date = dateFromDayString(day) ?? selectedDate
-        let dateString = dateToString(date)
-        
-        let mealField: String
-        switch mealType.lowercased() {
-        case "breakfast":
-            mealField = "breakfast"
-        case "lunch":
-            mealField = "lunch"
-        case "dinner":
-            mealField = "dinner"
-        default:
-            return
-        }
-        
-        // Get existing meals and remove the specified one
-        db.collection("users")
-            .document(userId)
-            .collection("mealPlanner")
-            .document(dateString)
-            .getDocument { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                if let snapshot = snapshot, snapshot.exists,
-                   let data = snapshot.data(),
-                   let mealsData = data[mealField] as? [[String: Any]] {
-                    
-                    var existingMeals = mealsData.compactMap { dict -> Meal? in
-                        try? Firestore.Decoder().decode(Meal.self, from: dict)
-                    }
-                    
-                    // Remove the meal with matching id
-                    existingMeals.removeAll { $0.id == meal.id }
-                    
-                    do {
-                        let updatedMealsData = try existingMeals.map { try Firestore.Encoder().encode($0) }
-                        
-                        self.db.collection("users")
-                            .document(userId)
-                            .collection("mealPlanner")
-                            .document(dateString)
-                            .updateData([mealField: updatedMealsData]) { error in
-                                if let error = error {
-                                    print("Error removing meal: \(error.localizedDescription)")
-                                } else {
-                                    // Reload the week to reflect changes
-                                    Task { @MainActor in
-                                        self.loadWeekMealPlans()
-                                    }
-                                }
-                            }
-                    } catch {
-                        print("Encoding error: \(error)")
-                    }
+
+        let reference = db.collection("users").document(userId)
+            .collection("mealPlanner").document(dayKey)
+
+        do {
+            _ = try await db.runTransaction { transaction, errorPointer -> Any? in
+                let snapshot: DocumentSnapshot
+                do {
+                    snapshot = try transaction.getDocument(reference)
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                    return nil
                 }
+
+                var existing = Self.decodeMeals(from: snapshot, field: mealType.field)
+                existing.removeAll { $0.id == meal.id }
+
+                do {
+                    let encoded = try existing.map { try Firestore.Encoder().encode($0) }
+                    transaction.updateData([mealType.field: encoded], forDocument: reference)
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                }
+                return nil
             }
-    }
-    
-    func changeDate(to newDate: Date) {
-        selectedDate = newDate
-        // Week tabs will auto-update via didSet
-    }
-    
-    func updateMealTime(_ newTime: Date, for mealType: MealType) {
-        switch mealType {
-        case .breakfast:
-            mealTimes.breakfastTime = newTime
-        case .lunch:
-            mealTimes.lunchTime = newTime
-        case .dinner:
-            mealTimes.dinnerTime = newTime
+        } catch {
+            errorMessage = error.localizedDescription
         }
-        saveMealTimes()
     }
-    
-    // MARK: - Search Function
+
+    private nonisolated static func decodeMeals(
+        from snapshot: DocumentSnapshot,
+        field: String
+    ) -> [Meal] {
+        guard snapshot.exists,
+              let raw = snapshot.data()?[field] as? [[String: Any]]
+        else { return [] }
+
+        return raw.compactMap { try? Firestore.Decoder().decode(Meal.self, from: $0) }
+    }
+
+    // MARK: - Search & discovery
+
     func searchMeals(query: String) async throws -> [Meal] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
         let snapshot = try await db.collection("recipes")
-            .whereField("name", isGreaterThanOrEqualTo: query)
-            .whereField("name", isLessThan: query + "\u{f8ff}")
+            .whereField("name", isGreaterThanOrEqualTo: trimmed)
+            .whereField("name", isLessThan: trimmed + "\u{f8ff}")
             .limit(to: 20)
             .getDocuments()
-        
-        return snapshot.documents.compactMap { doc in
-            try? doc.data(as: Meal.self)
-        }
+
+        return snapshot.documents.compactMap { Meal(document: $0) }
     }
-    
-    // MARK: - Fetch Random Meal
-    func fetchRandomMeal(completion: @escaping (Meal?) -> Void) {
-        db.collection("recipes").getDocuments { snapshot, error in
-            if let error = error {
-                print("Error fetching random meal: \(error.localizedDescription)")
-                completion(nil)
-                return
+
+    /// Picks a random recipe without downloading the whole collection.
+    ///
+    /// Uses a random cursor over document IDs and wraps around when the cursor
+    /// lands past the end, so it costs two reads at most instead of one per recipe.
+    func fetchRandomMeal() async -> Meal? {
+        let cursor = UUID().uuidString
+        let collection = db.collection("recipes")
+
+        do {
+            let forward = try await collection
+                .whereField(FieldPath.documentID(), isGreaterThanOrEqualTo: cursor)
+                .limit(to: 1)
+                .getDocuments()
+
+            if let document = forward.documents.first {
+                return Meal(document: document)
             }
-            
-            guard let documents = snapshot?.documents, !documents.isEmpty else {
-                completion(nil)
-                return
-            }
-            
-            let randomDocument = documents.randomElement()
-            let meal = try? randomDocument?.data(as: Meal.self)
-            
-            DispatchQueue.main.async {
-                completion(meal)
-            }
-        }
-    }
-    // MARK: - AI Meal Plan Generation (For Selected Day)
-    func generateAIMealPlan() async throws {
-        print("🤖 Generating AI meal plan for \(dateToString(selectedDate))...")
-        
-        // TODO: Add your AI meal generation logic here
-        // This should:
-        // 1. Call your AI API to get meal recommendations
-        // 2. Add them to the selected date
-        // 3. For now, we'll add a placeholder
-        
-        // Example: Generate random meals for the selected day
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let dateString = dateToString(selectedDate)
-        
-        // For demonstration, let's fetch 3 random meals from recipes
-        db.collection("recipes").limit(to: 3).getDocuments { [weak self] snapshot, error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("❌ Error generating meal plan: \(error)")
-                return
-            }
-            
-            guard let documents = snapshot?.documents, documents.count >= 3 else {
-                print("⚠️ Not enough recipes to generate meal plan")
-                return
-            }
-            
-            // Get 3 meals
-            let meals = documents.compactMap { try? $0.data(as: Meal.self) }
-            
-            guard meals.count >= 3 else { return }
-            
-            // Assign to breakfast, lunch, dinner
-            let breakfast = [meals[0]]
-            let lunch = [meals[1]]
-            let dinner = [meals[2]]
-            
-            do {
-                let breakfastData = try breakfast.map { try Firestore.Encoder().encode($0) }
-                let lunchData = try lunch.map { try Firestore.Encoder().encode($0) }
-                let dinnerData = try dinner.map { try Firestore.Encoder().encode($0) }
-                
-                self.db.collection("users")
-                    .document(userId)
-                    .collection("mealPlanner")
-                    .document(dateString)
-                    .setData([
-                        "date": Timestamp(date: self.selectedDate),
-                        "breakfast": breakfastData,
-                        "lunch": lunchData,
-                        "dinner": dinnerData
-                    ], merge: false) { error in
-                        if let error = error {
-                            print("❌ Error saving AI meal plan: \(error)")
-                        } else {
-                            print("✅ AI meal plan generated for \(dateString)!")
-                            Task { @MainActor in
-                                self.loadWeekMealPlans()
-                            }
-                        }
-                    }
-            } catch {
-                print(" Encoding error: \(error)")
-            }
+
+            let wrapped = try await collection
+                .whereField(FieldPath.documentID(), isLessThan: cursor)
+                .limit(to: 1)
+                .getDocuments()
+
+            return wrapped.documents.first.flatMap { Meal(document: $0) }
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
         }
     }
 
-    
+    /// Fills the selected day with three randomly chosen recipes.
+    ///
+    /// Named for what it does — the previous `generateAIMealPlan` was declared
+    /// `async throws` but neither awaited nor threw, always returned the same
+    /// three recipes from `limit(to: 3)`, and wrote with `merge: false`, wiping
+    /// anything already planned for that day.
+    func fillDayWithSuggestions() async {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let day = tab(forKey: selectedTabKey)
+            ?? DayTab(
+                key: dateKey(for: selectedDate),
+                label: Self.labelFormatter.string(from: selectedDate),
+                date: selectedDate
+            )
+
+        isLoading = true
+        defer { isLoading = false }
+
+        var picks: [Meal] = []
+        for _ in 0..<3 {
+            if let meal = await fetchRandomMeal(), !picks.contains(where: { $0.id == meal.id }) {
+                picks.append(meal)
+            }
+        }
+
+        guard picks.count == 3 else {
+            errorMessage = "Not enough recipes to build a plan yet."
+            return
+        }
+
+        do {
+            let encoded = try picks.map { try Firestore.Encoder().encode($0) }
+            try await db.collection("users").document(userId)
+                .collection("mealPlanner").document(day.key)
+                .setData([
+                    "date": Timestamp(date: day.date),
+                    MealType.breakfast.field: [encoded[0]],
+                    MealType.lunch.field: [encoded[1]],
+                    MealType.dinner.field: [encoded[2]]
+                ], merge: true)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Teardown
+
+    /// Called when the user signs out so the listener doesn't keep firing
+    /// permission-denied errors against the previous UID.
+    func stopListening() {
+        weekListener?.remove()
+        weekListener = nil
+        plans = [:]
+    }
 }

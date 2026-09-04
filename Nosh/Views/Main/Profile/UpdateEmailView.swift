@@ -157,52 +157,26 @@ struct UpdateEmailView: View {
             return
         }
         
-        // Re-authenticate user first
         let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
-        
-        user.reauthenticate(with: credential) { _, error in
-            if let error = error {
+
+        Task {
+            defer { isLoading = false }
+            do {
+                try await user.reauthenticate(with: credential)
+
+                // `updateEmail` is deprecated and changed the address without
+                // proving the user owns it. This sends a verification link to
+                // the new address and only switches over once it is clicked.
+                try await user.sendEmailVerification(beforeUpdatingEmail: newEmail)
+
+                alertTitle = "Verify Your New Email"
+                alertMessage = "We've sent a verification link to \(newEmail). "
+                    + "Your email address changes once you open that link."
+            } catch {
                 alertTitle = "Error"
-                alertMessage = "Current password is incorrect: \(error.localizedDescription)"
-                showAlert = true
-                isLoading = false
-                return
+                alertMessage = error.localizedDescription
             }
-            
-            // Update email in Firebase Auth
-            user.updateEmail(to: newEmail) { error in
-                if let error = error {
-                    isLoading = false
-                    alertTitle = "Error"
-                    alertMessage = error.localizedDescription
-                    showAlert = true
-                    return
-                }
-                
-                // Update email in Firestore
-                let db = Firestore.firestore()
-                db.collection("users").document(user.uid).updateData([
-                    "email": newEmail
-                ]) { firestoreError in
-                    isLoading = false
-                    
-                    if let firestoreError = firestoreError {
-                        alertTitle = "Warning"
-                        alertMessage = "Email updated in Auth but failed to update in Firestore: \(firestoreError.localizedDescription)"
-                    } else {
-                        // Send verification email
-                        user.sendEmailVerification { verificationError in
-                            if let verificationError = verificationError {
-                                print("Failed to send verification: \(verificationError.localizedDescription)")
-                            }
-                        }
-                        
-                        alertTitle = "Success"
-                        alertMessage = "Your email has been updated. Please verify your new email address."
-                    }
-                    showAlert = true
-                }
-            }
+            showAlert = true
         }
     }
 }

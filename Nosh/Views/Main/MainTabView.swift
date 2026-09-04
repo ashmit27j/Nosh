@@ -121,19 +121,12 @@ struct MainTabView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear {
+        .task {
             NotificationManager.shared.scheduleMealNotifications(mealTimes: appState.mealTimes)
-            print("MainTabView: Connecting PantryManager to shared pantryViewModel")
             PantryManager.shared.pantryViewModel = pantryViewModel
-            pantryViewModel.initializeDefaultPantry()
-            print("MainTabView: Loading meal planner data from Firestore")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                print("PantryManager connected: \(PantryManager.shared.pantryViewModel != nil)")
-                print("Pantry items count: \(pantryViewModel.items.count)")
-                print("MealPlanner initialized for date: \(mealPlannerViewModel.selectedDate)")
-            }
+            await pantryViewModel.initializeDefaultPantry()
         }
-        .onChange(of: shouldGoToPantry) { newValue in
+        .onChange(of: shouldGoToPantry) { _, newValue in
             if newValue {
                 selectedTab = .pantry
                 shouldGoToPantry = false 

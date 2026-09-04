@@ -86,25 +86,22 @@ struct MealPlannerHeader: View {
             // MARK: - Tabs (Synced with viewModel)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
-                    ForEach(viewModel.tabs, id: \.self) { tab in
+                    ForEach(viewModel.tabs) { tab in
                         VStack(spacing: 2) {
                             Button {
-                                selectedTab = tab
-                                // Update selected date when tab is tapped
-                                if let date = viewModel.dateFromDayString(tab) {
-                                    viewModel.changeDate(to: date)
-                                }
+                                selectedTab = tab.key
+                                viewModel.selectTab(tab)
                             } label: {
-                                Text(tab)
-                                    .fontWeight(selectedTab == tab ? .semibold : .regular)
-                                    .foregroundColor(selectedTab == tab ? .primary : .secondary)
+                                Text(tab.label)
+                                    .fontWeight(selectedTab == tab.key ? .semibold : .regular)
+                                    .foregroundColor(selectedTab == tab.key ? .primary : .secondary)
                                     .padding(.top, 10)
                             }
 
                             Capsule()
                                 .frame(height: 3)
-                                .foregroundColor(selectedTab == tab ? Color("primaryAccent") : .clear)
-                                .matchedGeometryEffect(id: "underline", in: underlineNamespace, isSource: selectedTab == tab)
+                                .foregroundColor(selectedTab == tab.key ? Color("primaryAccent") : .clear)
+                                .matchedGeometryEffect(id: "underline", in: underlineNamespace, isSource: selectedTab == tab.key)
                         }
                     }
                 }
@@ -113,7 +110,7 @@ struct MealPlannerHeader: View {
         }
         .padding()
         .background(Color("primaryCard"))
-        .onChange(of: viewModel.selectedTab) { newTab in
+        .onChange(of: viewModel.selectedTabKey) { _, newTab in
             selectedTab = newTab
         }
     }

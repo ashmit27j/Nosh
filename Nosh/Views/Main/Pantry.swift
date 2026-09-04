@@ -4,7 +4,7 @@ struct Pantry: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var searchText = ""
     @State private var isEditing = false
-    @State private var selectedTab = "All"
+    @State private var selectedTab = PantryViewModel.allTab
     @State private var showAddItemSheet = false
     @State private var showShoppingList = false
 
@@ -48,44 +48,47 @@ struct Pantry: View {
                 )
             }
             .onAppear {
-                viewModel.initializeDefaultPantry()
+                // MainTabView owns loading; this view only needs the connection.
                 PantryManager.shared.pantryViewModel = viewModel
-                print("🔗 PantryManager connected: \(PantryManager.shared.pantryViewModel != nil)")
-                print("🔗 Pantry items count: \(viewModel.items.count)")
             }
         }
     }
 
+    /// Items for the selected tab, filtered by the search field.
+    private var visibleItems: [PantryItem] {
+        let items = viewModel.items(for: selectedTab)
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return items }
+        return items.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
+
     private var ScrollContent: some View {
         List {
-            if let currentItems = viewModel.items[selectedTab == "All" ? "All" : selectedTab] {
-                ForEach(currentItems, id: \.id) { item in
-                    PantryItemCard(
-                        item: item,
-                        selectedTab: selectedTab,
-                        viewModel: viewModel,
-                        onEdit: {
-                            tappedItem, category in
-                                    editingItem = tappedItem
-                                    editingCategory = category
-                                    editingItemName = tappedItem.name
-                                    editingQuantity = tappedItem.quantity
-                                    editingIncrementBy = tappedItem.incrementBy
-                        }
-                    )
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                }
-
-                AddItemButton(
-                    category: selectedTab == "All" ? "Vegetables" : selectedTab,
-                    showAddItemSheet: $showAddItemSheet
+            ForEach(visibleItems, id: \.id) { item in
+                PantryItemCard(
+                    item: item,
+                    selectedTab: selectedTab,
+                    viewModel: viewModel,
+                    onEdit: { tappedItem, category in
+                        editingItem = tappedItem
+                        editingCategory = category
+                        editingItemName = tappedItem.name
+                        editingQuantity = tappedItem.quantity
+                        editingIncrementBy = tappedItem.incrementBy
+                    }
                 )
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
             }
+
+            AddItemButton(
+                category: selectedTab == PantryViewModel.allTab ? "Vegetables" : selectedTab,
+                showAddItemSheet: $showAddItemSheet
+            )
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
         .listStyle(.plain)
         .scrollIndicators(.hidden)
